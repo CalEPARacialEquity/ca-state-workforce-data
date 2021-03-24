@@ -1,0 +1,85 @@
+---
+title: "Example Report - State Water Resources Control Board Employment Data"
+date: "Updated: `r Sys.Date()`"
+output: 
+  github_document:
+    toc: TRUE
+    toc_depth: 5
+    # html_preview: TRUE
+    # keep_html: TRUE
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+
+# load packages
+library(here)
+library(janitor)
+library(dplyr)
+library(readr)
+library(lubridate)
+library(ggplot2)
+library(forcats)
+library(scales)
+library(glue)
+
+# enter variables
+report_department <- 'Water Resources Control Board'
+report_year <- 2020
+```
+
+## Introduction
+
+This is an example R Markdown document (in a format used for publishing markdown documents to GitHub - when you click the **Knit** button all R code chunks are run and a markdown file (.md) suitable for publishing to GitHub is generated). 
+
+This example analyzes the demographics of the California State Water Resources Control Board's workforce, using data from [CalHR's Statewide 5102 report](https://www.calhr.ca.gov/pages/statewide-reports.aspx). A cleaned and compiled version of that data is available on the California Open Data Portal, [here](https://data.ca.gov/dataset/calhr-civil-rights-data-for-gare-capital-cohort-2019).
+
+## Including Code
+
+You can include R code in the document as follows:
+
+```{r summary_data}
+# import data ---------------
+df_5102_report <- read_csv(file = here('03_data_processed',
+                                       'calhr_5102_statewide_2011-2020.csv.gz'),
+                           col_types = cols(.default = col_character())) %>% 
+    type_convert() %>% 
+    clean_names()
+
+# add a column for the year
+df_5102_report <- df_5102_report %>% 
+    mutate(report_year = year(as_of_date))
+
+# view a summary of the dataset
+glimpse(df_5102_report)
+```
+
+## Including Plots
+
+You can also embed plots, for example (note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot):
+
+```{r plot_department_summary, echo=FALSE}
+pl_dept_summary <- df_5102_report %>% 
+            filter(dept == report_department,
+                   report_year == report_year) %>% 
+            group_by(identity_variable, gender) %>% 
+            summarize(total_n = sum(record_count)) %>% 
+            ungroup() %>% 
+            mutate(identity_variable = fct_reorder(identity_variable, total_n)) %>% 
+            ggplot() + # code below this line actually creates the plot
+            aes(x = identity_variable, y = total_n, fill = gender) +
+            geom_bar(stat = 'identity', position = 'dodge') + # position = 'stack'
+            scale_y_continuous(labels = comma) +
+            coord_flip() +
+            labs(x = 'Race / Ethnicity', 
+                 y = 'Number of Employees', 
+                 title = glue('Employees In California State Government'),
+                 subtitle = glue('Year: ', report_year, 
+                                 ' | Department: ', report_department), 
+                 caption = "Note: data from 5102 Inline Report", 
+                 fill = 'Gender')
+        
+        # output the plot
+        pl_dept_summary
+```
+

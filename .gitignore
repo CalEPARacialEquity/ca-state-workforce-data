@@ -1,0 +1,9 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+05_shiny_app/rsconnect
+
+ignore/
+02_data_raw/*.csv
+03_data_processed/*.csv
