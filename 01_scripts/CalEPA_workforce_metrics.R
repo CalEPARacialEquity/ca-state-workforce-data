@@ -1,0 +1,150 @@
+# load packages ----
+library(readxl)
+library(readr)
+library(dplyr)
+library(janitor)
+library(here)
+library(purrr)
+library(glue)
+library(lubridate)
+library(ggplot2)
+library(forcats)
+library(scales)
+
+
+# 1 - load data ---------------------------------------------------------------
+
+## 5112 ----
+# pull data from data.ca.gov, this may take a few minutes
+df_5112_2020 <- read_csv('https://data.ca.gov/dataset/e620a64f-6b86-4ce0-ab4b-03d06674287b/resource/d308f328-6b5b-41c1-8bc2-a4afcfcee3d1/download/5112-inline-report_12.31.20.csv') %>% 
+    clean_names()
+
+# Add year column to dataset
+df_5112_2020 <- df_5112_2020 %>% 
+    mutate(as_of_date = as.Date("2020-12-31"))
+
+# Filtering for EPA and related BDOs 
+df_5112_2020_epa <- df_5112_2020 %>% 
+    filter(department == "Air Resources Board"|
+               department == "Environmental Health Hazard Assessment, Office of"|
+               department == "Environmental Protection Agency"|
+               department == "Pesticide Regulation, department of"|
+               department == "Resources Recycling and Recovery, department of"|
+               department == "Toxic Substances Control, department of"|
+               department == "Water Resources Control Board")
+
+## 5102 ----
+df_5102_all_yrs <- readr::read_csv(url('https://data.ca.gov/dataset/e620a64f-6b86-4ce0-ab4b-03d06674287b/resource/aba87ad9-f6b0-4a7e-a45e-d1452417eb7f/download/calhr_5102_statewide_2011-2020.csv')) %>%
+    clean_names() 
+
+# filter for 2020
+df_5102_2020 <- df_5102_all_yrs %>% 
+    filter(as_of_date == as.Date('2020-12-31'))
+
+# Filtering for EPA and related BDOs 
+df_5102_2020_epa <- df_5102_2020 %>% 
+    filter(dept == "Air Resources Board"|
+               dept == "Environmental Health Hazard Assessment, Office of"|
+               dept == "Environmental Protection Agency"|
+               dept == "Pesticide Regulation, dept of"|
+               dept == "Resources Recycling and Recovery, dept of"|
+               dept == "Toxic Substances Control, dept of"|
+               dept == "Water Resources Control Board")
+
+
+# 2 - 5112 exploration ----------------------------------------------------------------
+## 5112 - count of entries by race ----
+plot_1 <- ggplot() +
+    geom_bar(data = df_5112_2020_epa, 
+             aes(ethnicity)) +
+    coord_flip()
+
+
+# 3 - 5112 rates ----------------------------------------------------------
+
+## calculate rates ----
+    # # Old method
+    # counts_ethnicity <- df_5112_2020_epa %>% 
+    #     count(ethnicity, name = 'ethnicity_total')
+    # 
+    # summary_rates <- df_5112_2020_epa %>% 
+    #     count(ethnicity, hire_type) %>% 
+    #     left_join(counts_ethnicity) %>% 
+    #     mutate(rate = n / ethnicity_total)
+
+summary_rates <- df_5112_2020_epa %>% 
+    select(ethnicity, hire_type) %>% 
+    add_count(ethnicity, name = 'ethnicity_total') %>% 
+    add_count(ethnicity, hire_type, name = 'ethnicity_type_total') %>% 
+    group_by(ethnicity, hire_type) %>% 
+    mutate(rate = ethnicity_type_total / ethnicity_total) %>% 
+    distinct() %>% 
+    arrange(ethnicity)
+
+## plot rates ----
+### advancement ----
+plot_advancement <- summary_rates %>% 
+    filter(hire_type == 'Advancements') %>% 
+    # fct_reorder()
+    ggplot() +
+    geom_bar(aes(x = ethnicity, y = rate), stat = 'identity') +
+    coord_flip() + 
+    scale_y_continuous(labels = percent) +
+    labs(title = 'Rate of Advancement by Ethnicity',
+         x = 'Ethnicity',
+         y = 'Rate')
+
+### intake (external) ----
+plot_intake_outside <- summary_rates %>% 
+    filter(hire_type == 'Intake: Outside Hires') %>% 
+    # fct_reorder()
+    ggplot() +
+    geom_bar(aes(x = ethnicity, y = rate), stat = 'identity') +
+    coord_flip() + 
+    scale_y_continuous(labels = percent) +
+    labs(title = 'Rate of External Hires by Ethnicity',
+         x = 'Ethnicity',
+         y = 'Rate')
+
+### intake (other agency) ----
+plot_intake_other_agencies <- summary_rates %>% 
+    filter(hire_type == 'Intake: Hires from other State Agencies') %>% 
+    # fct_reorder()
+    ggplot() +
+    geom_bar(aes(x = ethnicity, y = rate), stat = 'identity') +
+    coord_flip() + 
+    scale_y_continuous(labels = percent) +
+    labs(title = 'Rate of Hires from Other State Agencies by Ethnicity',
+         x = 'Ethnicity',
+         y = 'Rate')
+
+### combined ----
+ordering <- summary_rates %>% 
+    filter(hire_type == 'Intake: Outside Hires') %>% 
+    arrange(desc(rate)) %>% 
+    pull(ethnicity) %>% 
+    as.character()
+missing <- unique(summary_rates$ethnicity)[!unique(summary_rates$ethnicity) %in% ordering]
+ordering <- c(ordering, missing)
+
+plot_5112_rates_combined <- summary_rates %>% 
+    mutate(ethnicity = as.factor(ethnicity)) %>% 
+    mutate(ethnicity = fct_relevel(ethnicity, rev(ordering))) %>%  
+    ggplot() +
+    geom_bar(aes(x = ethnicity, y = rate, fill = hire_type), 
+             stat = 'identity') +
+    coord_flip() + 
+    scale_y_continuous(labels = percent) +
+    labs(title = 'Rate of Hires from Other State Agencies by Ethnicity',
+         x = 'Ethnicity',
+         y = 'Rate') +
+    theme(legend.position = 'bottom', legend.title = element_blank())+
+    guides(fill = guide_legend(reverse = TRUE))
+
+
+
+# 4- 5102 summaries ----------------------------------------------------------
+df_5102_legal <- df_5102_2020_epa %>% 
+    filter(employee_category == 'Legal Occupations') %>% 
+    count(identity_variable) %>% 
+    mutate()
