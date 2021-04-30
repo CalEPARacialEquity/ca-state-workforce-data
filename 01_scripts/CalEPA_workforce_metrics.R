@@ -12,7 +12,7 @@ library(forcats)
 library(scales)
 
 
-# 1 - load data ---------------------------------------------------------------
+# 1 - load/transform data ---------------------------------------------------------------
 
 ## 5112 ----
 # pull data from data.ca.gov, this may take a few minutes
@@ -22,6 +22,11 @@ df_5112_2020 <- read_csv('https://data.ca.gov/dataset/e620a64f-6b86-4ce0-ab4b-03
 # Add year column to dataset
 df_5112_2020 <- df_5112_2020 %>% 
     mutate(as_of_date = as.Date("2020-12-31"))
+
+# add additional levels for ethnicity grouping
+df_5112_2020 <- df_5112_2020 %>% 
+    mutate(ethnicity_level1 = case_when(ethnicity == 'White' ~ 'White', 
+                                        TRUE ~ 'BIPOC'))
 
 # Filtering for EPA and related BDOs 
 df_5112_2020_epa <- df_5112_2020 %>% 
@@ -72,6 +77,7 @@ plot_1 <- ggplot() +
     #     left_join(counts_ethnicity) %>% 
     #     mutate(rate = n / ethnicity_total)
 
+# original ethnicity 
 summary_rates <- df_5112_2020_epa %>% 
     select(ethnicity, hire_type) %>% 
     add_count(ethnicity, name = 'ethnicity_total') %>% 
@@ -80,6 +86,18 @@ summary_rates <- df_5112_2020_epa %>%
     mutate(rate = ethnicity_type_total / ethnicity_total) %>% 
     distinct() %>% 
     arrange(ethnicity)
+
+
+# level 1 ethnicity (white vs BIPOC)
+summary_rates_level1 <- df_5112_2020_epa %>% 
+    select(ethnicity_level1, hire_type) %>% 
+    add_count(ethnicity_level1, name = 'ethnicity_total') %>% 
+    add_count(ethnicity_level1, hire_type, name = 'ethnicity_type_total') %>% 
+    group_by(ethnicity_level1, hire_type) %>% 
+    mutate(rate = ethnicity_type_total / ethnicity_total) %>% 
+    distinct() %>% 
+    arrange(ethnicity_level1)
+
 
 ## plot rates ----
 ### advancement ----
@@ -135,16 +153,30 @@ plot_5112_rates_combined <- summary_rates %>%
              stat = 'identity') +
     coord_flip() + 
     scale_y_continuous(labels = percent) +
-    labs(title = 'Rate of Hires from Other State Agencies by Ethnicity',
+    labs(title = 'Portion of Hires / Advancements',
          x = 'Ethnicity',
-         y = 'Rate') +
-    theme(legend.position = 'bottom', legend.title = element_blank())+
+         y = 'Portion') +
+    theme(legend.position = 'bottom', 
+          legend.title = element_blank()) +
+    guides(fill = guide_legend(reverse = TRUE))
+
+### combined L1 ethnicity ----
+plot_5112_rates_combined_level1 <- summary_rates_level1 %>% 
+    ggplot() +
+    geom_bar(aes(x = ethnicity_level1, y = rate, fill = hire_type), 
+             stat = 'identity') +
+    coord_flip() + 
+    scale_y_continuous(labels = percent) +
+    labs(title = 'Portion of Hires / Advancements',
+         x = 'Ethnicity',
+         y = 'Portion') +
+    theme(legend.position = 'bottom', 
+          legend.title = element_blank()) +
     guides(fill = guide_legend(reverse = TRUE))
 
 
 
-# 4- 5102 summaries ----------------------------------------------------------
+# 4 - 5102 summaries ----------------------------------------------------------
 df_5102_legal <- df_5102_2020_epa %>% 
     filter(employee_category == 'Legal Occupations') %>% 
-    count(identity_variable) %>% 
-    mutate()
+    count(identity_variable)
