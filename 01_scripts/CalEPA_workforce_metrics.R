@@ -39,7 +39,7 @@ df_5112_2020_epa <- df_5112_2020 %>%
                department == "Water Resources Control Board")
 
 ## 5102 ----
-df_5102_all_yrs <- readr::read_csv(url('https://data.ca.gov/dataset/e620a64f-6b86-4ce0-ab4b-03d06674287b/resource/aba87ad9-f6b0-4a7e-a45e-d1452417eb7f/download/calhr_5102_statewide_2011-2020.csv')) %>%
+df_5102_all_yrs <- readr::read_csv('https://data.ca.gov/dataset/e620a64f-6b86-4ce0-ab4b-03d06674287b/resource/aba87ad9-f6b0-4a7e-a45e-d1452417eb7f/download/calhr_5102_statewide_2011-2020.csv') %>%
     clean_names() 
 
 # filter for 2020
@@ -82,9 +82,8 @@ summary_rates <- df_5112_2020_epa %>%
     select(ethnicity, hire_type) %>% 
     add_count(ethnicity, name = 'ethnicity_total') %>% 
     add_count(ethnicity, hire_type, name = 'ethnicity_type_total') %>% 
-    group_by(ethnicity, hire_type) %>% 
     mutate(rate = ethnicity_type_total / ethnicity_total) %>% 
-    distinct() %>% 
+    distinct() %>%
     arrange(ethnicity)
 
 
@@ -93,10 +92,10 @@ summary_rates_level1 <- df_5112_2020_epa %>%
     select(ethnicity_level1, hire_type) %>% 
     add_count(ethnicity_level1, name = 'ethnicity_total') %>% 
     add_count(ethnicity_level1, hire_type, name = 'ethnicity_type_total') %>% 
-    group_by(ethnicity_level1, hire_type) %>% 
-    mutate(rate = ethnicity_type_total / ethnicity_total) %>% 
     distinct() %>% 
-    arrange(ethnicity_level1)
+    mutate(rate = ethnicity_type_total / ethnicity_total) %>% 
+    arrange(ethnicity_level1) %>%
+    {.}
 
 
 ## plot rates ----
@@ -149,7 +148,9 @@ plot_5112_rates_combined <- summary_rates %>%
     mutate(ethnicity = as.factor(ethnicity)) %>% 
     mutate(ethnicity = fct_relevel(ethnicity, rev(ordering))) %>%  
     ggplot() +
-    geom_bar(aes(x = ethnicity, y = rate, fill = hire_type), 
+    geom_bar(mapping = aes(x = ethnicity, 
+                           y = rate, 
+                           fill = hire_type), 
              stat = 'identity') +
     coord_flip() + 
     scale_y_continuous(labels = percent) +
@@ -163,7 +164,9 @@ plot_5112_rates_combined <- summary_rates %>%
 ### combined L1 ethnicity ----
 plot_5112_rates_combined_level1 <- summary_rates_level1 %>% 
     ggplot() +
-    geom_bar(aes(x = ethnicity_level1, y = rate, fill = hire_type), 
+    geom_bar(mapping = aes(x = ethnicity_level1, 
+                           y = rate, 
+                           fill = hire_type), 
              stat = 'identity') +
     coord_flip() + 
     scale_y_continuous(labels = percent) +
