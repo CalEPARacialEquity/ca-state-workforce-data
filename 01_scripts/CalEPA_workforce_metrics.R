@@ -38,6 +38,7 @@ df_5112_2020_epa <- df_5112_2020 %>%
                department == "Toxic Substances Control, department of"|
                department == "Water Resources Control Board")
 
+
 ## 5102 ----
 df_5102_all_yrs <- readr::read_csv('https://data.ca.gov/dataset/e620a64f-6b86-4ce0-ab4b-03d06674287b/resource/aba87ad9-f6b0-4a7e-a45e-d1452417eb7f/download/calhr_5102_statewide_2011-2020.csv') %>%
     clean_names() 
@@ -180,6 +181,130 @@ plot_5112_rates_combined_level1 <- summary_rates_level1 %>%
 
 
 # 4 - 5102 summaries ----------------------------------------------------------
-df_5102_legal <- df_5102_2020_epa %>% 
-    filter(employee_category == 'Legal Occupations') %>% 
-    count(identity_variable)
+
+# summary function 
+fun_summary_5102 <- function(dataset) {
+    dataset %>% 
+        select(identity_variable) %>% 
+        add_count(identity_variable, name = 'ethnicity_total') %>% 
+        distinct() %>% 
+        mutate(rate = ethnicity_total / sum(ethnicity_total)) %>%
+        mutate(type = 'State Government Workforce') %>% 
+        arrange(identity_variable) %>%
+        {.}
+}
+
+# plot function
+fun_plot_5102 <- function(dataset, plot_title) {
+    dataset %>% 
+        ggplot() +
+        geom_bar(mapping = aes(x = identity_variable, 
+                               y = rate, 
+                               fill = type), 
+                 stat = 'identity', 
+                 position = 'dodge') +
+        coord_flip() + 
+        scale_y_continuous(labels = percent) +
+        labs(title = plot_title,
+             x = 'Ethnicity',
+             y = 'Portion') +
+        theme(legend.position = 'bottom', 
+              legend.title = element_blank()) +
+        guides(fill = guide_legend(reverse = TRUE))
+}
+
+## legal ----
+summary_rates_legal_5102 <- df_5102_2020_epa %>% 
+    filter(employee_category == 'Legal Occupations') %>%  
+    fun_summary_5102()
+
+### dummy data (all of CA)
+summary_rates_legal_CA <- summary_rates_legal_5102 %>% 
+    mutate(type = 'State Population')
+
+### combine workforce / population data
+summary_rates_legal_5102 <- summary_rates_legal_5102 %>% 
+    bind_rows(summary_rates_legal_CA)
+
+### plot
+(plot_5102_legal <- fun_plot_5102(dataset = summary_rates_legal_5102, 
+                                 plot_title = 'Portion of Total'))
+
+
+
+
+
+# 5 - 5112 summaries ------------------------------------------------------
+## summary function 
+fun_summary_5112 <- function(dataset) {
+    dataset %>% 
+        select(ethnicity_level1, hire_type) %>% 
+        add_count(ethnicity_level1, name = 'ethnicity_total') %>% 
+        add_count(ethnicity_level1, hire_type, name = 'ethnicity_type_total') %>% 
+        distinct() %>% 
+        mutate(rate = ethnicity_type_total / ethnicity_total) %>% 
+        arrange(ethnicity_level1) %>%
+        {.} 
+}
+
+## plot function
+fun_plot_5112 <- function(dataset, plot_title) {
+    dataset %>% 
+        ggplot() +
+        geom_bar(mapping = aes(x = ethnicity_level1, 
+                               y = rate, 
+                               fill = hire_type), 
+                 stat = 'identity') +
+        coord_flip() + 
+        scale_y_continuous(labels = percent) +
+        labs(title = plot_title,
+             x = 'Ethnicity',
+             y = 'Portion') +
+        theme(legend.position = 'bottom', 
+              legend.title = element_blank()) +
+        guides(fill = guide_legend(reverse = TRUE))
+}
+
+## legal ----
+summary_rates_level1_legal <- df_5112_2020_epa %>% 
+    filter(soc_major_group_title == 'Legal Occupations') %>% 
+    fun_summary_5112()
+
+### plot
+(plot_legal_5112_rates_combined_level1 <- summary_rates_level1_legal %>% 
+    fun_plot_5112(plot_title = 'Legal - Portion of Hires / Advancements'))
+
+
+## Management ----
+summary_rates_level1_management <- df_5112_2020_epa %>% 
+    filter(soc_major_group_title == 'Management Occupations') %>%
+    fun_summary_5112()
+
+### plot
+(plot_mgmt_5112_rates_combined_level1 <- summary_rates_level1_management %>% 
+    fun_plot_5112(plot_title = 'Management - Portion of Hires / Advancements'))
+
+
+## Admin ----
+summary_rates_level1_admin <- df_5112_2020_epa %>% 
+    filter(soc_major_group_title == 'Office and Administrative Support Occupations' |
+               (soc_major_group_title == 'Computer and Mathematical Occupations' & 
+                    soc_detailed_group_title == 'Unmapped Classes')) %>% 
+    fun_summary_5112()
+
+### plot
+(plot_admin_5112_rates_combined_level1 <- summary_rates_level1_admin %>% 
+    fun_plot_5112(plot_title = 'Administrative - Portion of Hires / Advancements'))
+
+
+## Tech ----
+summary_rates_level1_tech <- df_5112_2020_epa %>% 
+    filter(soc_major_group_title == 'Architecture and Engineering Occupations' |
+               soc_major_group_title == 'Life, Physical, and Social Science Occupations' | 
+               (soc_major_group_title == 'Computer and Mathematical Occupations' & 
+                    soc_detailed_group_title == 'Operations Research Analysts')) %>% 
+    fun_summary_5112()
+
+### plot
+(plot_tech_5112_rates_combined_level1 <- summary_rates_level1_tech %>% 
+    fun_plot_5112(plot_title = 'Tech - Portion of Hires / Advancements'))
