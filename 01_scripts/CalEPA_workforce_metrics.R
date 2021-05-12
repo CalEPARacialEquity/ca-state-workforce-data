@@ -1,4 +1,3 @@
-#hello testing git
 # resources ----
 # census data: 
 #   - tidycensus R package: https://walker-data.com/tidycensus/articles/basic-usage.html  
