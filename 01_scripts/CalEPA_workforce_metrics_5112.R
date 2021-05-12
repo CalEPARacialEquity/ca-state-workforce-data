@@ -69,16 +69,16 @@ ggplot() +
     coord_flip()
 
 
-# 3 - 5112 rates ----------------------------------------------------------
+
+# 3 - 5112 All-CalEPA rates ----------------------------------------------------------
 
 ## define color palette for rate plots
 # RColorBrewer::brewer.pal(n = 3, name = 'Paired')
-colors_rate_plots <- c('gold', 'lightblue', 'darkblue')
-    
-## calculate rates ----
+colors_rate_plots <- c('darkblue', 'lightblue', 'gold') # intake outside, intake other agencies, advancements
 
+### detailed ethnic groups ----
 # original ethnicity 
-summary_rates <- df_5112_2020_epa %>% 
+sum_5112_detail <- df_5112_2020_epa %>% 
     select(ethnicity, hire_type) %>% 
     add_count(ethnicity, name = 'ethnicity_total') %>% 
     add_count(ethnicity, hire_type, name = 'ethnicity_type_total') %>% 
@@ -86,11 +86,74 @@ summary_rates <- df_5112_2020_epa %>%
     distinct() %>%
     arrange(ethnicity) %>% 
     mutate(data_label = glue('{ethnicity} \n(n = {ethnicity_total})')) %>% 
+    mutate(hire_type = factor(hire_type)) %>% 
+    # stuff below here is for adding labels to each segment of the bars in the bar charts
+    mutate(hire_type = as.factor(hire_type)) %>%  
+    mutate(hire_type = fct_relevel(hire_type, 
+                                   c('Advancements', 
+                                     'Intake: Hires from other State Agencies', 
+                                     'Intake: Outside Hires'))) %>% 
+    arrange(ethnicity, hire_type) %>% 
+    group_by(ethnicity) %>% 
+    mutate(label_y = cumsum(rate) - 0.5 * rate) %>% # puts the labels in the middle of each bar
+    ungroup() %>%
     {.}
-    
 
+# create ordering for bars (by number of advancements)
+ordering_detail <- sum_5112_detail %>%
+    filter(hire_type == 'Advancements') %>%
+    arrange(desc(rate)) %>%
+    pull(ethnicity) %>%
+    as.character()
+missing_detail <- unique(sum_5112_detail$ethnicity)[!unique(sum_5112_detail$ethnicity) %in% ordering_detail]
+ordering_detail <- c(ordering_detail, missing_detail)
+# ordering <- sum_5112_detail %>% 
+#     filter(hire_type == 'Intake: Outside Hires') %>% 
+#     arrange(desc(rate)) %>% 
+#     pull(ethnicity) %>% 
+#     as.character()
+# ordering_2 <- sum_5112_detail %>% 
+#     filter(hire_type == 'Intake: Hires from other State Agencies') %>% 
+#     arrange(desc(rate)) %>% 
+#     pull(ethnicity) %>% 
+#     as.character()
+# missing_1 <- ordering_2[!ordering_2 %in% ordering]
+# ordering <- c(ordering, missing_1)
+# missing_2 <- unique(sum_5112_detail$ethnicity)[!unique(sum_5112_detail$ethnicity) %in% ordering]
+# ordering <- c(ordering, missing_2)
+data_labels_detail <- tibble(ethnicity = ordering_detail) %>%
+    left_join(sum_5112_detail %>% distinct(ethnicity, data_label)) %>%
+    pull(data_label)
+
+(pl_5112_detail <- sum_5112_detail %>% 
+        mutate(ethnicity = as.factor(ethnicity)) %>% 
+        mutate(ethnicity = fct_relevel(ethnicity, rev(ordering_detail))) %>%
+        ggplot() +
+        geom_bar(mapping = aes(x = ethnicity, # data_label, 
+                               y = rate, 
+                               fill = fct_rev(hire_type)), 
+                 stat = 'identity') +
+        scale_fill_manual(values = colors_rate_plots) +
+        scale_y_continuous(labels = percent) +
+        scale_x_discrete(breaks = ordering_detail,
+                         labels = data_labels_detail) +
+        labs(title = 'Intake Versus Advancement by Ethnicity for all CalEPA Boards, Departments, and Offices (Year 2020)',
+             subtitle = 'Labels represent total number of employees in each grouping',
+             x = 'Ethnicity',
+             y = 'Percent of Total Intakes and Advancements (by Ethnicity Group)', 
+             caption = 'Workforce Data from CalHR 5112 Report') +
+        geom_text(aes(x = ethnicity, # data_label, # 
+                      y = label_y,
+                      # label = ethnicity_type_total,
+                      label = glue('{ethnicity_type_total}'))) +
+        coord_flip() + 
+        theme(legend.position = 'bottom', 
+              legend.title = element_blank()) +
+        guides(fill = guide_legend(reverse = TRUE)))
+
+### L1 ethnicity ----
 # level 1 ethnicity (white vs BIPOC)
-summary_rates_level1 <- df_5112_2020_epa %>% 
+sum_5112_l1 <- df_5112_2020_epa %>% 
     select(ethnicity_level1, hire_type) %>% 
     add_count(ethnicity_level1, name = 'ethnicity_total') %>% 
     add_count(ethnicity_level1, hire_type, name = 'ethnicity_type_total') %>% 
@@ -98,105 +161,121 @@ summary_rates_level1 <- df_5112_2020_epa %>%
     mutate(rate = ethnicity_type_total / ethnicity_total) %>% 
     arrange(ethnicity_level1) %>%
     mutate(data_label = glue('{ethnicity_level1} \n(n = {ethnicity_total})')) %>% 
+    # stuff below here is for adding labels to each segment of the bars in the bar charts
+    mutate(hire_type = as.factor(hire_type)) %>%  
+    mutate(hire_type = fct_relevel(hire_type, 
+                                   c('Advancements',
+                                     'Intake: Hires from other State Agencies', 
+                                     'Intake: Outside Hires'))) %>% 
+    arrange(ethnicity_level1, hire_type) %>% 
+    group_by(ethnicity_level1) %>% 
+    mutate(label_y = cumsum(rate) - 0.5 * rate) %>% # puts the labels in the middle of each bar
+    ungroup() %>%
     {.}
 
-
-## plot rates ----
-# ### advancement ----#
-# (plot_advancement <- summary_rates %>% 
-#     filter(hire_type == 'Advancements') %>% 
-#     # fct_reorder()
-#     ggplot() +
-#     geom_bar(aes(x = ethnicity, y = rate), stat = 'identity') +
-#     coord_flip() + 
-#     scale_y_continuous(labels = percent) +
-#     labs(title = 'Rate of Advancement by Ethnicity',
-#          x = 'Ethnicity',
-#          y = 'Rate'))
-# 
-# ### intake (external) ----#
-# (plot_intake_outside <- summary_rates %>% 
-#     filter(hire_type == 'Intake: Outside Hires') %>% 
-#     # fct_reorder()
-#     ggplot() +
-#     geom_bar(aes(x = ethnicity, y = rate), stat = 'identity') +
-#     coord_flip() + 
-#     scale_y_continuous(labels = percent) +
-#     labs(title = 'Rate of External Hires by Ethnicity',
-#          x = 'Ethnicity',
-#          y = 'Rate'))
-# 
-# ### intake (other agency) ----#
-# (plot_intake_other_agencies <- summary_rates %>% 
-#     filter(hire_type == 'Intake: Hires from other State Agencies') %>% 
-#     # fct_reorder()
-#     ggplot() +
-#     geom_bar(aes(x = ethnicity, y = rate), stat = 'identity') +
-#     coord_flip() + 
-#     scale_y_continuous(labels = percent) +
-#     labs(title = 'Rate of Hires from Other State Agencies by Ethnicity',
-#          x = 'Ethnicity',
-#          y = 'Rate'))
-
-### detailed ethnic groups ----
-ordering <- summary_rates %>% 
-    filter(hire_type == 'Intake: Outside Hires') %>% 
-    arrange(desc(rate)) %>% 
-    pull(ethnicity) %>% 
-    as.character()
-ordering_2 <- summary_rates %>% 
-    filter(hire_type == 'Intake: Hires from other State Agencies') %>% 
-    arrange(desc(rate)) %>% 
-    pull(ethnicity) %>% 
-    as.character()
-missing_1 <- ordering_2[!ordering_2 %in% ordering]
-ordering <- c(ordering, missing_1)
-missing_2 <- unique(summary_rates$ethnicity)[!unique(summary_rates$ethnicity) %in% ordering]
-ordering <- c(ordering, missing_2)
-data_labels <- tibble(ethnicity = ordering) %>% 
-    left_join(summary_rates %>% distinct(ethnicity, data_label)) %>% 
-    pull(data_label)
-
-(plot_5112_rates_combined <- summary_rates %>% 
-        mutate(ethnicity = as.factor(ethnicity)) %>% 
-        mutate(ethnicity = fct_relevel(ethnicity, rev(ordering))) %>%  
+(pl_5112_l1 <- sum_5112_l1 %>%
+        # mutate(data_label = glue('{ethnicity_level1} \n(n = {ethnicity_total})')) %>% 
+        mutate(hire_type = fct_rev(hire_type)) %>% 
         ggplot() +
-        geom_bar(mapping = aes(x = ethnicity, # data_label, 
+        geom_bar(mapping = aes(x = data_label, 
+                               #x = ethnicity_level1,
                                y = rate, 
                                fill = hire_type), 
                  stat = 'identity') +
-        scale_fill_manual(values = colors_rate_plots) +
         scale_y_continuous(labels = percent) +
-        scale_x_discrete(breaks = ordering,
-                         labels = data_labels) +
-        labs(title = 'Portion of Hires / Advancements',
+        labs(title = 'Intake Versus Advancement by Ethnicity for all CalEPA Boards, Departments, and Offices (Year 2020)',
+             subtitle = 'Labels represent total number of employees in each grouping',
              x = 'Ethnicity',
-             y = 'Portion') +
+             y = 'Percent of Total Intakes and Advancements (by Ethnicity Group)', 
+             caption = 'Workforce Data from CalHR 5112 Report') +
+        guides(fill = guide_legend(reverse = TRUE)) +
+        scale_fill_manual(values = colors_rate_plots) + 
+        # geom_text(aes(x = ethnicity_level1,
+        #               y = 1.05,
+        #               label = glue('n = {ethnicity_total}'),
+        #               hjust = 0.5)) +
+        geom_text(aes(x = data_label, # ethnicity_level1,
+                      y = label_y,
+                      # label = ethnicity_type_total,
+                      label = glue('{ethnicity_type_total}'))) +
         coord_flip() + 
+        # facet_wrap(~ metrics_group, scales = 'free_y') + 
         theme(legend.position = 'bottom', 
               legend.title = element_blank()) +
-        guides(fill = guide_legend(reverse = TRUE)))
-
-### combined L1 ethnicity ----
-(plot_5112_rates_combined_level1 <- summary_rates_level1 %>% 
-     ggplot() +
-     geom_bar(mapping = aes(x = data_label, # ethnicity_level1, 
-                            y = rate, 
-                            fill = hire_type), 
-              stat = 'identity') +
-     scale_fill_manual(values = colors_rate_plots) +
-     coord_flip() + 
-     scale_y_continuous(labels = percent) +
-     labs(title = 'Portion of Hires / Advancements',
-          x = 'Ethnicity',
-          y = 'Portion') +
-     theme(legend.position = 'bottom', 
-           legend.title = element_blank()) +
-     guides(fill = guide_legend(reverse = TRUE)))
+        geom_blank())
 
 
+### L2 ethnicity ----
+# level 2 ethnicity (white vs BIPOC)
+sum_5112_l2 <- df_5112_2020_epa %>% 
+    select(ethnicity_level2, hire_type) %>% 
+    add_count(ethnicity_level2, name = 'ethnicity_total') %>% 
+    add_count(ethnicity_level2, hire_type, name = 'ethnicity_type_total') %>% 
+    distinct() %>% 
+    mutate(rate = ethnicity_type_total / ethnicity_total) %>% 
+    arrange(ethnicity_level2) %>%
+    mutate(data_label = glue('{ethnicity_level2} \n(n = {ethnicity_total})')) %>% 
+    # stuff below here is for adding labels to each segment of the bars in the bar charts
+    mutate(hire_type = as.factor(hire_type)) %>%  
+    mutate(hire_type = fct_relevel(hire_type, 
+                                   c('Advancements',
+                                     'Intake: Hires from other State Agencies', 
+                                     'Intake: Outside Hires'))) %>% 
+    arrange(ethnicity_level2, hire_type) %>% 
+    group_by(ethnicity_level2) %>% 
+    mutate(label_y = cumsum(rate) - 0.5 * rate) %>% # puts the labels in the middle of each bar
+    ungroup() %>%
+    {.}
 
-# 5 - 5112 group summaries ------------------------------------------------------
+ordering_l2 <- sum_5112_l2 %>%
+    filter(hire_type == 'Advancements') %>%
+    arrange(desc(rate)) %>%
+    pull(ethnicity_level2) %>%
+    as.character()
+missing_l2 <- unique(sum_5112_l2$ethnicity_level2)[!unique(sum_5112_l2$ethnicity_level2) %in% ordering_l2]
+ordering_l2 <- c(ordering_l2, missing_l2)
+data_labels_l2 <- tibble(ethnicity_level2 = ordering_l2) %>%
+    left_join(sum_5112_l2 %>% distinct(ethnicity_level2, data_label)) %>%
+    pull(data_label)
+
+(pl_5112_l2 <- sum_5112_l2 %>%
+        # mutate(data_label = glue('{ethnicity_level1} \n(n = {ethnicity_total})')) %>% 
+        mutate(hire_type = fct_rev(hire_type)) %>% 
+        mutate(ethnicity_level2 = as.factor(ethnicity_level2)) %>% 
+        mutate(ethnicity_level2 = fct_relevel(ethnicity_level2, rev(ordering_l2))) %>%
+        ggplot() +
+        geom_bar(mapping = aes(# x = data_label, 
+                               x = ethnicity_level2,
+                               y = rate, 
+                               fill = hire_type), 
+                 stat = 'identity') +
+        scale_y_continuous(labels = percent) +
+        labs(title = 'Intake Versus Advancement by Ethnicity for all CalEPA Boards, Departments, and Offices (Year 2020)',
+             subtitle = 'Labels represent total number of employees in each grouping',
+             x = 'Ethnicity',
+             y = 'Percent of Total Intakes and Advancements (by Ethnicity Group)', 
+             caption = 'Workforce Data from CalHR 5112 Report') +
+        guides(fill = guide_legend(reverse = TRUE)) +
+        scale_fill_manual(values = colors_rate_plots) + 
+        scale_x_discrete(breaks = ordering_l2,
+                         labels = data_labels_l2) +
+        # geom_text(aes(x = ethnicity_level1,
+        #               y = 1.05,
+        #               label = glue('n = {ethnicity_total}'),
+        #               hjust = 0.5)) +
+        geom_text(aes(x = ethnicity_level2,
+                      y = label_y,
+                      # label = ethnicity_type_total,
+                      label = glue('{ethnicity_type_total}'))) +
+        coord_flip() + 
+        # facet_wrap(~ metrics_group, scales = 'free_y') + 
+        theme(legend.position = 'bottom', 
+              legend.title = element_blank()) +
+        geom_blank())
+
+
+
+# 4 - 5112 group summaries ------------------------------------------------------
 ## create groupings ----
 df_5112_2020_epa <- df_5112_2020_epa %>% 
     mutate(metrics_group = case_when(
@@ -225,14 +304,15 @@ sum_5112_groups_l1 <- df_5112_2020_epa %>%
     select(ethnicity_level1, hire_type, metrics_group) %>% 
     add_count(ethnicity_level1, metrics_group, name = 'ethnicity_total') %>% 
     add_count(ethnicity_level1, hire_type, metrics_group, name = 'ethnicity_type_total') %>% 
+    add_count(metrics_group, name = 'metrics_group_total') %>% 
     distinct() %>% 
     mutate(rate = ethnicity_type_total / ethnicity_total) %>% 
     # stuff below here is for adding labels to each segment of the bars in the bar charts
     mutate(hire_type = as.factor(hire_type)) %>%  
     mutate(hire_type = fct_relevel(hire_type, 
-                                   c('Intake: Outside Hires', 
-                                     'Intake: Hires from other State Agencies', 
-                                     'Advancements'))) %>% 
+                                   c('Advancements',
+                                     'Intake: Outside Hires', 
+                                     'Intake: Hires from other State Agencies'))) %>% 
     arrange(ethnicity_level1, metrics_group, hire_type) %>% 
     group_by(ethnicity_level1, metrics_group) %>% 
     mutate(label_y = cumsum(rate) - 0.5 * rate) %>% # puts the labels in the middle of each bar
@@ -241,7 +321,12 @@ sum_5112_groups_l1 <- df_5112_2020_epa %>%
 
 (pl_5112_groups_l1 <- sum_5112_groups_l1 %>%
         mutate(data_label = glue('{ethnicity_level1} \n(n = {ethnicity_total})')) %>% 
+        mutate(facet_label = glue('{metrics_group} (n = {metrics_group_total})')) %>% 
         mutate(hire_type = fct_rev(hire_type)) %>% 
+        # mutate(ethnicity_level1 = factor(ethnicity_level1)) %>% 
+        # mutate(ethnicity_level1 = fct_rev(ethnicity_level1)) %>% 
+        # mutate(data_label = factor(data_label)) %>% 
+        # mutate(data_label = fct_rev(data_label)) %>%
         ggplot() +
         geom_bar(mapping = aes(x = data_label, 
                                # x = ethnicity_level1,
@@ -249,227 +334,215 @@ sum_5112_groups_l1 <- df_5112_2020_epa %>%
                                fill = hire_type), 
                  stat = 'identity') +
         scale_y_continuous(labels = percent) +
-        labs(title = 'CalEPA Intake Versus Advancements by Occupation Group and Ethicity (Year 2020)',
-             subtitle = 'Includes all CalEPA Boards, Departments, and Offices',
+        labs(title = 'Intake Versus Advancement by Occupation Group and Ethnicity for all CalEPA Boards, Departments, and Offices (Year 2020)',
+             subtitle = 'Labels represent total number of employees in each grouping',
              x = 'Ethnicity',
-             y = 'Percent of Total (by Occupation / Ethnicity Group)', 
-             caption = 'Workforce data from CalHR 5112 report') +
+             y = 'Percent of Total Intakes and Advancements (by Occupation and Ethnicity Group)', 
+             caption = 'Workforce Data from CalHR 5112 Report') +
         guides(fill = guide_legend(reverse = TRUE)) +
         scale_fill_manual(values = colors_rate_plots) + 
         # geom_text(aes(x = ethnicity_level1,
         #               y = 1.05,
         #               label = glue('n = {ethnicity_total}'),
         #               hjust = 0.5)) +
-        # geom_text(aes(x = ethnicity_level1,
-        #               y = label_y,
-        #               # label = ethnicity_type_total,
-        #               label = glue('n = {ethnicity_type_total}'))) +
+        geom_text(aes(x = data_label, # ethnicity_level1,
+                      y = label_y,
+                      # label = ethnicity_type_total,
+                      label = glue('{ethnicity_type_total}'))) +
         coord_flip() + 
-        facet_wrap(~ metrics_group, scales = 'free_y') + 
-        theme(legend.position = 'bottom', 
-              legend.title = element_blank()#,
-              # panel.margin=unit(.05, "lines"),
-              # panel.border = element_rect(color = "black", fill = NA, size = 1), 
-              # strip.background = element_rect(color = "black", size = 1)
-              ) +
-        geom_blank())
-
-## L1 summary by group & BDO ----
-sum_5112_groups_l1_BDO <- df_5112_2020_epa %>% 
-    filter(!is.na(metrics_group)) %>% 
-    select(ethnicity_level1, hire_type, metrics_group, department) %>% 
-    add_count(ethnicity_level1, metrics_group, department, name = 'ethnicity_total') %>% 
-    add_count(ethnicity_level1, hire_type, metrics_group, department, name = 'ethnicity_type_total') %>% 
-    distinct() %>% 
-    mutate(rate = ethnicity_type_total / ethnicity_total) %>% 
-    # stuff below here is for adding labels to each segment of the bars in the bar charts
-    mutate(hire_type = as.factor(hire_type)) %>%  
-    mutate(hire_type = fct_relevel(hire_type, 
-                                   c('Intake: Outside Hires', 
-                                     'Intake: Hires from other State Agencies', 
-                                     'Advancements'))) %>% 
-    arrange(department, ethnicity_level1, metrics_group, hire_type) %>% 
-    group_by(department, ethnicity_level1, metrics_group) %>%
-    mutate(label_y = cumsum(rate) - 0.5 * rate) %>% # puts the labels in the middle of each bar
-    ungroup() %>%
-    {.}
-
-
-pl_l1_BDO_dept <- 'Environmental Health Hazard Assessment, Office of'
-(pl_l1_BDO <- sum_5112_groups_l1_BDO %>%
-        filter(department == pl_l1_BDO_dept) %>%
-        mutate(data_label = glue('{ethnicity_level1} \n(n = {ethnicity_total})')) %>% 
-        mutate(hire_type = fct_rev(hire_type)) %>% 
-        ggplot() +
-        geom_bar(mapping = aes(x = data_label, 
-                               # x = ethnicity_level1,
-                               y = rate, 
-                               fill = hire_type), 
-                 stat = 'identity') +
-        scale_y_continuous(labels = percent) +
-        labs(title = 'CalEPA Intake Versus Advancements by Occupation Group and Ethicity (Year 2020)',
-             subtitle = pl_l1_BDO_dept,
-             x = 'Ethnicity',
-             y = 'Percent of Total (by Occupation / Ethnicity Group)', 
-             caption = 'Workforce data from CalHR 5102 report') +
-        guides(fill = guide_legend(reverse = TRUE)) +
-        scale_fill_manual(values = c('aquamarine4', 'blue', 'darkblue')) +
-        # geom_text(aes(x = ethnicity_level1,
-        #               y = 1.05,
-        #               label = glue('n = {ethnicity_total}'),
-        #               hjust = 0.5)) +
-        # geom_text(aes(x = ethnicity_level1,
-        #               y = label_y,
-        #               # label = ethnicity_type_total,
-        #               label = glue('n = {ethnicity_type_total}'))) +
-        coord_flip() + 
-        facet_wrap(~ metrics_group, scales = 'free_y') + 
-        theme(legend.position = 'bottom', 
-              legend.title = element_blank()#,
-              # panel.margin=unit(.05, "lines"),
-              # panel.border = element_rect(color = "black", fill = NA, size = 1), 
-              # strip.background = element_rect(color = "black", size = 1)
-              ) +
-        geom_blank())
-
-
-
-## L2 summary by group ----
-sum_groups_l2 <- df_5112_2020_epa %>% 
-    filter(!is.na(metrics_group)) %>% 
-    select(ethnicity_level2, hire_type, metrics_group) %>% 
-    add_count(ethnicity_level2, metrics_group, name = 'ethnicity_total') %>% 
-    add_count(ethnicity_level2, hire_type, metrics_group, name = 'ethnicity_type_total') %>% 
-    distinct() %>% 
-    mutate(rate = ethnicity_type_total / ethnicity_total) %>% 
-    # stuff below here is for adding labels to each segment of the bars in the bar charts
-    mutate(hire_type = as.factor(hire_type)) %>%  
-    mutate(hire_type = fct_relevel(hire_type, 
-                                   c('Intake: Outside Hires', 
-                                     'Intake: Hires from other State Agencies', 
-                                     'Advancements'))) %>% 
-    arrange(metrics_group, ethnicity_level2, hire_type) %>% 
-    {.}
-
-
-(pl_groups_l2 <- sum_groups_l2 %>%
-        mutate(data_label = glue('{ethnicity_level2} \n(n = {ethnicity_total})')) %>% 
-        mutate(hire_type = fct_rev(hire_type)) %>% 
-        ggplot() +
-        geom_bar(mapping = aes(x = data_label, #ethnicity_level2,  
-                               # x = ethnicity_level1,
-                               y = rate, 
-                               fill = hire_type), 
-                 stat = 'identity') +
-        scale_y_continuous(labels = percent) +
-        # scale_fill_brewer(palette = "Dark2") + 
-        scale_fill_manual(values = colors_rate_plots) +
-        labs(title = 'CalEPA Intake Versus Advancements by Occupation Group and Ethicity (Year 2020)',
-             subtitle = 'Includes all CalEPA Boards, Departments, and Offices',
-             x = 'Ethnicity',
-             y = 'Percent of Total (by Occupation / Ethnicity Group)', 
-             caption = 'Workforce data from CalHR 5102 report') +
-        guides(fill = guide_legend(reverse = TRUE)) +
-        # geom_text(aes(x = ethnicity_level2, # data_label,
-        #               y = 1.05,
-        #               label = glue('n = {ethnicity_total}'),
-        #               hjust = 0.5)) +
-        # geom_text(aes(x = ethnicity_level1,
-        #               y = label_y,
-        #               # label = ethnicity_type_total,
-        #               label = glue('n = {ethnicity_type_total}'))) +
-        coord_flip() + 
-        facet_wrap(~ metrics_group, scales = 'free_y') + 
+        facet_wrap(~ facet_label, scales = 'free_y') + 
         theme(legend.position = 'bottom', 
               legend.title = element_blank()) +
         geom_blank())
 
 
+# NOT USED BELOW HERE !!!!!! ----------------------------------------------
 
-# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-## 5.2 Individual Group Plots ----
-## summary function 
-fun_summary_5112_l1 <- function(dataset) {
-    dataset %>% 
-        select(ethnicity_level1, hire_type) %>% 
-        add_count(ethnicity_level1, name = 'ethnicity_total') %>% 
-        add_count(ethnicity_level1, hire_type, name = 'ethnicity_type_total') %>% 
-        distinct() %>% 
-        mutate(rate = ethnicity_type_total / ethnicity_total) %>% 
-        arrange(ethnicity_level1) %>%
-        {.} 
-}
-
-## plot function
-fun_plot_5112_l1 <- function(dataset, plot_title) {
-    dataset %>% 
-        mutate(data_label = glue('{ethnicity_level1} \n(n = {ethnicity_total})')) %>% 
-        ggplot() +
-        geom_bar(mapping = aes(x = data_label, # ethnicity_level1, 
-                               y = rate, 
-                               fill = hire_type), 
-                 stat = 'identity') +
-        scale_fill_manual(values = colors_rate_plots) +
-        scale_y_continuous(labels = percent) +
-        labs(title = plot_title,
-             x = 'Ethnicity',
-             y = 'Portion') +
-        coord_flip() + 
-        theme(legend.position = 'bottom', 
-              legend.title = element_blank()) +
-        guides(fill = guide_legend(reverse = TRUE)) + 
-        # geom_text(data = dataset,
-        #           stat = 'identity',
-        #           aes(x = ethnicity_level1,
-        #               y = 1 + 0.1,
-        #               label = glue('n = {ethnicity_total}'))
-        #           ) +
-        geom_blank()
-}
-
-### Legal ----
-### plot
-(pl_5112_l1_legal <- df_5112_2020_epa %>% 
-        filter(soc_major_group_title == 'Legal Occupations') %>% 
-        fun_summary_5112_l1() %>% 
-        fun_plot_5112_l1(plot_title = 'Legal - Portion of Hires / Advancements'))
-
-
-### Management ----
-### plot
-(pl_5112_l1_mgmt <- df_5112_2020_epa %>% 
-        filter(soc_major_group_title == 'Management Occupations') %>%
-        fun_summary_5112_l1() %>% 
-        fun_plot_5112_l1(plot_title = 'Management - Portion of Hires / Advancements'))
-
-
-### Admin ----
-### plot
-(pl_5112_l1_admin <- df_5112_2020_epa %>% 
-        filter(soc_major_group_title == 'Office and Administrative Support Occupations' |
-                   (soc_major_group_title == 'Computer and Mathematical Occupations' & 
-                        soc_detailed_group_title == 'Unmapped Classes')) %>% 
-        fun_summary_5112_l1() %>% 
-        fun_plot_5112_l1(plot_title = 'Administrative - Portion of Hires / Advancements'))
-
-
-### Tech ----
-### plot
-(pl_5112_l1_tech <- df_5112_2020_epa %>% 
-        filter(soc_major_group_title == 'Architecture and Engineering Occupations' |
-                   soc_major_group_title == 'Life, Physical, and Social Science Occupations' | 
-                   (soc_major_group_title == 'Computer and Mathematical Occupations' & 
-                        soc_detailed_group_title == 'Operations Research Analysts')) %>% 
-        fun_summary_5112_l1() %>% 
-        fun_plot_5112_l1(plot_title = 'Tech - Portion of Hires / Advancements'))
+# ## L1 summary by group & BDO ----
+# sum_5112_groups_l1_BDO <- df_5112_2020_epa %>% 
+#     filter(!is.na(metrics_group)) %>% 
+#     select(ethnicity_level1, hire_type, metrics_group, department) %>% 
+#     add_count(ethnicity_level1, metrics_group, department, name = 'ethnicity_total') %>% 
+#     add_count(ethnicity_level1, hire_type, metrics_group, department, name = 'ethnicity_type_total') %>% 
+#     distinct() %>% 
+#     mutate(rate = ethnicity_type_total / ethnicity_total) %>% 
+#     # stuff below here is for adding labels to each segment of the bars in the bar charts
+#     mutate(hire_type = as.factor(hire_type)) %>%  
+#     mutate(hire_type = fct_relevel(hire_type, 
+#                                    c('Intake: Outside Hires', 
+#                                      'Intake: Hires from other State Agencies', 
+#                                      'Advancements'))) %>% 
+#     arrange(department, ethnicity_level1, metrics_group, hire_type) %>% 
+#     group_by(department, ethnicity_level1, metrics_group) %>%
+#     mutate(label_y = cumsum(rate) - 0.5 * rate) %>% # puts the labels in the middle of each bar
+#     ungroup() %>%
+#     {.}
+# 
+# 
+# pl_l1_BDO_dept <- 'Environmental Health Hazard Assessment, Office of'
+# (pl_l1_BDO <- sum_5112_groups_l1_BDO %>%
+#         filter(department == pl_l1_BDO_dept) %>%
+#         mutate(data_label = glue('{ethnicity_level1} \n(n = {ethnicity_total})')) %>% 
+#         mutate(hire_type = fct_rev(hire_type)) %>% 
+#         ggplot() +
+#         geom_bar(mapping = aes(x = data_label, 
+#                                # x = ethnicity_level1,
+#                                y = rate, 
+#                                fill = hire_type), 
+#                  stat = 'identity') +
+#         scale_y_continuous(labels = percent) +
+#         labs(title = 'CalEPA Intake Versus Advancements by Occupation Group and Ethnicity (Year 2020)',
+#              subtitle = pl_l1_BDO_dept,
+#              x = 'Ethnicity',
+#              y = 'Percent of Total (by Occupation / Ethnicity Group)', 
+#              caption = 'Workforce data from CalHR 5102 report') +
+#         guides(fill = guide_legend(reverse = TRUE)) +
+#         scale_fill_manual(values = c('aquamarine4', 'blue', 'darkblue')) +
+#         # geom_text(aes(x = ethnicity_level1,
+#         #               y = 1.05,
+#         #               label = glue('n = {ethnicity_total}'),
+#         #               hjust = 0.5)) +
+#         # geom_text(aes(x = ethnicity_level1,
+#         #               y = label_y,
+#         #               # label = ethnicity_type_total,
+#         #               label = glue('n = {ethnicity_type_total}'))) +
+#         coord_flip() + 
+#         facet_wrap(~ metrics_group, scales = 'free_y') + 
+#         theme(legend.position = 'bottom', 
+#               legend.title = element_blank()#,
+#               # panel.margin=unit(.05, "lines"),
+#               # panel.border = element_rect(color = "black", fill = NA, size = 1), 
+#               # strip.background = element_rect(color = "black", size = 1)
+#               ) +
+#         geom_blank())
 
 
 
-# 6 - exits (by job class) ----------------------------------------------------
-job_class <- 'ENVIRONMENTAL SCIENTIST'
+# ## L2 summary by group ----
+# sum_groups_l2 <- df_5112_2020_epa %>% 
+#     filter(!is.na(metrics_group)) %>% 
+#     select(ethnicity_level2, hire_type, metrics_group) %>% 
+#     add_count(ethnicity_level2, metrics_group, name = 'ethnicity_total') %>% 
+#     add_count(ethnicity_level2, hire_type, metrics_group, name = 'ethnicity_type_total') %>% 
+#     distinct() %>% 
+#     mutate(rate = ethnicity_type_total / ethnicity_total) %>% 
+#     # stuff below here is for adding labels to each segment of the bars in the bar charts
+#     mutate(hire_type = as.factor(hire_type)) %>%  
+#     mutate(hire_type = fct_relevel(hire_type, 
+#                                    c('Intake: Outside Hires', 
+#                                      'Intake: Hires from other State Agencies', 
+#                                      'Advancements'))) %>% 
+#     arrange(metrics_group, ethnicity_level2, hire_type) %>% 
+#     {.}
+# 
+# 
+# (pl_groups_l2 <- sum_groups_l2 %>%
+#         mutate(data_label = glue('{ethnicity_level2} \n(n = {ethnicity_total})')) %>% 
+#         mutate(hire_type = fct_rev(hire_type)) %>% 
+#         ggplot() +
+#         geom_bar(mapping = aes(x = data_label, #ethnicity_level2,  
+#                                # x = ethnicity_level1,
+#                                y = rate, 
+#                                fill = hire_type), 
+#                  stat = 'identity') +
+#         scale_y_continuous(labels = percent) +
+#         # scale_fill_brewer(palette = "Dark2") + 
+#         scale_fill_manual(values = colors_rate_plots) +
+#         labs(title = 'CalEPA Intake Versus Advancements by Occupation Group and Ethnicity (Year 2020)',
+#              subtitle = 'Includes all CalEPA Boards, Departments, and Offices',
+#              x = 'Ethnicity',
+#              y = 'Percent of Total (by Occupation / Ethnicity Group)', 
+#              caption = 'Workforce data from CalHR 5102 report') +
+#         guides(fill = guide_legend(reverse = TRUE)) +
+#         # geom_text(aes(x = ethnicity_level2, # data_label,
+#         #               y = 1.05,
+#         #               label = glue('n = {ethnicity_total}'),
+#         #               hjust = 0.5)) +
+#         # geom_text(aes(x = ethnicity_level1,
+#         #               y = label_y,
+#         #               # label = ethnicity_type_total,
+#         #               label = glue('n = {ethnicity_type_total}'))) +
+#         coord_flip() + 
+#         facet_wrap(~ metrics_group, scales = 'free_y') + 
+#         theme(legend.position = 'bottom', 
+#               legend.title = element_blank()) +
+#         geom_blank())
 
-job_class_flux <- df_5112_2020_epa %>% 
-    filter(class_title == all_of(job_class))
 
-job_class_timeline <- df_5102_epa %>% 
-    filter(class_title == job_class)
+
+# # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ## 4.2 Individual Group Plots ----
+# ## summary function 
+# fun_summary_5112_l1 <- function(dataset) {
+#     dataset %>% 
+#         select(ethnicity_level1, hire_type) %>% 
+#         add_count(ethnicity_level1, name = 'ethnicity_total') %>% 
+#         add_count(ethnicity_level1, hire_type, name = 'ethnicity_type_total') %>% 
+#         distinct() %>% 
+#         mutate(rate = ethnicity_type_total / ethnicity_total) %>% 
+#         arrange(ethnicity_level1) %>%
+#         {.} 
+# }
+# 
+# ## plot function
+# fun_plot_5112_l1 <- function(dataset, plot_title) {
+#     dataset %>% 
+#         mutate(data_label = glue('{ethnicity_level1} \n(n = {ethnicity_total})')) %>% 
+#         ggplot() +
+#         geom_bar(mapping = aes(x = data_label, # ethnicity_level1, 
+#                                y = rate, 
+#                                fill = hire_type), 
+#                  stat = 'identity') +
+#         scale_fill_manual(values = colors_rate_plots) +
+#         scale_y_continuous(labels = percent) +
+#         labs(title = plot_title,
+#              x = 'Ethnicity',
+#              y = 'Portion') +
+#         coord_flip() + 
+#         theme(legend.position = 'bottom', 
+#               legend.title = element_blank()) +
+#         guides(fill = guide_legend(reverse = TRUE)) + 
+#         # geom_text(data = dataset,
+#         #           stat = 'identity',
+#         #           aes(x = ethnicity_level1,
+#         #               y = 1 + 0.1,
+#         #               label = glue('n = {ethnicity_total}'))
+#         #           ) +
+#         geom_blank()
+# }
+# 
+# ### Legal ----
+# ### plot
+# (pl_5112_l1_legal <- df_5112_2020_epa %>% 
+#         filter(soc_major_group_title == 'Legal Occupations') %>% 
+#         fun_summary_5112_l1() %>% 
+#         fun_plot_5112_l1(plot_title = 'Legal - Portion of Hires / Advancements'))
+# 
+# 
+# ### Management ----
+# ### plot
+# (pl_5112_l1_mgmt <- df_5112_2020_epa %>% 
+#         filter(soc_major_group_title == 'Management Occupations') %>%
+#         fun_summary_5112_l1() %>% 
+#         fun_plot_5112_l1(plot_title = 'Management - Portion of Hires / Advancements'))
+# 
+# 
+# ### Admin ----
+# ### plot
+# (pl_5112_l1_admin <- df_5112_2020_epa %>% 
+#         filter(soc_major_group_title == 'Office and Administrative Support Occupations' |
+#                    (soc_major_group_title == 'Computer and Mathematical Occupations' & 
+#                         soc_detailed_group_title == 'Unmapped Classes')) %>% 
+#         fun_summary_5112_l1() %>% 
+#         fun_plot_5112_l1(plot_title = 'Administrative - Portion of Hires / Advancements'))
+# 
+# 
+# ### Tech ----
+# ### plot
+# (pl_5112_l1_tech <- df_5112_2020_epa %>% 
+#         filter(soc_major_group_title == 'Architecture and Engineering Occupations' |
+#                    soc_major_group_title == 'Life, Physical, and Social Science Occupations' | 
+#                    (soc_major_group_title == 'Computer and Mathematical Occupations' & 
+#                         soc_detailed_group_title == 'Operations Research Analysts')) %>% 
+#         fun_summary_5112_l1() %>% 
+#         fun_plot_5112_l1(plot_title = 'Tech - Portion of Hires / Advancements'))
