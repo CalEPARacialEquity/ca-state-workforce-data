@@ -33,6 +33,7 @@ library(sf)
 library(stringr)
 library(officer)
 library(rvg)
+library(tidyverse)
 
 
 # 1 - load / transform data ---------------------------------------------------------------
@@ -329,12 +330,13 @@ fun_summary_5102_l2_wb <- function(dataset) {
 ## plot function
 fun_plot_5102_l1 <- function(dataset, plot_title) {
     dataset %>% 
-        ggplot() +
-        geom_bar(mapping = aes(x = ethnicity_level1, 
-                               y = rate, 
-                               fill = type), 
-                 stat = 'identity', 
-                 position = 'dodge') +
+        ggplot(data=.,
+               aes(x = ethnicity_level1,
+                   y = rate)) +
+        geom_bar(aes(x = ethnicity_level1,
+                     y = rate,
+                     fill = type,
+                     position_dodge2(width = 0.9, preserve = "single"))) +
         coord_flip() + 
         scale_y_continuous(labels = percent) +
         labs(title = plot_title,
@@ -347,6 +349,7 @@ fun_plot_5102_l1 <- function(dataset, plot_title) {
         scale_fill_manual(values=c("gold", "mediumblue"))
 }
 
+
 fun_plot_5102_l2 <- function(dataset, plot_title) {
     dataset %>% 
         ggplot() +
@@ -354,7 +357,7 @@ fun_plot_5102_l2 <- function(dataset, plot_title) {
                                y = rate, 
                                fill = type), 
                  stat = 'identity', 
-                 position = 'dodge') +
+                 position_dodge(preserve = 'single')) +
         coord_flip() + 
         scale_y_continuous(labels = percent) +
         labs(title = plot_title,
