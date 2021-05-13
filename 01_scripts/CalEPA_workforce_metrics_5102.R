@@ -630,7 +630,12 @@ job_class_delta <- df_5102_epa %>%
     {.}
     
 job_class_calc <- job_class_delta %>% 
-    left_join(job_class_flux, by = 'ethnicity_level2')
+    left_join(job_class_flux, by = 'ethnicity_level2') %>% 
+    mutate_if(is.numeric, ~replace_na(., 0)) %>% 
+    mutate(intake_total = intake_outside + 
+               intake_other_agencies + 
+               intake_advancements) %>% 
+    mutate(departure = intake_total - change)
 
 
 ## timeline ----

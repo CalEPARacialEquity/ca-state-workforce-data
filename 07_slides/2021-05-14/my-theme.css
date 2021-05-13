@@ -1,0 +1,28 @@
+.title-slide a, a > code {
+    color: #aadff2;
+    text-decoration: none;
+  }
+}
+
+div.my-footer {
+    background-color: #E7EEF0;
+    position: absolute;
+    bottom: 0px;
+    left: 0px;
+    height: 30px;
+    width: 100%;
+}
+div.my-footer span {
+    font-size: 14pt;
+    color: #125972;
+    position: absolute;
+    left: 20px;
+    bottom: 10px;
+}
+
+.footnote {
+  position: absolute;
+  bottom: 30px;
+  padding-right: 4em;
+  font-size: 0.7em;
+}

@@ -20,20 +20,23 @@ library(tidycensus)
 library(sf)
 library(stringr)
 library(glue)
+library(patchwork)
 
+report_year <- 2020
 
 # 1 - load / transform data ---------------------------------------------------------------
 
 ## 5112 ----
 # pull data from data.ca.gov, this may take a few minutes
-df_5112_2020 <- read_csv('https://data.ca.gov/dataset/e620a64f-6b86-4ce0-ab4b-03d06674287b/resource/d308f328-6b5b-41c1-8bc2-a4afcfcee3d1/download/5112-inline-report_12.31.20.csv') %>% 
+# NOTE: change the URL to get data for a different year
+df_5112 <- read_csv('https://data.ca.gov/dataset/e620a64f-6b86-4ce0-ab4b-03d06674287b/resource/d308f328-6b5b-41c1-8bc2-a4afcfcee3d1/download/5112-inline-report_12.31.20.csv') %>% 
     clean_names()
 
 # add additional levels for ethnicity grouping
 #   ethnicity (in original dataset) is most detailed level
 #   level 1 groups all BIPOC together (resulting groups are BIPOC and white)
 #   level 2 groups some ethnicity sub-groupings together (Asian group and Pacific Islander group)
-df_5112_2020 <- df_5112_2020 %>% 
+df_5112 <- df_5112 %>% 
     mutate(
         ethnicity_level1 = case_when(
             ethnicity == 'White' ~ 'White', 
@@ -46,7 +49,7 @@ df_5112_2020 <- df_5112_2020 %>%
     )
 
 # Filtering for EPA and related BDOs 
-df_5112_2020_epa <- df_5112_2020 %>% 
+df_5112_epa <- df_5112 %>% 
     filter(department == "Air Resources Board"|
                department == "Environmental Health Hazard Assessment, Office of"|
                department == "Environmental Protection Agency"|
@@ -64,7 +67,7 @@ df_5112_2020_epa <- df_5112_2020 %>%
 # 2 - 5112 exploration ----------------------------------------------------------------
 ## count of entries by race ----
 ggplot() +
-    geom_bar(data = df_5112_2020_epa, 
+    geom_bar(data = df_5112_epa, 
              aes(ethnicity)) +
     coord_flip()
 
@@ -78,7 +81,7 @@ colors_rate_plots <- c('darkblue', 'lightblue', 'gold') # intake outside, intake
 
 ### detailed ethnic groups ----
 # original ethnicity 
-sum_5112_detail <- df_5112_2020_epa %>% 
+sum_5112_detail <- df_5112_epa %>% 
     select(ethnicity, hire_type) %>% 
     add_count(ethnicity, name = 'ethnicity_total') %>% 
     add_count(ethnicity, hire_type, name = 'ethnicity_type_total') %>% 
@@ -137,11 +140,11 @@ data_labels_detail <- tibble(ethnicity = ordering_detail) %>%
         scale_y_continuous(labels = percent) +
         scale_x_discrete(breaks = ordering_detail,
                          labels = data_labels_detail) +
-        labs(title = 'Intake Versus Advancement by Ethnicity for all CalEPA Boards, Departments, and Offices (Year 2020)',
+        labs(title = glue('Intake Versus Advancement by Ethnicity for all CalEPA BDOs (Year {report_year})'),
              subtitle = 'Labels represent total number of employees in each grouping',
-             x = 'Ethnicity',
+             x = 'Ethnicity Group',
              y = 'Percent of Total Intakes and Advancements (by Ethnicity Group)', 
-             caption = 'Workforce Data from CalHR 5112 Report') +
+             caption = glue('Data Source: {report_year} CalHR 5112 Report')) +
         geom_text(aes(x = ethnicity, # data_label, # 
                       y = label_y,
                       # label = ethnicity_type_total,
@@ -151,9 +154,18 @@ data_labels_detail <- tibble(ethnicity = ordering_detail) %>%
               legend.title = element_blank()) +
         guides(fill = guide_legend(reverse = TRUE)))
 
+ggsave(filename = here('07_slides', '2021-05-14', 'images', '5112_calepa_detail.png'), 
+       plot = pl_5112_detail, 
+       width = 10, 
+       height = 6, 
+       dpi = 125
+       )
+
+
+
 ### L1 ethnicity ----
 # level 1 ethnicity (white vs BIPOC)
-sum_5112_l1 <- df_5112_2020_epa %>% 
+sum_5112_l1 <- df_5112_epa %>% 
     select(ethnicity_level1, hire_type) %>% 
     add_count(ethnicity_level1, name = 'ethnicity_total') %>% 
     add_count(ethnicity_level1, hire_type, name = 'ethnicity_type_total') %>% 
@@ -183,11 +195,11 @@ sum_5112_l1 <- df_5112_2020_epa %>%
                                fill = hire_type), 
                  stat = 'identity') +
         scale_y_continuous(labels = percent) +
-        labs(title = 'Intake Versus Advancement by Ethnicity for all CalEPA Boards, Departments, and Offices (Year 2020)',
+        labs(title = glue('Intake Versus Advancement by Ethnicity for all CalEPA BDOs (Year {report_year})'),
              subtitle = 'Labels represent total number of employees in each grouping',
-             x = 'Ethnicity',
+             x = 'Ethnicity Group',
              y = 'Percent of Total Intakes and Advancements (by Ethnicity Group)', 
-             caption = 'Workforce Data from CalHR 5112 Report') +
+             caption = glue('Data Source: {report_year} CalHR 5112 Report')) +
         guides(fill = guide_legend(reverse = TRUE)) +
         scale_fill_manual(values = colors_rate_plots) + 
         # geom_text(aes(x = ethnicity_level1,
@@ -204,10 +216,16 @@ sum_5112_l1 <- df_5112_2020_epa %>%
               legend.title = element_blank()) +
         geom_blank())
 
+ggsave(filename = here('07_slides', '2021-05-14', 'images', '5112_calepa_level1.png'), 
+       plot = pl_5112_l1, 
+       width = 10, 
+       height = 6, 
+       dpi = 125
+       )
 
 ### L2 ethnicity ----
 # level 2 ethnicity (white vs BIPOC)
-sum_5112_l2 <- df_5112_2020_epa %>% 
+sum_5112_l2 <- df_5112_epa %>% 
     select(ethnicity_level2, hire_type) %>% 
     add_count(ethnicity_level2, name = 'ethnicity_total') %>% 
     add_count(ethnicity_level2, hire_type, name = 'ethnicity_type_total') %>% 
@@ -250,11 +268,11 @@ data_labels_l2 <- tibble(ethnicity_level2 = ordering_l2) %>%
                                fill = hire_type), 
                  stat = 'identity') +
         scale_y_continuous(labels = percent) +
-        labs(title = 'Intake Versus Advancement by Ethnicity for all CalEPA Boards, Departments, and Offices (Year 2020)',
+        labs(title = glue('Intake Versus Advancement by Ethnicity for all CalEPA BDOs (Year {report_year})'),
              subtitle = 'Labels represent total number of employees in each grouping',
-             x = 'Ethnicity',
+             x = 'Ethnicity Group',
              y = 'Percent of Total Intakes and Advancements (by Ethnicity Group)', 
-             caption = 'Workforce Data from CalHR 5112 Report') +
+             caption = glue('Data Source: {report_year} CalHR 5112 Report')) +
         guides(fill = guide_legend(reverse = TRUE)) +
         scale_fill_manual(values = colors_rate_plots) + 
         scale_x_discrete(breaks = ordering_l2,
@@ -273,11 +291,41 @@ data_labels_l2 <- tibble(ethnicity_level2 = ordering_l2) %>%
               legend.title = element_blank()) +
         geom_blank())
 
+ggsave(filename = here('07_slides', '2021-05-14', 'images', '5112_calepa_level2.png'), 
+       plot = pl_5112_l2, 
+       width = 10, 
+       height = 6, 
+       dpi = 125
+       )
 
+# patchwork (combine plots)
+pl_5512_patch <- pl_5112_l1 / pl_5112_l2 
+pl_5512_patch[[1]] <- pl_5512_patch[[1]] + 
+    labs(title = element_blank(),
+         subtitle = element_blank(),
+         caption = element_blank()) + 
+    theme(legend.position = 'none')
+pl_5512_patch[[2]] <- pl_5512_patch[[2]] + 
+    labs(title = element_blank(),
+         subtitle = element_blank(),
+         caption = element_blank())
+pl_5512_patch <- pl_5512_patch + 
+    plot_layout(heights = c(1, 3)) +
+    plot_annotation(
+        title = glue('Intake Versus Advancement by Ethnicity for all CalEPA BDOs (Year {report_year})'),
+        subtitle = 'Labels represent total number of employees in each grouping',
+        caption = glue('Data Source: {report_year} CalHR 5112 Report'))
+
+ggsave(filename = here('07_slides', '2021-05-14', 'images', '5112_calepa_level1_2_combined.png'), 
+       plot = pl_5512_patch, 
+       width = 10, 
+       height = 6, 
+       dpi = 125
+       )
 
 # 4 - 5112 group summaries ------------------------------------------------------
 ## create groupings ----
-df_5112_2020_epa <- df_5112_2020_epa %>% 
+df_5112_epa <- df_5112_epa %>% 
     mutate(metrics_group = case_when(
         # legal
         soc_major_group_title == 'Legal Occupations' ~ 
@@ -299,7 +347,7 @@ df_5112_2020_epa <- df_5112_2020_epa %>%
     )
 
 ## L1 summary by group ----
-sum_5112_groups_l1 <- df_5112_2020_epa %>% 
+sum_5112_groups_l1 <- df_5112_epa %>% 
     filter(!is.na(metrics_group)) %>% 
     select(ethnicity_level1, hire_type, metrics_group) %>% 
     add_count(ethnicity_level1, metrics_group, name = 'ethnicity_total') %>% 
@@ -334,11 +382,11 @@ sum_5112_groups_l1 <- df_5112_2020_epa %>%
                                fill = hire_type), 
                  stat = 'identity') +
         scale_y_continuous(labels = percent) +
-        labs(title = 'Intake Versus Advancement by Occupation Group and Ethnicity for all CalEPA Boards, Departments, and Offices (Year 2020)',
+        labs(title = glue('Intake Versus Advancement by Ethnicity for all CalEPA BDOs (Year {report_year})'),
              subtitle = 'Labels represent total number of employees in each grouping',
-             x = 'Ethnicity',
+             x = 'Ethnicity Group',
              y = 'Percent of Total Intakes and Advancements (by Occupation and Ethnicity Group)', 
-             caption = 'Workforce Data from CalHR 5112 Report') +
+             caption = glue('Data Source: {report_year} CalHR 5112 Report')) +
         guides(fill = guide_legend(reverse = TRUE)) +
         scale_fill_manual(values = colors_rate_plots) + 
         # geom_text(aes(x = ethnicity_level1,
@@ -355,11 +403,18 @@ sum_5112_groups_l1 <- df_5112_2020_epa %>%
               legend.title = element_blank()) +
         geom_blank())
 
+ggsave(filename = here('07_slides', '2021-05-14', 'images', 
+                       '5112_calepa_groups_level1.png'), 
+       plot = pl_5112_groups_l1, 
+       width = 10, 
+       height = 6, 
+       dpi = 125
+       )
 
 # NOT USED BELOW HERE !!!!!! ----------------------------------------------
 
 # ## L1 summary by group & BDO ----
-# sum_5112_groups_l1_BDO <- df_5112_2020_epa %>% 
+# sum_5112_groups_l1_BDO <- df_5112_epa %>% 
 #     filter(!is.na(metrics_group)) %>% 
 #     select(ethnicity_level1, hire_type, metrics_group, department) %>% 
 #     add_count(ethnicity_level1, metrics_group, department, name = 'ethnicity_total') %>% 
@@ -395,7 +450,7 @@ sum_5112_groups_l1 <- df_5112_2020_epa %>%
 #              subtitle = pl_l1_BDO_dept,
 #              x = 'Ethnicity',
 #              y = 'Percent of Total (by Occupation / Ethnicity Group)', 
-#              caption = 'Workforce data from CalHR 5102 report') +
+#              caption = glue('Data Source: {report_year} CalHR 5112 Report')) +
 #         guides(fill = guide_legend(reverse = TRUE)) +
 #         scale_fill_manual(values = c('aquamarine4', 'blue', 'darkblue')) +
 #         # geom_text(aes(x = ethnicity_level1,
@@ -419,7 +474,7 @@ sum_5112_groups_l1 <- df_5112_2020_epa %>%
 
 
 # ## L2 summary by group ----
-# sum_groups_l2 <- df_5112_2020_epa %>% 
+# sum_groups_l2 <- df_5112_epa %>% 
 #     filter(!is.na(metrics_group)) %>% 
 #     select(ethnicity_level2, hire_type, metrics_group) %>% 
 #     add_count(ethnicity_level2, metrics_group, name = 'ethnicity_total') %>% 
@@ -449,10 +504,10 @@ sum_5112_groups_l1 <- df_5112_2020_epa %>%
 #         # scale_fill_brewer(palette = "Dark2") + 
 #         scale_fill_manual(values = colors_rate_plots) +
 #         labs(title = 'CalEPA Intake Versus Advancements by Occupation Group and Ethnicity (Year 2020)',
-#              subtitle = 'Includes all CalEPA Boards, Departments, and Offices',
+#              subtitle = 'Includes all CalEPA BDOs',
 #              x = 'Ethnicity',
 #              y = 'Percent of Total (by Occupation / Ethnicity Group)', 
-#              caption = 'Workforce data from CalHR 5102 report') +
+#              caption = glue('Data Source: {report_year} CalHR 5112 Report')) +
 #         guides(fill = guide_legend(reverse = TRUE)) +
 #         # geom_text(aes(x = ethnicity_level2, # data_label,
 #         #               y = 1.05,
@@ -513,7 +568,7 @@ sum_5112_groups_l1 <- df_5112_2020_epa %>%
 # 
 # ### Legal ----
 # ### plot
-# (pl_5112_l1_legal <- df_5112_2020_epa %>% 
+# (pl_5112_l1_legal <- df_5112_epa %>% 
 #         filter(soc_major_group_title == 'Legal Occupations') %>% 
 #         fun_summary_5112_l1() %>% 
 #         fun_plot_5112_l1(plot_title = 'Legal - Portion of Hires / Advancements'))
@@ -521,7 +576,7 @@ sum_5112_groups_l1 <- df_5112_2020_epa %>%
 # 
 # ### Management ----
 # ### plot
-# (pl_5112_l1_mgmt <- df_5112_2020_epa %>% 
+# (pl_5112_l1_mgmt <- df_5112_epa %>% 
 #         filter(soc_major_group_title == 'Management Occupations') %>%
 #         fun_summary_5112_l1() %>% 
 #         fun_plot_5112_l1(plot_title = 'Management - Portion of Hires / Advancements'))
@@ -529,7 +584,7 @@ sum_5112_groups_l1 <- df_5112_2020_epa %>%
 # 
 # ### Admin ----
 # ### plot
-# (pl_5112_l1_admin <- df_5112_2020_epa %>% 
+# (pl_5112_l1_admin <- df_5112_epa %>% 
 #         filter(soc_major_group_title == 'Office and Administrative Support Occupations' |
 #                    (soc_major_group_title == 'Computer and Mathematical Occupations' & 
 #                         soc_detailed_group_title == 'Unmapped Classes')) %>% 
@@ -539,7 +594,7 @@ sum_5112_groups_l1 <- df_5112_2020_epa %>%
 # 
 # ### Tech ----
 # ### plot
-# (pl_5112_l1_tech <- df_5112_2020_epa %>% 
+# (pl_5112_l1_tech <- df_5112_epa %>% 
 #         filter(soc_major_group_title == 'Architecture and Engineering Occupations' |
 #                    soc_major_group_title == 'Life, Physical, and Social Science Occupations' | 
 #                    (soc_major_group_title == 'Computer and Mathematical Occupations' & 

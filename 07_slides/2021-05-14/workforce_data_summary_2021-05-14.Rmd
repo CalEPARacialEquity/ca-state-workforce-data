@@ -1,0 +1,186 @@
+---
+title: "CalEPA Workforce Data Summary <br>Year 2020"
+author: "CalEPA Racial Equity Workgroup<br>Data Subteam"
+date: 'May 14, 2021<br><br>`r icons::fontawesome("link")` [bit.ly/redline-03-18](https://bit.ly/redline-03-18)'
+
+output:
+  xaringan::moon_reader:
+    self_contained: true
+    lib_dir: libs
+    chakra: libs/remark-latest.min.js
+    css: [xaringan-themer.css, my-theme.css]
+    nature:
+      slideNumberFormat: "%current%"
+      titleSlideClass: ["left", "middle", "inverse"]
+      highlightStyle: github
+      highlightLines: true
+      ratio: 16:9
+      countIncrementalSlides: false
+    includes: 
+      in_header: "in_header.html" # see: https://github.com/fnaufel/smartify
+      after_body: "after_body.html" # see same source as above
+---
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+knitr::opts_chunk$set(
+  fig.width=9, fig.height=3.5, fig.retina=3,
+  out.width = "100%",
+  cache = FALSE,
+  echo = TRUE,
+  message = FALSE, 
+  warning = FALSE,
+  fig.show = TRUE,
+  hiline = TRUE
+)
+```
+
+```{r xaringan-themer, include=FALSE, warning=FALSE}
+library(xaringanthemer)
+# style_duo_accent(
+#   primary_color = "#1381B0",
+#   secondary_color = "#FF961C",
+#   inverse_header_color = "#FFFFFF"
+# )
+
+style_mono_light(base_color = "#125972", 
+                 code_highlight_color = "#c0e8f5",
+                 link_color = "#197b9e")#,
+                 # title_slide_background_image = 'images/data_center_logo_withText_crop_resize.png',
+                 # title_slide_background_size = '400px',
+                 # title_slide_background_position = '95% 95%')
+```
+
+```{r xaringan-logo, echo=FALSE}
+xaringanExtra::use_tile_view()
+
+# xaringanExtra::use_logo(
+#   image_url = "images/data_center_logo_withText_crop_resize.png",
+#   width = "280px",
+#   height = "68px",
+#   link_url = 'https://github.com/CAWaterBoardDataCenter'
+# )
+```
+
+## Contents
+
+### 2020 CalEPA Workforce vs State Population Demographics
+
+- Plot 1
+- Plot 2
+- Plot 3
+
+*Note: workforce data for these plots is from the CalHR 5102 Report, and state population data is from the U.S. Census Bureau's 2019 1-year American Community Survey (ACS) data*
+
+---
+
+## Contents
+
+### 2020 CalEPA Intakes and Advancements
+
+- Overall CalEPA Intakes vs Advancements
+    - White vs BIPOC
+    - Detailed Ethnic Groups
+- by BDO
+- by Occupation Group
+
+*Note: workforce data for these plots is from the CalHR 5112 Report*
+
+---
+
+## Contents (maybe?)
+
+### 2010 - 2020 Trends
+- CalEPA trends
+- Occupation Group Trends
+- BDO / Occupation Group Trends
+
+### Retention / Departures
+
+---
+
+## Definitions
+
+- Administrative Occupations:
+    - Classes
+- Legal Occupations
+    - Classes
+- Management Occupations
+    - Classes
+- Technical Occupations
+    - Classes
+
+---
+
+class: inverse center middle
+
+# 2020 CalEPA Workforce vs State Population Demographics
+
+---
+
+## Slide 2
+
+- Bullet 1
+    - Sub-Bullet 1
+
+- Bullet 2
+
+---
+
+## Image Slide
+
+.center[
+```{r out.width = '100%', echo=FALSE}
+# knitr::include_graphics("images/5-race_ethnicity_plot_revised.png")
+```
+]
+
+---
+
+class: inverse center middle
+
+# 2020 CalEPA Intakes and Advancements
+
+---
+
+.center[
+```{r out.width = '95%', out.height= '95%', echo=FALSE}
+knitr::include_graphics("images/5112_calepa_level1_2_combined.png")
+```
+]
+
+---
+
+.center[
+```{r out.width = '95%', out.height = '95%', echo=FALSE}
+knitr::include_graphics("images/5112_calepa_groups_level1.png")
+```
+]
+
+---
+
+class: inverse center middle
+
+# Extra Plots - Workforce vs State Demographics
+
+---
+
+<!-- .center[ -->
+<!-- ```{r out.width = '95%', out.height = '95%', echo=FALSE} -->
+<!-- knitr::include_graphics("images/") -->
+<!-- ``` -->
+<!-- ] -->
+
+---
+
+class: inverse center middle
+
+# Extra Plots - Intakes & Advancements
+
+---
+
+.center[
+```{r out.width = '95%', out.height = '95%', echo=FALSE}
+knitr::include_graphics("images/5112_calepa_detail.png")
+```
+]
