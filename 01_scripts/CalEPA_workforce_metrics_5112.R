@@ -20,8 +20,10 @@ library(tidycensus)
 library(sf)
 library(stringr)
 library(glue)
+library(tidyr)
 library(patchwork)
 
+# enter report year (updates plot titles / captions)
 report_year <- 2020
 
 # 1 - load / transform data ---------------------------------------------------------------
@@ -147,8 +149,10 @@ data_labels_detail <- tibble(ethnicity = ordering_detail) %>%
              caption = glue('Data Source: {report_year} CalHR 5112 Report')) +
         geom_text(aes(x = ethnicity, # data_label, # 
                       y = label_y,
-                      # label = ethnicity_type_total,
-                      label = glue('{ethnicity_type_total}'))) +
+                      # label = ethnicity_type_total
+                      label = glue('{ethnicity_type_total}')
+                      ),
+                  color = 'grey50') +
         coord_flip() + 
         theme(legend.position = 'bottom', 
               legend.title = element_blank()) +
@@ -209,7 +213,8 @@ sum_5112_l1 <- df_5112_epa %>%
         geom_text(aes(x = data_label, # ethnicity_level1,
                       y = label_y,
                       # label = ethnicity_type_total,
-                      label = glue('{ethnicity_type_total}'))) +
+                      label = glue('{ethnicity_type_total}')),
+                  color = 'grey50') +
         coord_flip() + 
         # facet_wrap(~ metrics_group, scales = 'free_y') + 
         theme(legend.position = 'bottom', 
@@ -284,7 +289,8 @@ data_labels_l2 <- tibble(ethnicity_level2 = ordering_l2) %>%
         geom_text(aes(x = ethnicity_level2,
                       y = label_y,
                       # label = ethnicity_type_total,
-                      label = glue('{ethnicity_type_total}'))) +
+                      label = glue('{ethnicity_type_total}')),
+                  color = 'grey50') +
         coord_flip() + 
         # facet_wrap(~ metrics_group, scales = 'free_y') + 
         theme(legend.position = 'bottom', 
@@ -396,7 +402,8 @@ sum_5112_groups_l1 <- df_5112_epa %>%
         geom_text(aes(x = data_label, # ethnicity_level1,
                       y = label_y,
                       # label = ethnicity_type_total,
-                      label = glue('{ethnicity_type_total}'))) +
+                      label = glue('{ethnicity_type_total}')),
+                  color = 'grey50') +
         coord_flip() + 
         facet_wrap(~ facet_label, scales = 'free_y') + 
         theme(legend.position = 'bottom', 

@@ -1,8 +1,7 @@
 ---
 title: "CalEPA Workforce Data Summary <br>Year 2020"
 author: "CalEPA Racial Equity Workgroup<br>Data Subteam"
-date: 'May 14, 2021<br><br>`r icons::fontawesome("link")` [bit.ly/redline-03-18](https://bit.ly/redline-03-18)'
-
+date: 'May 14, 2021<br><br>`r icons::fontawesome("link")` [bit.ly/calepa_workforce_2020-05-14](http://bit.ly/calepa_workforce_2020-05-14)'
 output:
   xaringan::moon_reader:
     self_contained: true
@@ -114,24 +113,21 @@ xaringanExtra::use_tile_view()
 
 class: inverse center middle
 
-# 2020 CalEPA Workforce vs State Population Demographics
+# 2020 CalEPA Workforce Compared to State Population Demographics
 
 ---
-
-## Slide 2
-
-- Bullet 1
-    - Sub-Bullet 1
-
-- Bullet 2
-
----
-
-## Image Slide
 
 .center[
 ```{r out.width = '100%', echo=FALSE}
-# knitr::include_graphics("images/5-race_ethnicity_plot_revised.png")
+knitr::include_graphics("images/5102_calepa_level1_2_combined_stack.png")
+```
+]
+
+---
+
+.center[
+```{r out.width = '100%', echo=FALSE}
+knitr::include_graphics("images/5102_calepa_level2.png")
 ```
 ]
 
