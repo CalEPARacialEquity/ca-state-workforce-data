@@ -21,4 +21,4 @@ To run the exploratory data analysis script, run the `workforce_data_exploration
 ## Reports / Slides
 
 - 2020 Workforce Data Analysis slides available [here](https://cawaterboarddatacenter.github.io/ca-state-workforce-data/07_slides/2021-05-14/workforce_data_summary_2021-05-14.html)
-	- shortened ulrhttp://bit.ly/calepa_workforce_2020-05-14
+	- Shortened Link: http://bit.ly/calepa_workforce_2020-05-14
