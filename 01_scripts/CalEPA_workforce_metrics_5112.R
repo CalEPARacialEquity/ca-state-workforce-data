@@ -143,7 +143,7 @@ data_labels_detail <- tibble(ethnicity = ordering_detail) %>%
         scale_x_discrete(breaks = ordering_detail,
                          labels = data_labels_detail) +
         labs(title = glue('Intake Versus Advancement by Ethnicity for all CalEPA BDOs (Year {report_year})'),
-             subtitle = 'Labels represent total number of employees in each grouping',
+             subtitle = 'Labels represent total number in each grouping',
              x = 'Ethnicity Group',
              y = 'Percent of Total Intakes and Advancements (by Ethnicity Group)', 
              caption = glue('Data Source: {report_year} CalHR 5112 Report')) +
@@ -200,7 +200,7 @@ sum_5112_l1 <- df_5112_epa %>%
                  stat = 'identity') +
         scale_y_continuous(labels = percent) +
         labs(title = glue('Intake Versus Advancement by Ethnicity for all CalEPA BDOs (Year {report_year})'),
-             subtitle = 'Labels represent total number of employees in each grouping',
+             subtitle = 'Labels represent total number in each grouping',
              x = 'Ethnicity Group',
              y = 'Percent of Total Intakes and Advancements (by Ethnicity Group)', 
              caption = glue('Data Source: {report_year} CalHR 5112 Report')) +
@@ -274,7 +274,7 @@ data_labels_l2 <- tibble(ethnicity_level2 = ordering_l2) %>%
                  stat = 'identity') +
         scale_y_continuous(labels = percent) +
         labs(title = glue('Intake Versus Advancement by Ethnicity for all CalEPA BDOs (Year {report_year})'),
-             subtitle = 'Labels represent total number of employees in each grouping',
+             subtitle = 'Labels represent total number in each grouping',
              x = 'Ethnicity Group',
              y = 'Percent of Total Intakes and Advancements (by Ethnicity Group)', 
              caption = glue('Data Source: {report_year} CalHR 5112 Report')) +
@@ -319,7 +319,7 @@ pl_5512_patch <- pl_5512_patch +
     plot_layout(heights = c(1, 3)) +
     plot_annotation(
         title = glue('Intake Versus Advancement by Ethnicity for all CalEPA BDOs (Year {report_year})'),
-        subtitle = 'Labels represent total number of employees in each grouping',
+        subtitle = 'Labels represent total number in each grouping',
         caption = glue('Data Source: {report_year} CalHR 5112 Report'))
 
 ggsave(filename = here('07_slides', '2021-05-14', 'images', '5112_calepa_level1_2_combined.png'), 
@@ -388,8 +388,8 @@ sum_5112_groups_l1 <- df_5112_epa %>%
                                fill = hire_type), 
                  stat = 'identity') +
         scale_y_continuous(labels = percent) +
-        labs(title = glue('Intake Versus Advancement by Ethnicity for all CalEPA BDOs (Year {report_year})'),
-             subtitle = 'Labels represent total number of employees in each grouping',
+        labs(title = glue('Intake Versus Advancement by Occupation and Ethnicity for all CalEPA BDOs (Year {report_year})'),
+             subtitle = 'Labels represent total number in each grouping',
              x = 'Ethnicity Group',
              y = 'Percent of Total Intakes and Advancements (by Occupation and Ethnicity Group)', 
              caption = glue('Data Source: {report_year} CalHR 5112 Report')) +

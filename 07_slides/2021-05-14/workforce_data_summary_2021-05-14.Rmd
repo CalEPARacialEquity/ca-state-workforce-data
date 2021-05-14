@@ -1,7 +1,7 @@
 ---
 title: "CalEPA Workforce Data Summary <br>Year 2020"
 author: "CalEPA Racial Equity Workgroup<br>Data Subteam"
-date: 'May 14, 2021<br><br>`r icons::fontawesome("link")` [bit.ly/calepa_workforce_2020-05-14](http://bit.ly/calepa_workforce_2020-05-14)'
+date: 'May 14, 2021<br><br>`r icons::fontawesome("link")` [bit.ly/calepa_workforce_2020-05-14](http://bit.ly/calepa_workforce_2020-05-14)<br><br>*Press "f" key to view fullscreen*'
 output:
   xaringan::moon_reader:
     self_contained: true
@@ -18,6 +18,7 @@ output:
     includes: 
       in_header: "in_header.html" # see: https://github.com/fnaufel/smartify
       after_body: "after_body.html" # see same source as above
+    seal: false
 ---
 
 ```{r setup, include=FALSE}
@@ -44,7 +45,8 @@ library(xaringanthemer)
 
 style_mono_light(base_color = "#125972", 
                  code_highlight_color = "#c0e8f5",
-                 link_color = "#197b9e")#,
+                 link_color = "#197b9e", 
+                 inverse_link_color = 'lightblue')#,
                  # title_slide_background_image = 'images/data_center_logo_withText_crop_resize.png',
                  # title_slide_background_size = '400px',
                  # title_slide_background_position = '95% 95%')
@@ -61,77 +63,373 @@ xaringanExtra::use_tile_view()
 # )
 ```
 
+
+class: inverse middle
+<!-- Alternate Title Slide -->
+
+# CalEPA Workforce Data Summary <br>Year 2020
+
+### CalEPA Racial Equity Workgroup<br>Data Subteam
+
+### May 14, 2021
+
+### `r icons::fontawesome("link")`[bit.ly/calepa_workforce_2020-05-14](http://bit.ly/calepa_workforce_2020-05-14)
+
+#### *NOTE: press "f" key to view fullscreen, and "o" to see additional viewing options*
+
+---
+
 ## Contents
 
-### 2020 CalEPA Workforce vs State Population Demographics
+#### 2020 CalEPA Workforce Compared to California State Population Demographics
+- [Entire CalEPA Workforce](#part-1-1) 
+- [CalEPA BDOs](#part-1-2)
+- [Entire CalEPA Workforce by Occupation Group](#part-1-3)
+- [CalEPA BDOs by Occupation Group](#part-1-4)
 
-- Plot 1
-- Plot 2
-- Plot 3
+*Note: workforce data for these plots is from the 2020 CalHR 5102 Report, and state population data is from the U.S. Census Bureau's 2019 1-year American Community Survey (ACS) data*
 
-*Note: workforce data for these plots is from the CalHR 5102 Report, and state population data is from the U.S. Census Bureau's 2019 1-year American Community Survey (ACS) data*
+#### 2020 CalEPA Intakes and Advancements
+- [All CalEPA](#part-2-1)
+- [All CalEPA by Occupation Group](#part-2-1)
 
----
-
-## Contents
-
-### 2020 CalEPA Intakes and Advancements
-
-- Overall CalEPA Intakes vs Advancements
-    - White vs BIPOC
-    - Detailed Ethnic Groups
-- by BDO
-- by Occupation Group
-
-*Note: workforce data for these plots is from the CalHR 5112 Report*
+*Note: workforce data for these plots is from the 2020 CalHR 5112 Report*
 
 ---
 
-## Contents (maybe?)
+name: definitions-page
 
-### 2010 - 2020 Trends
-- CalEPA trends
-- Occupation Group Trends
-- BDO / Occupation Group Trends
+## Definitions - Administrative Occupations
 
-### Retention / Departures
+.pull-left[
+- Administrative Assistant I
+- Administrative Assistant II
+- Business Service Assistant (Specialist)
+- Business Service Officer I (Specialist)
+- Business Service Officer II (Specialist)
+- Digital Composition Specialist I
+- Digital Composition Specialist II
+- Digital Composition Specialist III
+- Executive Assistant
+- Executive Secretary II
+- Information Technology Associate
+- Information Technology Specialist I
+- Information Technology Specialist II
+- Information Technology Specialist III
+- Information Technology Technician
+- Legal Secretary
+- Mailing Machines Operator I
+- Management Services Technician
+]
+
+.pull-right[
+- Office Assistant (General)
+- Office Assistant (Typing)
+- Office Services Supervisor II (General)
+- Office Technician (General)
+- Office Technician (Typing)
+- Personnel Specialist
+- Personnel Supervisor I
+- Personnel Supervisor II
+- Personnel Technician I
+- Program Technician
+- Program Technician II
+- Program Technician III
+- Seasonal Clerk
+- Senior Personnel Specialist
+- Supervising Program Technician II
+- Supervising Program Technician III
+- Word Processing Technician
+]
 
 ---
 
-## Definitions
+## Definitions - Legal Occupations
 
-- Administrative Occupations:
-    - Classes
-- Legal Occupations
-    - Classes
-- Management Occupations
-    - Classes
-- Technical Occupations
-    - Classes
+- Attorney                       
+- Attorney III                
+- Attorney IV                  
+- Legal Analyst                  
+- Legal Assistant                
+- Questioned Document Examiner II
+- Senior Legal Analyst
 
 ---
+
+## Definitions - Management Occupations
+
+.pull-left[
+- Accounting Administrator III                                  
+- Assistant Chief Counsel                                       
+- Assistant Division Chief, Air Resources Board                 
+- C.E.A.                                                        
+- Chief Counsel I, C.E.A.                                       
+- Division Chief, Department Of Toxic Substances Control, C.E.A.
+- Environmental Program Manager I (Managerial)                  
+- Environmental Program Manager II                              
+- Information Technology Manager I                              
+- Information Technology Manager II                             
+- Information Technology Supervisor I]
+
+.pull-right[
+- Information Technology Supervisor II                          
+- Principal Engineer, Drinking Water Program                    
+- Principal Water Resource Control Engineer                     
+- Recycling Program Manager I                                   
+- Recycling Program Manager II                                  
+- Research Scientist Manager (Chemical Services)                
+- Staff Services Manager II (Managerial)                        
+- Staff Services Manager III                                    
+- Supervising Environmental Planner                             
+- Supervising Management Auditor]
+
+---
+
+## Definitions - Technical Occupations (page 1/2)
+
+.pull-left[
+- Air Pollution Specialist
+- Air Resources Engineer
+- Air Resources Supervisor I 
+- Air Resources Supervisor II
+- Air Resources Technician I 
+- Air Resources Technician II
+- Associate Safety Engineer
+- Associate Sanitary Engineer 
+- Associate Toxicologist
+- Chemist
+- Delineator
+- Engineering Geologist 
+- Environmental Program Manager I (Supervisory)
+- Environmental Scientist 
+- Hazardous Substances Engineer
+- Integrated Waste Management Specialist 
+- Research Data Analyst II
+- Research Data Specialist I
+- Research Data Specialist II 
+]
+
+.pull-right[
+- Research Data Specialist III
+- Research Data Supervisor II 
+- Research Scientist I (Chemical Sciences)
+- Research Scientist I (Epidemiology/Biostatistics) 
+- Research Scientist II (Chemical Sciences)
+- Research Scientist II (Epidemiology/Biostatistics) 
+- Research Scientist II (Physical/Engineering Sciences)
+- Research Scientist III (Chemical Sciences) 
+- Research Scientist III (Epidemiology/Biostatistics)
+- Research Scientist III (Physical/Engineering Sciences) 
+- Research Scientist IV (Epidemiology/Biostatistics)
+- Research Scientist IV (Physical/Engineering Sciences) 
+- Research Scientist Supervisor I (Chemical Sciences)
+- Research Scientist Supervisor I (Epidemiology/Biostatistics)
+]
+
+---
+
+## Definitions - Technical Occupations (page 2/2)
+
+.pull-left[
+- Research Scientist Supervisor II (Chemical Sciences)
+- Sanitary Engineer 
+- Sanitary Engineering Associate
+- Scientific Aid
+- Senior Engineer Water Resources 
+- Senior Engineering Geologist
+- Senior Environmental Planner 
+- Senior Environmental Scientist (Supervisory)
+- Senior Environmental Scientist(Specialist) 
+- Senior Hazardous Substances Engineer
+- Senior Health Physicist 
+- Senior Integrated Waste Management Specialist
+- Senior Safety Engineer - Industrial-  
+- Senior Sanitary Engineer
+- Senior Toxicologist
+- Senior Waste Management Engineer 
+- Senior Water Resource Control Engineer
+- Staff Air Pollution Specialist 
+]
+
+.pull-right[
+- Staff Chemist
+- Staff Toxicologist (Specialist)
+- Staff Toxicologist (Supervisor) 
+- Student Assistant - Engineering And Architectural Sciences-  
+- Supervising Engineering Geologist
+- Supervising Hazardous Substances Engineer I 
+- Supervising Hazardous Substances Engineer II
+- Supervising Sanitary Engineer 
+- Supervising Toxicologist (Managerial)
+- Supervising Waste Management Engineer 
+- Supervising Water Resource Control Engineer (Supervisory) 
+- Vehicle Program Specialist, Air Resources Board
+- Waste Management Engineer 
+- Water Resource Control Engineer
+]
+
+---
+
+name: part-1-1
 
 class: inverse center middle
 
 # 2020 CalEPA Workforce Compared to State Population Demographics
 
+### Entire CalEPA Workforce
+
 ---
 
 .center[
-```{r out.width = '100%', echo=FALSE}
-knitr::include_graphics("images/5102_calepa_level1_2_combined_stack.png")
+```{r out.width = '95%', out.height= '95%', echo=FALSE}
+knitr::include_graphics("images/5102_calepa_level1_stack.png")
+```
+]
+
+<!-- .center[ -->
+<!-- ```{r out.width = '95%', out.height= '95%', echo=FALSE} -->
+<!-- knitr::include_graphics("images/5102_calepa_level1_2_combined_stack.png") -->
+<!-- ``` -->
+<!-- ] -->
+
+
+---
+
+.center[
+```{r out.width = '95%', out.height= '95%', echo=FALSE}
+knitr::include_graphics("images/5102_calepa_level2_stack.png")
 ```
 ]
 
 ---
 
 .center[
-```{r out.width = '100%', echo=FALSE}
+```{r out.width = '95%', out.height= '95%', echo=FALSE}
 knitr::include_graphics("images/5102_calepa_level2.png")
 ```
 ]
 
 ---
+
+name: part-1-2
+
+class: inverse middle center
+
+# 2020 CalEPA Workforce Compared to State Population Demographics
+
+### CalEPA BDOs
+
+---
+
+.center[
+```{r out.width = '95%', out.height= '95%', echo=FALSE}
+knitr::include_graphics("images/5102_calepa_bdo_level2.png")
+```
+]
+
+---
+
+name: part-1-3
+
+class: inverse middle center
+
+# 2020 CalEPA Workforce Compared to State Population Demographics
+
+### Entire CalEPA Workforce by Occupation Group
+
+---
+
+.center[
+```{r out.width = '95%', out.height= '95%', echo=FALSE}
+knitr::include_graphics("images/5102_calepa_groups_level1_stack.png")
+```
+]
+
+---
+
+.center[
+```{r out.width = '95%', out.height= '95%', echo=FALSE}
+knitr::include_graphics("images/5102_calepa_groups_level2_stack.png")
+```
+]
+
+---
+
+.center[
+```{r out.width = '95%', out.height= '95%', echo=FALSE}
+knitr::include_graphics("images/5102_calepa_groups_level2.png")
+```
+]
+
+---
+
+name: part-1-4
+
+class: inverse middle center
+
+# 2020 CalEPA Workforce Compared to State Population Demographics
+
+### CalEPA BDOs by Occupation Group
+
+---
+
+.center[
+```{r out.width = '95%', out.height= '95%', echo=FALSE}
+knitr::include_graphics("images/5102_bdo_group_l2_arb.png")
+```
+]
+
+---
+
+.center[
+```{r out.width = '95%', out.height= '95%', echo=FALSE}
+knitr::include_graphics("images/5102_bdo_group_l2_calrecycle.png")
+```
+]
+
+---
+
+.center[
+```{r out.width = '95%', out.height= '95%', echo=FALSE}
+knitr::include_graphics("images/5102_bdo_group_l2_dpr.png")
+```
+]
+
+---
+
+.center[
+```{r out.width = '95%', out.height= '95%', echo=FALSE}
+knitr::include_graphics("images/5102_bdo_group_l2_dtsc.png")
+```
+]
+
+---
+
+.center[
+```{r out.width = '95%', out.height= '95%', echo=FALSE}
+knitr::include_graphics("images/5102_bdo_group_l2_oehha.png")
+```
+]
+
+---
+
+.center[
+```{r out.width = '95%', out.height= '95%', echo=FALSE}
+knitr::include_graphics("images/5102_bdo_group_l2_swrcb.png")
+```
+]
+
+---
+
+.center[
+```{r out.width = '95%', out.height= '95%', echo=FALSE}
+knitr::include_graphics("images/5102_bdo_group_l2_calepa_agency.png")
+```
+]
+
+---
+
+name: part-2-1
 
 class: inverse center middle
 
@@ -161,11 +459,7 @@ class: inverse center middle
 
 ---
 
-<!-- .center[ -->
-<!-- ```{r out.width = '95%', out.height = '95%', echo=FALSE} -->
-<!-- knitr::include_graphics("images/") -->
-<!-- ``` -->
-<!-- ] -->
+
 
 ---
 
