@@ -73,9 +73,12 @@ class: inverse middle
 
 ### May 14, 2021
 
-### `r icons::fontawesome("link")`[bit.ly/calepa_workforce_2020-05-14](http://bit.ly/calepa_workforce_2020-05-14)
+### `r icons::fontawesome("link")` [bit.ly/calepa_workforce_2020-05-14](http://bit.ly/calepa_workforce_2020-05-14)
 
-#### *NOTE: press "f" key to view fullscreen, and "o" to see additional viewing options*
+<br>
+<br>
+
+*NOTE: press 'f' key to view fullscreen, and '?' key to see additional viewing options*
 
 ---
 
