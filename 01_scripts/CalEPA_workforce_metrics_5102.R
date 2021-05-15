@@ -483,7 +483,17 @@ sum_5102_groups_l1 <- df_5102_epa_1yr %>%
     mutate(type = factor(type)) %>% 
     {.}
 
+facet_label_5102_groups_l1 <- sum_5102_groups_l1 %>% 
+        filter(type == 'CalEPA Workforce') %>% 
+        count(metrics_group, wt = ethnicity_total) %>% 
+        mutate(facet_label = glue('{metrics_group} (CalEPA n = {n})'))
+
+
 (pl_5102_groups_l1 <- sum_5102_groups_l1 %>%  
+        left_join(facet_label_5102_groups_l1, 
+                  by = c('metrics_group')) %>% 
+        select(-metrics_group) %>% 
+        rename('metrics_group' = 'facet_label') %>% 
         ggplot() +
         geom_bar(mapping = aes(x = ethnicity_level1, 
                                y = rate, 
@@ -512,6 +522,10 @@ ggsave(filename = here('07_slides', '2021-05-14', 'images',
        )
 
 (pl_5102_groups_l1_stack <- sum_5102_groups_l1 %>%  
+        left_join(facet_label_5102_groups_l1, 
+                  by = c('metrics_group')) %>% 
+        select(-metrics_group) %>% 
+        rename('metrics_group' = 'facet_label') %>% 
         ggplot() +
         geom_bar(mapping = aes(x = fct_rev(type), 
                                y = rate, 
@@ -592,11 +606,19 @@ fun_plot_5102_groups_l2 <- function(dataset,
 }
 
 
-# sum_5102_groups_l2 <- df_5102_epa_1yr %>% 
-#     fun_summary_5102_groups_l2() 
+sum_5102_groups_l2 <- df_5102_epa_1yr %>%
+    fun_summary_5102_groups_l2()
+
+facet_label_5102_groups_l2 <- sum_5102_groups_l2 %>% 
+    filter(type == 'CalEPA Workforce') %>% 
+    count(metrics_group, wt = ethnicity_total) %>% 
+    mutate(facet_label = glue('{metrics_group} (CalEPA n = {n})'))
 
 (pl_5102_groups_l2 <- df_5102_epa_1yr %>% 
-        fun_summary_5102_groups_l2() %>%  
+        fun_summary_5102_groups_l2() %>%
+        left_join(facet_label_5102_groups_l2, by = c('metrics_group')) %>% 
+        select(-metrics_group) %>% 
+        rename('metrics_group' = 'facet_label') %>% 
         fun_plot_5102_groups_l2())
 
 ggsave(filename = here('07_slides', '2021-05-14', 'images', 
@@ -632,8 +654,12 @@ fun_plot_5102_groups_l2_stack <- function(dataset,
         guides(fill = guide_legend(reverse = TRUE))
 }
 
+
 (pl_5102_groups_l2_stack <- df_5102_epa_1yr %>% 
         fun_summary_5102_groups_l2() %>% 
+        left_join(facet_label_5102_groups_l2, by = c('metrics_group')) %>% 
+        select(-metrics_group) %>% 
+        rename('metrics_group' = 'facet_label') %>% 
         fun_plot_5102_groups_l2_stack())
 
 ggsave(filename = here('07_slides', '2021-05-14', 'images', 
@@ -718,6 +744,18 @@ bdo_titles <- c("ARB" = 'Air Resources Board',
 bdo_titles_filenames <- tolower(c('ARB', 'OEHHA', 'CalEPA_Agency', 
                                   'DPR', 'CalRecycle', 'DTSC', 'SWRCB'))
 
+# get facet labels
+pl_5102_groups_l2_bdo_all_facets <- map2_df(.x = names(bdo_titles), 
+                                            .y = unname(bdo_titles), 
+                                            .f = ~  df_5102_epa_1yr %>% 
+                                                filter(dept == .y) %>% 
+                                                fun_summary_5102_groups_l2() %>% 
+                                                filter(type == 'CalEPA Workforce') %>% 
+                                                count(metrics_group, wt = ethnicity_total) %>% 
+                                                mutate(facet_label = glue('{metrics_group} ({.x} n = {n})')) %>% 
+                                                mutate(bdo = glue('{.x}'))
+                                            )
+
 #### make plots
 pl_5102_groups_l2_bdo_all <- map2(.x = names(bdo_titles), 
                                   .y = unname(bdo_titles), 
@@ -727,12 +765,19 @@ pl_5102_groups_l2_bdo_all <- map2(.x = names(bdo_titles),
                                       mutate(type = case_when(as.character(type) == 'CalEPA Workforce' ~
                                                                   glue('{.x}'),
                                                               TRUE ~ as.character(type))) %>%
-                                      mutate(type = factor(type, levels = c(.x, 'State Population'))) %>% 
+                                      mutate(type = factor(type, 
+                                                           levels = c(.x, 'State Population'))) %>%
+                                      mutate(bdo = glue('{.x}')) %>%
+                                      left_join(pl_5102_groups_l2_bdo_all_facets,
+                                                by = c('metrics_group', 'bdo')) %>%
+                                      select(-metrics_group) %>%
+                                      rename('metrics_group' = 'facet_label') %>%
+                                      distinct() %>%
                                       fun_plot_5102_groups_l2_stack(plot_title = glue('{.x} Workforce by Occupation and Ethnicity Group vs. State Population (Year {report_year})')) %>%
                                       {.}
 )
 ## View one plot
-pl_5102_groups_l2_bdo_all[[7]]
+pl_5102_groups_l2_bdo_all[[3]]
 
 #### save plots
 walk2(.x = pl_5102_groups_l2_bdo_all, 
@@ -759,7 +804,7 @@ walk2(.x = pl_5102_groups_l2_bdo_all,
 #     mutate(type = case_when(as.character(type) == 'CalEPA Workforce' ~
 #                                 glue('{bdo_plot} Workforce'),
 #                             TRUE ~ as.character(type))) %>%
-#     mutate(type = factor(type, levels = c(glue('{bdo_plot} Workforce'), 'State Population'))) %>% 
+#     mutate(type = factor(type, levels = c(glue('{bdo_plot} Workforce'), 'State Population'))) %>%
 #     fun_plot_5102_groups_l2_stack(plot_title = glue('{bdo_plot} Workforce by Occupation and Ethnicity Group Compared to State Population (Year {report_year})'))
 # )
 # ggsave(filename = here('07_slides', '2021-05-14', 'images',
