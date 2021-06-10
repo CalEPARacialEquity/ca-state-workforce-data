@@ -101,7 +101,7 @@ default_pl_caption <- glue('Data sources: state population data from {acs_data_y
 
 ### 5102 Data
 
-Info about 5102 dataset?...
+Info about 5102 dataset?... from Key performance target document & notes accompanying slide deck....
 
 #### Ethnicity Groupings
 
@@ -138,6 +138,7 @@ df_5102 <- df_5102 %>%
 
 #### Filter for Selected Agency
 
+Search for the name of your selected agency from the box below, then copy and paste into the subsequent code chunk.
 List of agency names in the 5102 dataset:
 ```{r}
 # list of all departments
@@ -155,11 +156,11 @@ depts_list %>%
 ```
 
 
-Enter departments to be included in the analysis:
+Enter departments to be included in the analysis, and modify the variable names as you see fit:
 
 ```{r}
 # Filtering for EPA and related BDOs 
-df_5102_epa <- df_5102 %>% 
+df_5102_dept <- df_5102 %>% 
     filter(dept == "Air Resources Board"|
                dept == "Environmental Health Hazard Assessment, Office of"|
                dept == "Environmental Protection Agency"|
@@ -169,7 +170,7 @@ df_5102_epa <- df_5102 %>%
                dept == "Water Resources Control Board")
 
 # filter for data from the report year (selected above)
-df_5102_epa_1yr <- df_5102_epa %>% 
+df_5102_dept_1yr <- df_5102_dept %>% 
     filter(reporting_year == report_year)
 
 ```
@@ -191,12 +192,12 @@ explain ethnicity levels available in the data...
 
 explain selected table / variables?...
 
+To download the census data, first request a key here: <https://api.census.gov/data/key_signup.html/>
+and enter census_api_key("*your_key*", install = TRUE) in your console.
+
+
 ```{r}
 ## census data (ACS 1 yr) ----
-### view all variables
-# acs_variables <- load_variables(acs_data_year, 'acs1', cache = TRUE)
-    # to view label for a given code (name)
-    # acs_variables %>% filter(name == 'B03002_009') %>% pull(label)
 
 ### get ACS data
 acs_data_raw <- get_acs(geography = 'state', 
@@ -274,8 +275,8 @@ acs_data_level1 <- acs_data_level2 %>%
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # 2 - 5102 summaries (vs CA pop) -----------------------------------------------
 ## define color palette for plots
-### state pop vs CalEPA workforce plots
-colors_5102_state_epa <-c('gold', 'darkgreen') # state pop / CalEPA workforce
+### state pop vs dept workforce plots
+colors_5102_state_dept <-c('gold', 'darkgreen') # state pop / dept workforce
 ### colors for ethnicities (in stacked bar plots) - trying to keep 'white' the same for both levels of plots for consistency/comparison
 brewer_colors <- rev(RColorBrewer::brewer.pal(n = 7, name = 'Set2'))
 colors_5102_2 <- brewer_colors[6:7] # BIPOC / White
@@ -286,7 +287,7 @@ colors_5102_7 <- brewer_colors # detailed ethnic groups: Asian ... White
 
 
 ### Format Data & Create Plotting Functions
-
+No changes necessary, unless you would like to update variable and/or title names.
 ```{r}
 
 ## format census data for plot (all of CA) ----
@@ -312,7 +313,7 @@ fun_summary_5102_l1 <- function(dataset) {
         select(ethnicity_level1, ethnicity_total) %>%
         distinct() %>%
         mutate(rate = ethnicity_total / sum(ethnicity_total)) %>%
-        mutate(type = 'CalEPA Workforce') %>%
+        mutate(type = 'Deparment Workforce') %>%
         arrange(ethnicity_level1) %>%
         mutate(type = factor(type)) %>% 
         {.}
@@ -326,7 +327,7 @@ fun_summary_5102_l2 <- function(dataset) {
         select(ethnicity_level2, ethnicity_total) %>%
         distinct() %>%
         mutate(rate = ethnicity_total / sum(ethnicity_total)) %>%
-        mutate(type = 'CalEPA Workforce') %>%
+        mutate(type = 'Department Workforce') %>%
         arrange(ethnicity_level2) %>%
         mutate(type = factor(type)) %>% 
         {.}
@@ -418,45 +419,49 @@ fun_plot_5102_l2_stack <- function(dataset, plot_title, plot_caption) {
 ### Plots...
 
 ```{r}
-## 2.1 - CalEPA summary ----
-### L1 ----
-(pl_5102_calepa_l1 <- df_5102_epa_1yr %>% 
+## 2.1 - Department summary ----
+### Level 1 ----
+(pl_5102_dept_l1 <- df_5102_dept_1yr %>% 
      fun_summary_5102_l1() %>% 
      bind_rows(acs_data_level1) %>% 
      fun_plot_5102_l1(plot_title = default_pl_title, 
                       plot_caption = default_pl_caption))
 
-(pl_5102_calepa_l1_stack <- df_5102_epa_1yr %>% 
+(pl_5102_dept_l1_stack <- df_5102_dept_1yr %>% 
         fun_summary_5102_l1() %>% 
         bind_rows(acs_data_level1) %>% 
         fun_plot_5102_l1_stack(plot_title = default_pl_title, 
                                plot_caption = default_pl_caption))
 
-ggsave(filename = here('07_slides', '2021-05-14', 'images', 
-                       '5102_calepa_level1_stack.png'), 
-       plot = pl_5102_calepa_l1_stack, 
-       width = 10, 
-       height = 6, 
-       dpi = 125
-       )
+# ggsave(filename = here('07_slides', '2021-05-14', 'images', 
+#                        '5102_dept_level1_stack.png'), 
+#        plot = pl_5102_dept_l1_stack, 
+#        width = 10, 
+#        height = 6, 
+#        dpi = 125
+#        )
 
-# # patchwork (combine plots) - L1
-# pl_5512_patch_calepa_l1 <- pl_5102_calepa_l1_stack / pl_5102_calepa_l1
+# # patchwork (combine plots) - Level 1
+# pl_5512_patch_dept_l1 <- pl_5102_dept_l1_stack / pl_5102_dept_l1
+```
 
-### L2 ----
-(pl_5102_calepa_l2 <- df_5102_epa_1yr %>% 
+
+
+```{r}
+### Level 2 ----
+(pl_5102_dept_l2 <- df_5102_dept_1yr %>% 
      fun_summary_5102_l2() %>% 
      bind_rows(acs_data_level2) %>% 
      fun_plot_5102_l2(plot_title = default_pl_title, 
                       plot_caption = default_pl_caption))
  
-ggsave(filename = here('07_slides', '2021-05-14', 'images', 
-                       '5102_calepa_level2.png'), 
-       plot = pl_5102_calepa_l2, 
-       width = 10, 
-       height = 6, 
-       dpi = 125
-       )
+# ggsave(filename = here('07_slides', '2021-05-14', 'images', 
+#                        '5102_dept_level2.png'), 
+#        plot = pl_5102_dept_l2, 
+#        width = 10, 
+#        height = 6, 
+#        dpi = 125
+#        )
 
 (pl_5102_calepa_l2_stack <- df_5102_epa_1yr %>% 
         fun_summary_5102_l2() %>% 
@@ -464,15 +469,15 @@ ggsave(filename = here('07_slides', '2021-05-14', 'images',
         fun_plot_5102_l2_stack(plot_title = default_pl_title, 
                                plot_caption = default_pl_caption))
 
-ggsave(filename = here('07_slides', '2021-05-14', 'images', 
-                       '5102_calepa_level2_stack.png'), 
-       plot = pl_5102_calepa_l2_stack, 
-       width = 10, 
-       height = 6, 
-       dpi = 125
-       )
+# ggsave(filename = here('07_slides', '2021-05-14', 'images', 
+#                        '5102_calepa_level2_stack.png'), 
+#        plot = pl_5102_calepa_l2_stack, 
+#        width = 10, 
+#        height = 6, 
+#        dpi = 125
+#        )
 
-# patchwork (combine plots) - L1 and L2 stacked plots
+# patchwork (combine plots) - Level 1 and Level 2 stacked plots
 pl_5102_patch_calepa_stack_combined <- pl_5102_calepa_l1_stack / pl_5102_calepa_l2_stack
 pl_5102_patch_calepa_stack_combined[[1]] <- pl_5102_patch_calepa_stack_combined[[1]] + 
     labs(title = element_blank(),
@@ -487,13 +492,13 @@ pl_5102_patch_calepa_stack_combined <- pl_5102_patch_calepa_stack_combined +
     plot_annotation(
         title = default_pl_title,
         caption = default_pl_caption)
-ggsave(filename = here('07_slides', '2021-05-14', 'images', 
-                       '5102_calepa_level1_2_combined_stack.png'), 
-       plot = pl_5102_patch_calepa_stack_combined, 
-       width = 10, 
-       height = 6, 
-       dpi = 125
-       )
+# ggsave(filename = here('07_slides', '2021-05-14', 'images', 
+#                        '5102_calepa_level1_2_combined_stack.png'), 
+#        plot = pl_5102_patch_calepa_stack_combined, 
+#        width = 10, 
+#        height = 6, 
+#        dpi = 125
+#        )
 
 # patchwork (combine plots) - both L2 plots
 pl_5102_patch_calepa_l2 <- pl_5102_calepa_l2_stack / pl_5102_calepa_l2
@@ -509,15 +514,19 @@ pl_5102_patch_calepa_l2 <- pl_5102_patch_calepa_l2 +
     plot_annotation(
         title = default_pl_title,
         caption = default_pl_caption)
-ggsave(filename = here('07_slides', '2021-05-14', 'images', 
-                       '5102_calepa_level2_combined.png'), 
-       plot = pl_5102_patch_calepa_l2, 
-       width = 10, 
-       height = 6, 
-       dpi = 125
-       )
+# ggsave(filename = here('07_slides', '2021-05-14', 'images', 
+#                        '5102_calepa_level2_combined.png'), 
+#        plot = pl_5102_patch_calepa_l2, 
+#        width = 10, 
+#        height = 6, 
+#        dpi = 125
+#        )
+```
 
-## 2.2. - CalEPA By Group ----
+
+If you would like to include different levels of your agency, use the code below to compare. You could also compare departments across the state system.
+```{r}
+## 2.2. - Department By Group ----
 
 ### create groupings ----
 df_5102_epa_1yr <- df_5102_epa_1yr %>% 
@@ -541,41 +550,6 @@ df_5102_epa_1yr <- df_5102_epa_1yr %>%
             'Technical Occupations')
     )
 
-### L1 ----
-# sum_5102_groups_l1 <- df_5102_epa_1yr %>% 
-#     add_count(metrics_group, # ethnicity_level1, 
-#               wt = record_count,
-#               name = 'group_total') %>%
-#     add_count(ethnicity_level1, metrics_group,
-#               wt = record_count,
-#               name = 'ethnicity_group_total') %>% 
-#     select(ethnicity_level1, ethnicity_group_total, group_total, metrics_group) %>%
-#     distinct() %>%
-#     mutate(rate = ethnicity_group_total / group_total) %>% 
-#     mutate(type = 'CalEPA Workforce') %>%
-#     arrange(metrics_group, ethnicity_level1) %>%
-#     {.}
-# 
-# (pl_5102_groups_l1 <- sum_5102_groups_l1 %>% 
-#     filter(!is.na(metrics_group)) %>% 
-#         bind_rows(acs_data_level1)
-#     ggplot() +
-#     geom_bar(mapping = aes(x = ethnicity_level1, 
-#                            y = rate, 
-#                            fill = type), 
-#              stat = 'identity', 
-#              position = 'dodge') + 
-#     facet_wrap(~ metrics_group) +
-#     coord_flip() + 
-#     scale_y_continuous(labels = percent) +
-#     labs(title = 'Test', 
-#          subtitle = 'Test',
-#          x = 'Ethnicity Group',
-#          y = 'Percent of Total', 
-#          caption = 'State population data from 2019 1 yr ACS  |  workforce data from CalHR 5102') +
-#     theme(legend.position = 'bottom', 
-#           legend.title = element_blank()) +
-#     guides(fill = guide_legend(reverse = TRUE)))
 
 sum_5102_groups_l1 <- df_5102_epa_1yr %>% 
     filter(metrics_group == 'Legal Occupations') %>%
@@ -630,13 +604,13 @@ facet_label_5102_groups_l1 <- sum_5102_groups_l1 %>%
               legend.title = element_blank()) +
         guides(fill = guide_legend(reverse = TRUE)))
 
-ggsave(filename = here('07_slides', '2021-05-14', 'images', 
-                       '5102_calepa_groups_level1.png'), 
-       plot = pl_5102_groups_l1, 
-       width = 10, 
-       height = 6, 
-       dpi = 125
-       )
+# ggsave(filename = here('07_slides', '2021-05-14', 'images', 
+#                        '5102_calepa_groups_level1.png'), 
+#        plot = pl_5102_groups_l1, 
+#        width = 10, 
+#        height = 6, 
+#        dpi = 125
+#        )
 
 (pl_5102_groups_l1_stack <- sum_5102_groups_l1 %>%  
         left_join(facet_label_5102_groups_l1, 
@@ -661,13 +635,13 @@ ggsave(filename = here('07_slides', '2021-05-14', 'images',
               legend.title = element_blank()) +
         guides(fill = guide_legend(reverse = TRUE)))
 
-ggsave(filename = here('07_slides', '2021-05-14', 'images', 
-                       '5102_calepa_groups_level1_stack.png'), 
-       plot = pl_5102_groups_l1_stack, 
-       width = 10, 
-       height = 6, 
-       dpi = 125
-       )
+# ggsave(filename = here('07_slides', '2021-05-14', 'images', 
+#                        '5102_calepa_groups_level1_stack.png'), 
+#        plot = pl_5102_groups_l1_stack, 
+#        width = 10, 
+#        height = 6, 
+#        dpi = 125
+#        )
 
 
 ### L2 ----
@@ -738,13 +712,13 @@ facet_label_5102_groups_l2 <- sum_5102_groups_l2 %>%
         rename('metrics_group' = 'facet_label') %>% 
         fun_plot_5102_groups_l2())
 
-ggsave(filename = here('07_slides', '2021-05-14', 'images', 
-                       '5102_calepa_groups_level2.png'), 
-       plot = pl_5102_groups_l2, 
-       width = 10, 
-       height = 6, 
-       dpi = 125
-       )
+# ggsave(filename = here('07_slides', '2021-05-14', 'images', 
+#                        '5102_calepa_groups_level2.png'), 
+#        plot = pl_5102_groups_l2, 
+#        width = 10, 
+#        height = 6, 
+#        dpi = 125
+#        )
 
         
 fun_plot_5102_groups_l2_stack <- function(dataset, 
@@ -779,15 +753,17 @@ fun_plot_5102_groups_l2_stack <- function(dataset,
         rename('metrics_group' = 'facet_label') %>% 
         fun_plot_5102_groups_l2_stack())
 
-ggsave(filename = here('07_slides', '2021-05-14', 'images', 
-                       '5102_calepa_groups_level2_stack.png'), 
-       plot = pl_5102_groups_l2_stack, 
-       width = 10, 
-       height = 6, 
-       dpi = 125
-       )
-    
+# ggsave(filename = here('07_slides', '2021-05-14', 'images', 
+#                        '5102_calepa_groups_level2_stack.png'), 
+#        plot = pl_5102_groups_l2_stack, 
+#        width = 10, 
+#        height = 6, 
+#        dpi = 125
+#        )
+```
 
+
+```{r}
 ## 2.4 By BDO Plots ----
 ### L2 ----
 summary_5102_l2_bdo <- df_5102_epa_1yr %>%
@@ -832,24 +808,17 @@ ordering_bdo <- summary_5102_l2_bdo %>%
         guides(fill = guide_legend(reverse = TRUE)) + 
         geom_vline(xintercept = 1.5, size = 0.5, linetype = 'dashed'))#, color = 'grey50')
 
-ggsave(filename = here('07_slides', '2021-05-14', 'images', 
-                       '5102_calepa_bdo_level2.png'), 
-       plot = pl_5102_l2_bdo_stack, 
-       width = 10, 
-       height = 6, 
-       dpi = 125
-       )
+# ggsave(filename = here('07_slides', '2021-05-14', 'images', 
+#                        '5102_calepa_bdo_level2.png'), 
+#        plot = pl_5102_l2_bdo_stack, 
+#        width = 10, 
+#        height = 6, 
+#        dpi = 125
+#        )
 
 
 ### L2 - BDO & Group ----
 ##### enter dept name for plot vs dept name in 5102 dataset
-# bdo_titles <- c("Air Resources Board" = 'Air Resources Board', 
-#                 "Offc. of Env. Health Hazard Assessment" = 'Environmental Health Hazard Assessment, Office of',
-#                 "Cal. Environmental Protection Agency" = 'Environmental Protection Agency',
-#                 "Dept. of Pesticide Regulation" = 'Pesticide Regulation, Department of',
-#                 "Dept. of Resources Recycling and Recovery" = 'Resources Recycling and Recovery, Department of',
-#                 "Dept. of Toxic Substances Control" = 'Toxic Substances Control, Department of',
-#                 "Water Resources Control Board" = 'Water Resources Control Board')
 
 bdo_titles <- c("ARB" = 'Air Resources Board', 
                 "OEHHA" = 'Environmental Health Hazard Assessment, Office of',
@@ -872,7 +841,11 @@ pl_5102_groups_l2_bdo_all_facets <- map2_df(.x = names(bdo_titles),
                                                 mutate(facet_label = glue('{metrics_group} ({.x} n = {n})')) %>% 
                                                 mutate(bdo = glue('{.x}'))
                                             )
+```
 
+
+
+```{r}
 #### make plots
 pl_5102_groups_l2_bdo_all <- map2(.x = names(bdo_titles), 
                                   .y = unname(bdo_titles), 
@@ -912,109 +885,6 @@ walk2(.x = pl_5102_groups_l2_bdo_all,
 )
 
 
-# # plot one individual bdo (not needed if above map/walk functions are working)
-# bdo_plot <- "Air Resources Board"
-# bdo_plot <- 'Water Resources Control Board'
-# (pl_5102_groups_l2_bdo <- df_5102_epa_1yr %>%
-#     filter(dept == bdo_plot) %>%
-#     fun_summary_5102_groups_l2() %>%
-#     mutate(type = case_when(as.character(type) == 'CalEPA Workforce' ~
-#                                 glue('{bdo_plot} Workforce'),
-#                             TRUE ~ as.character(type))) %>%
-#     mutate(type = factor(type, levels = c(glue('{bdo_plot} Workforce'), 'State Population'))) %>%
-#     fun_plot_5102_groups_l2_stack(plot_title = glue('{bdo_plot} Workforce by Occupation and Ethnicity Group Compared to State Population (Year {report_year})'))
-# )
-# ggsave(filename = here('07_slides', '2021-05-14', 'images',
-#                        glue('5102_bdo_group_l2_{bdo_plot}.png')),
-#        plot = pl_5102_groups_l2_bdo,
-#        width = 10,
-#        height = 6,
-#        dpi = 125
-#        )
-
-
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# 3 - retention / departures (by job class) ----------------------------------------------------
-
-## get 5112 data ----
-### pull data from data.ca.gov
-df_5112_2020 <- read_csv('https://data.ca.gov/dataset/e620a64f-6b86-4ce0-ab4b-03d06674287b/resource/d308f328-6b5b-41c1-8bc2-a4afcfcee3d1/download/5112-inline-report_12.31.20.csv') %>% 
-    clean_names()
-
-### add additional levels for ethnicity grouping
-#   ethnicity (in original dataset) is most detailed level
-#   level 1 groups all BIPOC together (resulting groups are BIPOC and white)
-#   level 2 groups some ethnicity sub-groupings together (Asian group and Pacific Islander group)
-df_5112_2020 <- df_5112_2020 %>% 
-    mutate(
-        ethnicity_level1 = case_when(
-            ethnicity == 'White' ~ 'White', 
-            TRUE ~ 'BIPOC'
-        ),
-        ethnicity_level2 = case_when(
-            str_detect(ethnicity, 'Pacific Islander') ~ 'Pacific Islander', # groups (all start with "Pacific Islander - "): Guamanian, Hawaiian, Other or Multiple, and Samoan
-            str_detect(ethnicity, 'Asian') ~ 'Asian', # groups (all start with "Asian - "): Cambodian, Chinese, Filipino, Indian, Japanese, Korean, Laotian, Other or Multiple, Vietnamese
-            TRUE ~ ethnicity)
-    )
-
-### Filtering for EPA and related BDOs 
-df_5112_2020_epa <- df_5112_2020 %>% 
-    filter(department == "Air Resources Board"|
-               department == "Environmental Health Hazard Assessment, Office of"|
-               department == "Environmental Protection Agency"|
-               department == "Pesticide Regulation, Department of"|
-               department == "Resources Recycling and Recovery, Department of"|
-               department == "Toxic Substances Control, Department of"|
-               department == "Water Resources Control Board")
-
-
-## calculate... ----
-
-job_class <- 'ENVIRONMENTAL SCIENTIST'
-
-job_class_flux <- df_5112_2020_epa %>% 
-    filter(class_title == job_class) %>% 
-    group_by(ethnicity_level2, hire_type) %>% 
-    summarize(count = n()) %>% 
-    ungroup() %>% 
-    mutate(hire_type = case_when(
-        hire_type == 'Intake: Outside Hires' ~ 
-            'intake_outside',
-        hire_type == 'Intake: Hires from other State Agencies' ~ 
-            'intake_other_agencies',
-        hire_type == 'Advancements' ~ 
-            'intake_advancements'
-    ))
-    # add_count(ethnicity, name = 'ethnicity_total') %>% 
-    # add_count(ethnicity, hire_type, name = 'ethnicity_type_total')
-
-job_class_flux <- job_class_flux %>% 
-    pivot_wider(names_from = hire_type, 
-                values_from = count)
-
-job_class_delta <- df_5102_epa %>% 
-    filter(class_title == job_class) %>% 
-    filter(as_of_date == '2020-12-31' | as_of_date == '2019-12-31') %>% 
-    mutate(year = glue('yr_{year(as_of_date)}')) %>% 
-    group_by(year, ethnicity_level2) %>% 
-    summarize(total = sum(record_count)) %>% 
-    ungroup() %>% 
-    pivot_wider(names_from = year, values_from = total) %>% 
-    mutate(change = yr_2020 - yr_2019) %>% 
-    {.}
-    
-job_class_calc <- job_class_delta %>% 
-    left_join(job_class_flux, by = 'ethnicity_level2') %>% 
-    mutate_if(is.numeric, ~replace_na(., 0)) %>% 
-    mutate(intake_total = intake_outside + 
-               intake_other_agencies + 
-               intake_advancements) %>% 
-    mutate(departure = intake_total - change)
-
-
-## timeline ----
-job_class_timeline <- df_5102_epa %>% 
-    filter(class_title == job_class) 
-
 ```
