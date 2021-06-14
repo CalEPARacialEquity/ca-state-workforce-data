@@ -418,12 +418,11 @@ fun_plot_5102_l2_stack <- function(dataset, plot_title, plot_caption) {
 ```
 
 
-### Plots...
+### Department Summary
 If you want to save the graphs as png image files, remove the comment symbols (#) from the ggsave lines.
 
 ```{r}
-## 2.1 - Department summary ----
-### Level 1 ----
+#### Level 1 ---- 
 (pl_5102_dept_l1 <- df_5102_dept_1yr %>% 
      fun_summary_5102_l1() %>% 
      bind_rows(acs_data_level1) %>% 
@@ -847,9 +846,9 @@ ordering_bdo <- summary_5102_l2_bdo %>%
 
 ```{r}
 ### Level 2 ethincity - by BDO & Class Groupings ----
+
 ##### Optional: enter dept name you'd like for the plot vs dept name listed 
 ##### in 5102 dataset
-
 bdo_titles <- c("ARB" = 'Air Resources Board', 
                 "OEHHA" = 'Environmental Health Hazard Assessment, Office of',
                 "CalEPA (Agency)" = 'Environmental Protection Agency',
@@ -860,10 +859,10 @@ bdo_titles <- c("ARB" = 'Air Resources Board',
 bdo_titles_filenames <- tolower(c('ARB', 'OEHHA', 'CalEPA_Agency', 
                                   'DPR', 'CalRecycle', 'DTSC', 'SWRCB'))
 
-# get facet labels
+# To get facet labels
 pl_5102_groups_l2_bdo_all_facets <- map2_df(.x = names(bdo_titles), 
                                             .y = unname(bdo_titles), 
-                                            .f = ~  df_5102_epa_1yr %>% 
+                                            .f = ~  df_5102_dept_1yr %>% 
                                                 filter(dept == .y) %>% 
                                                 fun_summary_5102_groups_l2() %>% 
                                                 filter(type == 'CalEPA Workforce') %>% 
@@ -876,7 +875,7 @@ pl_5102_groups_l2_bdo_all_facets <- map2_df(.x = names(bdo_titles),
 
 
 ```{r}
-#### make plots
+#### To make plots
 pl_5102_groups_l2_bdo_all <- map2(.x = names(bdo_titles), 
                                   .y = unname(bdo_titles), 
                                   .f = ~ df_5102_epa_1yr %>% 
