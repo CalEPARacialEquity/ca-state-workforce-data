@@ -21,4 +21,7 @@ To run the exploratory data analysis script, run the `workforce_data_exploration
 ## Reports / Slides
 
 - 2020 Workforce Data Analysis slides available [here](https://cawaterboarddatacenter.github.io/ca-state-workforce-data/07_slides/2021-05-14/workforce_data_summary_2021-05-14.html)
-	- Shortened Link: http://bit.ly/calepa_workforce_2020-05-14
+   - Shortened Link: http://bit.ly/calepa_workforce_2020-05-14
+- PowerBI prototypes and older data viz tools:
+   - CalHR statewide data tools (includes up to 2020 for 5102 and one panel using 2020 5112 data - this is panel 7 and includes "advancements" related filters). https://bit.ly/calHR2020_5112
+   - CalEPA interactive tool for 2011 to 2020 CalHR 5102 data: https://bit.ly/CalEPA_workforcedemo_PeterH
