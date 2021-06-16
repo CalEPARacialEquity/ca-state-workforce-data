@@ -13,18 +13,20 @@ output:
 # 5102 Data Analysis by Agency / Department
 
 ## Introduction
-created to supplement the racial equity survey results...
 This code can be modified and applied to any department(s) in the California
 state system listed in California Department of Human Resource's (CalHR) 5102 data 
 set. This code was written by California Environmental Protection Agency's (CalEPA) 
 Racial Equity Team (CRET) Data Subteam in Spring 2021 to provide helpful 
 racial demographics visualizations for the workforce of the Agency and its Boards, 
-Departments, and Office (BDOs). The desired result of the Data sub-Team's work is 
-to create a workforce in which one's work and/or career outcomes are not predicted 
-by one's race. This statement is informed by more detailed goals and objectives 
+Departments, and Office (BDOs). The effort came out of a desire to supplement the
+Agency's Race Forward survey results with workforce demographic data. The Data 
+Subteam intends on maintaining and building off this and other resources and datasets.
+The vision of the Workforce Equity Subteam's work is to create a workforce in which 
+one's work and/or career outcomes are not predicted by one's race. The Data Subteam's 
+efforts support this vision. This vision is informed by more detailed goals and objectives 
 related to work/career satisfaction, promotion and retention, compensation, 
 inclusion, mental and other health safety, and more. 
-CRET model of change - normalize, organize and operationalize – is 
+CRET's model of change - normalize, organize and operationalize – is 
 aligned with over 200 government organizations part of a nationwide network to 
 transform governments to deliver more racial equity. We anticipate that these
 demographic metrics and resulting performance measures will evolve over time and 
@@ -460,7 +462,11 @@ fun_plot_5102_l2_stack <- function(dataset, plot_title, plot_caption) {
 
 ### Department Summary Plots
 
-*If you want to save the graphs as png image files, remove the comment symbols (#) from the ggsave lines.*
+*To save the graphs as png image files, remove the comment symbols (#) from the* 
+*ggsave lines.*
+
+
+#### Level 1 Ethnicity
 
 ```{r}
 #### Level 1 ---- 
@@ -488,7 +494,7 @@ fun_plot_5102_l2_stack <- function(dataset, plot_title, plot_caption) {
 # pl_5512_patch_dept_l1 <- pl_5102_dept_l1_stack / pl_5102_dept_l1
 ```
 
-Level 2 ethnicity:
+#### Level 2 Ethnicity
 
 ```{r}
 ### Level 2 ----
@@ -566,9 +572,10 @@ pl_5102_patch_dept_l2 <- pl_5102_patch_dept_l2 +
 #        )
 ```
 
+### Department by Employee Class
 
-
-If you would like to compare across employee categories, use the code chunks below to identify your desired groupings and modify the categories/classes as you see fit.
+To compare across employee categories, use the code chunks below to identify your 
+desired groupings and modify the categories/classes as you see fit.
 
 ```{r}
 ## 2.2. - Department By Group ----
@@ -589,7 +596,18 @@ categories_list %>%
     {.}
 ```
 
+Create your employee class groupings in the code below. Investigate the table 
+above and code below to determine how you would like to group your classes.
+In our example, we grouped by Legal, Management, Technical, Administrative,
+and Technical, because we wanted to see the differences in demographics between
+these groups. We chose these groupings to investigate assumptions about diversity
+in these varying categories.
+
 ```{r}
+## you can also use the code below to view your table in RStudio, to examine
+## what classes and are in your department:
+#View(df_5102_dept_1yr)
+
 ### create groupings ----
 df_5102_dept_1yr <- df_5102_dept_1yr %>% 
     mutate(metrics_group = case_when(
@@ -611,8 +629,12 @@ df_5102_dept_1yr <- df_5102_dept_1yr %>%
                  sub_category == 'Operations Research Analysts') ~ 
             'Technical Occupations')
     )
+```
 
 
+#### Level 1 Ethnicity
+
+```{r}
 # Level 1 ethnicity
 sum_5102_groups_l1 <- df_5102_dept_1yr %>% 
     filter(metrics_group == 'Legal Occupations') %>%
@@ -708,6 +730,7 @@ facet_label_5102_groups_l1 <- sum_5102_groups_l1 %>%
 ```
 
 
+#### Level 2 Ethnicity
 
 ```{r}
 ### Level 2 ----
@@ -828,8 +851,12 @@ fun_plot_5102_groups_l2_stack <- function(dataset,
 #        )
 ```
 
+### Department/BDO Comparison
 
-If you would like to include different levels of your agency, use the code below to compare. You could also compare departments across the state system.
+To include different levels of your agency, use the code below to compare. You could also compare departments across the state system.
+
+#### Level 2 Ethnicity
+
 ```{r}
 ## 2.4 By BDO Plots ----
 ### Level 2 ethnicity ----
@@ -919,10 +946,10 @@ pl_5102_groups_l2_bdo_all_facets <- map2_df(.x = names(bdo_titles),
 #### To make plots
 pl_5102_groups_l2_bdo_all <- map2(.x = names(bdo_titles), 
                                   .y = unname(bdo_titles), 
-                                  .f = ~ df_5102_epa_1yr %>% 
+                                  .f = ~ df_5102_dept_1yr %>% 
                                       filter(dept == .y) %>% 
                                       fun_summary_5102_groups_l2() %>%
-                                      mutate(type = case_when(as.character(type) == 'CalEPA Workforce' ~
+                                      mutate(type = case_when(as.character(type) == 'Department Workforce' ~
                                                                   glue('{.x}'),
                                                               TRUE ~ as.character(type))) %>%
                                       mutate(type = factor(type, 
@@ -938,23 +965,23 @@ pl_5102_groups_l2_bdo_all <- map2(.x = names(bdo_titles),
 )
 ## View one plot
 pl_5102_groups_l2_bdo_all[[3]]
+```
 
-#### save plots
-walk2(.x = pl_5102_groups_l2_bdo_all, 
-      # .y = tolower(str_replace_all(string = names(bdo_titles), 
-      #                              pattern = ' ', 
-      #                              replacement = '_') %>% 
-      #                  str_remove_all(pattern = '\\.|(|)')), 
-      .y = bdo_titles_filenames, # keep filenames consistent regardless of changes to plot labels/titles
-      .f = ~ ggsave(filename = here('07_slides', '2021-05-14', 'images', 
-                                    glue('5102_bdo_group_l2_{.y}.png')), 
-                    plot = .x,
-                    width = 10, 
-                    height = 6, 
-                    dpi = 125)
-)
+*To save these graphs as png image files, remove the comment symbols (#) from the* 
+*code below.*
 
-
-# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+```{r}
+# walk2(.x = pl_5102_groups_l2_bdo_all, 
+#       # .y = tolower(str_replace_all(string = names(bdo_titles), 
+#       #                              pattern = ' ', 
+#       #                              replacement = '_') %>% 
+#       #                  str_remove_all(pattern = '\\.|(|)')), 
+#       .y = bdo_titles_filenames, # keep filenames consistent regardless of changes to plot labels/titles
+#       .f = ~ ggsave(filename = here('07_slides', '2021-05-14', 'images', 
+#                                     glue('5102_bdo_group_l2_{.y}.png')), 
+#                     plot = .x,
+#                     width = 10, 
+#                     height = 6, 
+#                     dpi = 125)
+# )
 ```
