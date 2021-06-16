@@ -1,6 +1,6 @@
 ## Project Description / Background
 
-This project is part of CalEPA's racial equity data team, and aims to explore the demographics of California's state government workforce (we can potentially add more information about the project here, e.g., a description of the project background and goals, documentation of where the raw/source data came from, instructions for running the scripts, description of intermediate and final outputs, etc.).
+This project is part of CalEPA's racial equity work group (REWG) data sub-team, and aims to explore the demographics of California's state government workforce. The project is regularly evolving to fit the data needs of CalEPA's REWG workforce equity sub-team. There are several different analyses within the project, each supporting the larger goal of operationalizing equity throughout all phases of workforce development and supporting a culture across CalEPA where all feel they belong. CalEPA's REWG is guided by equity principles from the Government Alliance on Racial Equity (GARE). (we can potentially add more information about the project here, e.g., a description of the project background and goals, documentation of where the raw/source data came from, instructions for running the scripts, description of intermediate and final outputs, etc.).
 
 ## Source Data
 
@@ -17,6 +17,10 @@ If using RStudio, open the `workforce_data.Rproj` file to open the project withi
 ### Exploratory Data Analysis
 
 To run the exploratory data analysis script, run the `workforce_data_exploration.R` script in the `01_scripts` folder.
+
+### Create Visualizations For Your Agency
+
+To create graphs visualizing your department's workforce demographics, use the script in the `06_reports` folder. Your results will be saved locally in the `07_slides` folder.
 
 ## Reports / Slides
 
