@@ -13,8 +13,29 @@ output:
 # 5102 Data Analysis by Agency / Department
 
 ## Introduction
-
-intro text...
+created to supplement the racial equity survey results...
+This code can be modified and applied to any department(s) in the California
+state system listed in California Department of Human Resource's (CalHR) 5102 data 
+set. This code was written by California Environmental Protection Agency's (CalEPA) 
+Racial Equity Team (CRET) Data Subteam in Spring 2021 to provide helpful 
+racial demographics visualizations for the workforce of the Agency and its Boards, 
+Departments, and Office (BDOs). The desired result of the Data sub-Team's work is 
+to create a workforce in which one's work and/or career outcomes are not predicted 
+by one's race. This statement is informed by more detailed goals and objectives 
+related to work/career satisfaction, promotion and retention, compensation, 
+inclusion, mental and other health safety, and more. 
+CRET model of change - normalize, organize and operationalize – is 
+aligned with over 200 government organizations part of a nationwide network to 
+transform governments to deliver more racial equity. We anticipate that these
+demographic metrics and resulting performance measures will evolve over time and 
+will be informed by future data and analyses of surveys, workforce demographics, 
+and research.
+Finally, the Data Subteam acknowledges that racial equity work is complex and 
+cannot be pared down to simple numbers in bins. This code and resulting 
+visualizations seeks to be the first step in critically examining an agency's 
+racial demographics, and may be more helpful in developing the right questions 
+that need to be asked, rather than immediate answers and/or numeric targets.
+If you have any questions about this code, please email Leah Jones at <leah.jones@waterboards.ca.gov>.
 
 ## Resources
 
@@ -102,12 +123,21 @@ default_pl_caption <- glue('Data sources: state population data from {acs_data_y
 
 ### 5102 Data
 
-Info about 5102 dataset?... from Key performance target document & notes accompanying slide deck....
+CalHR's biannual 5102 report "captures the race/ethnicity, gender, disability, 
+and veteran status by occupational group and classification for all state employees."
+Data source: [CalHR's Statewide 5102 report](https://www.calhr.ca.gov/pages/statewide-reports.aspx). 
+A cleaned and compiled version of that data is available on the California Open Data Portal at: <https://data.ca.gov/dataset/calhr-civil-rights-data-for-gare-capital-cohort-2019>
 
 #### Ethnicity Groupings
 
-describe ethnicity levels added to the 5102 dataset (level 1: BIPOC /
-white, level 2: combined Asian and Pacific Islander groupings)...
+The ethnicity groupings were thought of in two levels. Level one is "white" versus
+"BIPOC", where BIPOC stands for black, indigenous, and people of color, and includes 
+all ethnicity values other than white. Level two ethnicity groups some sub-groupings,
+in this case all Asian identities. We recognize that all ethnicities, including
+sub-groups of Asian ethnicities, experience discrimination differently. However,
+for the purposes of creating useful visualizations with a relatively small dataset, 
+we chose to group the identity variables in this way. Feel free to explore the
+data and re-group for your purposes as you see fit.
 
 ```{r}
 # 1 - load / transform data ---------------------------------------------------------------
@@ -139,8 +169,11 @@ df_5102 <- df_5102 %>%
 
 #### Filter for Selected Agency
 
-Search for the name of your selected agency from the box below, then copy and paste into the subsequent code chunk.
-List of agency names in the 5102 dataset:
+Search for the name of your selected agency from the box below, then copy and 
+paste into the subsequent code chunk.
+
+List of agency names in the 5102 data set:
+
 ```{r}
 # list of all departments
 depts_list <- df_5102 %>% 
@@ -157,7 +190,8 @@ depts_list %>%
 ```
 
 
-Enter departments to be included in the analysis, and modify the variable names as you see fit:
+Enter departments to be included in the analysis, and modify the variable 
+names as you see fit:
 
 ```{r}
 # Filtering for EPA and related BDOs 
@@ -193,8 +227,8 @@ explain ethnicity levels available in the data...
 
 explain selected table / variables?...
 
-To download the census data, first request a key here: <https://api.census.gov/data/key_signup.html/>
-and enter census_api_key("*your_key*", install = TRUE) in your console.
+To download the census data, you need to first request a key here: <https://api.census.gov/data/key_signup.html/>
+Then, enter census_api_key("*your_key*", install = TRUE) in your console.
 
 
 ```{r}
@@ -271,6 +305,9 @@ acs_data_level1 <- acs_data_level2 %>%
 ## Plots
 
 ### Enter Plotting Parameters
+
+Here you can modify the plot color palette and other parameters:
+
 ```{r}
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -288,7 +325,10 @@ colors_5102_7 <- brewer_colors # detailed ethnic groups: Asian ... White
 
 
 ### Format Data & Create Plotting Functions
-No changes necessary, unless you would like to update variable and/or title names.
+
+No changes necessary here, unless you would like to update variable and/or title 
+names:
+
 ```{r}
 
 ## format census data for plot (all of CA) ----
@@ -418,8 +458,9 @@ fun_plot_5102_l2_stack <- function(dataset, plot_title, plot_caption) {
 ```
 
 
-### Department Summary
-If you want to save the graphs as png image files, remove the comment symbols (#) from the ggsave lines.
+### Department Summary Plots
+
+*If you want to save the graphs as png image files, remove the comment symbols (#) from the ggsave lines.*
 
 ```{r}
 #### Level 1 ---- 
@@ -447,7 +488,7 @@ If you want to save the graphs as png image files, remove the comment symbols (#
 # pl_5512_patch_dept_l1 <- pl_5102_dept_l1_stack / pl_5102_dept_l1
 ```
 
-
+Level 2 ethnicity:
 
 ```{r}
 ### Level 2 ----
