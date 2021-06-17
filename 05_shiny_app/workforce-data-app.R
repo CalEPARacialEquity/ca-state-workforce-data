@@ -14,25 +14,115 @@ library(ggplot2)
 library(stringr)
 library(forcats)
 library(scales)
+library(tidycensus)
+library(sf)
 
 
 # import data ---------------
-df_5102_report <- read_csv('data/calhr_5102_statewide_2011-2020.csv.gz',
-                        col_types = cols(.default = col_character())) %>% 
+## 5102 report ----
+url_data_all_yrs <- 'https://data.ca.gov/dataset/e620a64f-6b86-4ce0-ab4b-03d06674287b/resource/aba87ad9-f6b0-4a7e-a45e-d1452417eb7f/download/calhr_5102_statewide_2011-2020.csv'
+
+df_5102_report <- read_csv(url_data_all_yrs,
+                        col_types = cols(.default = col_character())) %>%  
     type_convert() %>% 
     clean_names() %>% 
     # mutate(record_count = as.integer(record_count)) %>% 
     {.}
 
+## census data (ACS 1 yr) ----
+years <- c(2011,2012,2013,2014,2015,2016,2017,2018,2019)
 
-# clean/transform data ---------------
+
+### get ACS data
+acs_data_raw <- map_dfr(
+    years,
+    ~ get_acs(geography = 'state', 
+                        variables = c(# total_state_pop = 'B02001_001',
+                            'Hispanic or Latino' = 'B03002_012', # Total Hispanic or Latino
+                            'White' = 'B03002_003', # White (Not Hispanic or Latino)
+                            'Black or African American' = 'B03002_004', # Black or African American (Not Hispanic or Latino)
+                            'Native American or Alaska Native' = 'B03002_005', # American Indian and Alaska Native (Not Hispanic or Latino)
+                            'Asian' = 'B03002_006', # Asian (Not Hispanic or Latino)
+                            'Pacific Islander' = 'B03002_007', # Native Hawaiian and Other Pacific Islander (Not Hispanic or Latino)
+                            'Other' = 'B03002_008', # Some other race (Not Hispanic or Latino)
+                            'Multiple' = 'B03002_009'# Two or more races (Not Hispanic or Latino)
+                        ),
+                        summary_var = c(total_state_pop = 'B02001_001'), 
+                        survey = 'acs1', # use 'acs1' or 'acs5' to get 1 or 5 year acs
+                        state = 'CA', 
+                        geometry = FALSE, # set to TRUE to get as geospatial data
+                        year = .x),
+    .id = "year"
+    )
+
+
+# Clean/Transform Data ---------------
+## 5102 ----
 # create a new column with just the year
 df_5102_report <- df_5102_report %>% 
     mutate(report_year = year(as_of_date))
 
+## ACS ----
+# clean / reformat the acs data (the data will be formatted to be 
+# consistent with the "level 2" ethnicity groupings in the workforce 
+# data that are created above)
+acs_data_raw <- acs_data_raw %>% mutate(year = (as.numeric(year) + 2010))
+
+acs_data_level2 <- acs_data_raw %>% 
+    clean_names() %>% 
+    rename(total_state_pop = summary_est, 
+           total_state_pop_moe = summary_moe,
+           location_name = name,
+           ethnicity_level2 = variable)
+
+## check (should be TRUE) - make sure sum of populations by group == total state population
+# sum(acs_data_level2$estimate) == acs_data_level2$total_state_pop[1]
+
+### group the 'Other' and 'Multiple' rows into one 'Other or Multiple Race' row
+acs_data_level2 <- acs_data_level2 %>% 
+    mutate(ethnicity_level2 = 
+               case_when(ethnicity_level2 == 'Other' | 
+                             ethnicity_level2 == 'Multiple' ~ 
+                             'Other or Multiple Race',
+                         TRUE ~ ethnicity_level2)) %>% 
+    group_by(year, geoid, location_name, ethnicity_level2, total_state_pop) %>% 
+    summarize(estimate = sum(estimate)) %>%
+    ungroup() %>% 
+    {.}
 
 
-##### Define UI for application ###################################################
+# ignore below
+## check (should be TRUE) - make sure sum of populations by group == total state population
+# sum(acs_data_level2$estimate) == acs_data_level2$total_state_pop[1]
+# okay resume
+
+# LEFT OF HERE 6/17 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+### add a column with each ethnicity's % of total state population
+acs_data_level2 <- acs_data_level2 %>% 
+    mutate(pop_pct = estimate / total_state_pop) %>% 
+    {.}
+
+### create a dataset grouped at level 1 - all BIPOC together (resulting groups are BIPOC and white)
+acs_data_level1 <- acs_data_level2 %>%  
+    mutate(
+        ethnicity_level1 = case_when(
+            ethnicity_level2 == 'White' ~ 'White', 
+            TRUE ~ 'BIPOC')
+    ) %>% 
+    group_by(geoid, location_name, ethnicity_level1, total_state_pop) %>% 
+    summarize(estimate = sum(estimate)) %>% 
+    ungroup() %>% 
+    mutate(pop_pct = estimate / total_state_pop) %>% # update the pop_pct to reflect level 1 numbers
+    {.}
+
+## check 
+# sum(acs_data_level1$estimate) == acs_data_level1$total_state_pop[1]
+
+
+
+
+# Define UI for application ###################################################
 ui <- fluidPage(
 
     # Application title
