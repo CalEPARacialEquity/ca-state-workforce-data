@@ -20,9 +20,9 @@ library(sf)
 
 # import data ---------------
 ## 5102 report ----
-url_data_all_yrs <- 'https://data.ca.gov/dataset/e620a64f-6b86-4ce0-ab4b-03d06674287b/resource/aba87ad9-f6b0-4a7e-a45e-d1452417eb7f/download/calhr_5102_statewide_2011-2020.csv'
+#url_data_all_yrs <- 'https://data.ca.gov/dataset/e620a64f-6b86-4ce0-ab4b-03d06674287b/resource/aba87ad9-f6b0-4a7e-a45e-d1452417eb7f/download/calhr_5102_statewide_2011-2020.csv'
 
-df_5102_report <- read_csv(url_data_all_yrs,
+df_5102_report <- read_csv("data\calhr_5102_statewide_2011-2020.csv.gz",
                         col_types = cols(.default = col_character())) %>%  
     type_convert() %>% 
     clean_names() %>% 
@@ -62,6 +62,15 @@ acs_data_raw <- map_dfr(
 df_5102_report <- df_5102_report %>% 
     mutate(report_year = year(as_of_date))
 
+# make ethnicities consistent
+df_5102_report <- df_5102_report %>% 
+    mutate(
+        ethnicity_level2 = case_when(
+            str_detect(identity_variable, 'Pacific Islander') ~ 'Pacific Islander', # groups (all start with "Pacific Islander - "): Guamanian, Hawaiian, Other or Multiple, and Samoan
+            str_detect(identity_variable, 'Asian') ~ 'Asian', # groups (all start with "Asian - "): Cambodian, Chinese, Filipino, Indian, Japanese, Korean, Laotian, Other or Multiple, Vietnamese
+            TRUE ~ identity_variable)
+    )
+
 ## ACS ----
 # clean / reformat the acs data (the data will be formatted to be 
 # consistent with the "level 2" ethnicity groupings in the workforce 
@@ -96,7 +105,6 @@ acs_data_level2 <- acs_data_level2 %>%
 # sum(acs_data_level2$estimate) == acs_data_level2$total_state_pop[1]
 # okay resume
 
-# LEFT OF HERE 6/17 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ### add a column with each ethnicity's % of total state population
 acs_data_level2 <- acs_data_level2 %>% 
@@ -104,17 +112,17 @@ acs_data_level2 <- acs_data_level2 %>%
     {.}
 
 ### create a dataset grouped at level 1 - all BIPOC together (resulting groups are BIPOC and white)
-acs_data_level1 <- acs_data_level2 %>%  
-    mutate(
-        ethnicity_level1 = case_when(
-            ethnicity_level2 == 'White' ~ 'White', 
-            TRUE ~ 'BIPOC')
-    ) %>% 
-    group_by(geoid, location_name, ethnicity_level1, total_state_pop) %>% 
-    summarize(estimate = sum(estimate)) %>% 
-    ungroup() %>% 
-    mutate(pop_pct = estimate / total_state_pop) %>% # update the pop_pct to reflect level 1 numbers
-    {.}
+# acs_data_level1 <- acs_data_level2 %>%  
+#     mutate(
+#         ethnicity_level1 = case_when(
+#             ethnicity_level2 == 'White' ~ 'White', 
+#             TRUE ~ 'BIPOC')
+#     ) %>% 
+#     group_by(geoid, location_name, ethnicity_level1, total_state_pop) %>% 
+#     summarize(estimate = sum(estimate)) %>% 
+#     ungroup() %>% 
+#     mutate(pop_pct = estimate / total_state_pop) %>% # update the pop_pct to reflect level 1 numbers
+#     {.}
 
 ## check 
 # sum(acs_data_level1$estimate) == acs_data_level1$total_state_pop[1]
@@ -162,8 +170,10 @@ ui <- fluidPage(
         
 
         # outputs
-        mainPanel(
+  mainPanel(
             column(12, align = 'center',
+                   plotOutput('plot_class_title', 
+                              height = 500),
                    plotOutput('plot_class_title', 
                               height = 500),
                    radioButtons(inputId = 'bar_type', 
