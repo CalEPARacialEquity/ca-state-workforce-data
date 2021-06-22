@@ -22,7 +22,7 @@ library(sf)
 ## 5102 report ----
 url_data_all_yrs <- 'https://data.ca.gov/dataset/e620a64f-6b86-4ce0-ab4b-03d06674287b/resource/aba87ad9-f6b0-4a7e-a45e-d1452417eb7f/download/calhr_5102_statewide_2011-2020.csv'
 
-df_5102_report <- read_csv(url_data_all_yrs,
+df_5102_report <- read_csv('data\\calhr_5102_statewide_2011-2020.csv.gz',
                         col_types = cols(.default = col_character())) %>%  
     type_convert() %>% 
     clean_names() %>% 
@@ -30,7 +30,7 @@ df_5102_report <- read_csv(url_data_all_yrs,
     {.}
 
 ## census data (ACS 1 yr) ----
-years <- c(2011,2012,2013,2014,2015,2016,2017,2018,2019)
+years <- c(2011:2019)
 
 
 ### get ACS data
@@ -166,6 +166,8 @@ ui <- fluidPage(
             column(12, align = 'center',
                    plotOutput('plot_class_title', 
                               height = 500),
+                   plotOutput('plot_2',
+                              height = 500),
                    radioButtons(inputId = 'bar_type', 
                                 label = 'bar type:',
                                 choices = c('stacked', 'grouped'),
@@ -276,6 +278,38 @@ server <- function(input, output, session) {
     
     # make the plot
     output$plot_class_title <- renderPlot({
+        # make the plot
+        pl_class_title <- df_5102_report %>% 
+            filter(dept %in% filter_dpt(),
+                   class_title %in% toupper(filter_title()), 
+                   report_year == input$rpt_year) %>% 
+            group_by(identity_variable, gender) %>% 
+            summarize(total_n = sum(record_count)) %>% 
+            ungroup() %>% 
+            mutate(identity_variable = fct_reorder(identity_variable, total_n)) %>% 
+            ggplot() + # code below this line actually creates the plot
+            aes(x = identity_variable, y = total_n, fill = gender) +
+            geom_bar(stat = 'identity', 
+                     position = ifelse(input$bar_type == 'stacked', 'stack', 'dodge')) + # position = 'dodge'
+            scale_y_continuous(labels = comma_format(accuracy = 1),
+                               breaks = integer_breaks()) +
+            coord_flip() +
+            labs(x = 'Race / Ethnicity', 
+                 y = 'Number of Employees', 
+                 title = glue('Employees In California State Government'),
+                 subtitle = glue('Year: ', input$rpt_year, 
+                                 ' | Department: ', input$department, 
+                                 ' | Class Title: ', input$class_selected), 
+                 caption = "Note: data from 5102 Inline Report", 
+                 fill = 'Gender')
+        
+        # output the plot
+        pl_class_title
+    })
+    
+    
+    # make the plot
+    output$plot_2 <- renderPlot({
         # make the plot
         pl_class_title <- df_5102_report %>% 
             filter(dept %in% filter_dpt(),
