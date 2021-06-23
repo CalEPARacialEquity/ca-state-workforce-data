@@ -32,7 +32,6 @@ df_5102_report <- read_csv('data\\calhr_5102_statewide_2011-2020.csv.gz',
 ## census data (ACS 1 yr) ----
 years <- c(2011:2019)
 
-
 ### get ACS data
 acs_data_raw <- map_dfr(
     years,
@@ -61,6 +60,17 @@ acs_data_raw <- map_dfr(
 # create a new column with just the year
 df_5102_report <- df_5102_report %>% 
     mutate(report_year = year(as_of_date))
+
+df_5102_report <- df_5102_report %>% 
+    mutate(
+        # ethnicity_level1 = case_when(
+        #     identity_variable == 'White' ~ 'White', 
+        #     TRUE ~ 'BIPOC'),
+        ethnicity_level2 = case_when(
+            str_detect(identity_variable, 'Pacific Islander') ~ 'Pacific Islander', # groups (all start with "Pacific Islander - "): Guamanian, Hawaiian, Other or Multiple, and Samoan
+            str_detect(identity_variable, 'Asian') ~ 'Asian', # groups (all start with "Asian - "): Cambodian, Chinese, Filipino, Indian, Japanese, Korean, Laotian, Other or Multiple, Vietnamese
+            TRUE ~ identity_variable)
+    )
 
 ## ACS ----
 # clean / reformat the acs data (the data will be formatted to be 
@@ -104,17 +114,17 @@ acs_data_level2 <- acs_data_level2 %>%
     {.}
 
 ### create a dataset grouped at level 1 - all BIPOC together (resulting groups are BIPOC and white)
-acs_data_level1 <- acs_data_level2 %>%  
-    mutate(
-        ethnicity_level1 = case_when(
-            ethnicity_level2 == 'White' ~ 'White', 
-            TRUE ~ 'BIPOC')
-    ) %>% 
-    group_by(geoid, location_name, ethnicity_level1, total_state_pop) %>% 
-    summarize(estimate = sum(estimate)) %>% 
-    ungroup() %>% 
-    mutate(pop_pct = estimate / total_state_pop) %>% # update the pop_pct to reflect level 1 numbers
-    {.}
+# acs_data_level1 <- acs_data_level2 %>%  
+#     mutate(
+#         ethnicity_level1 = case_when(
+#             ethnicity_level2 == 'White' ~ 'White', 
+#             TRUE ~ 'BIPOC')
+#     ) %>% 
+#     group_by(geoid, location_name, ethnicity_level1, total_state_pop) %>% 
+#     summarize(estimate = sum(estimate)) %>% 
+#     ungroup() %>% 
+#     mutate(pop_pct = estimate / total_state_pop) %>% # update the pop_pct to reflect level 1 numbers
+#     {.}
 
 ## check 
 # sum(acs_data_level1$estimate) == acs_data_level1$total_state_pop[1]
