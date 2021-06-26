@@ -73,7 +73,7 @@ If you have any questions about this code, please email Leah Jones at <leah.jone
     <https://data.ca.gov/dataset/calhr-civil-rights-data-for-gare-capital-cohort-2019>
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, message = FALSE)
 
 # load packages ----
 library(readxl)
@@ -356,7 +356,7 @@ fun_summary_5102_l1 <- function(dataset) {
         select(ethnicity_level1, ethnicity_total) %>%
         distinct() %>%
         mutate(rate = ethnicity_total / sum(ethnicity_total)) %>%
-        mutate(type = 'Deparment Workforce') %>%
+        mutate(type = 'Department Workforce') %>%
         arrange(ethnicity_level1) %>%
         mutate(type = factor(type)) %>% 
         {.}
@@ -660,9 +660,9 @@ sum_5102_groups_l1 <- df_5102_dept_1yr %>%
     {.}
 
 facet_label_5102_groups_l1 <- sum_5102_groups_l1 %>% 
-        filter(type == 'Department Workforce') %>% 
-        count(metrics_group, wt = ethnicity_total) %>% 
-        mutate(facet_label = glue('{metrics_group} (Department n = {n})'))
+    filter(type == 'Department Workforce') %>% 
+    count(metrics_group, wt = ethnicity_total) %>% 
+    mutate(facet_label = glue('{metrics_group} (Department n = {n})'))
 
 
 (pl_5102_groups_l1 <- sum_5102_groups_l1 %>%  
@@ -933,7 +933,7 @@ pl_5102_groups_l2_bdo_all_facets <- map2_df(.x = names(bdo_titles),
                                             .f = ~  df_5102_dept_1yr %>% 
                                                 filter(dept == .y) %>% 
                                                 fun_summary_5102_groups_l2() %>% 
-                                                filter(type == 'CalEPA Workforce') %>% 
+                                                filter(type == 'Department Workforce') %>% 
                                                 count(metrics_group, wt = ethnicity_total) %>% 
                                                 mutate(facet_label = glue('{metrics_group} ({.x} n = {n})')) %>% 
                                                 mutate(bdo = glue('{.x}'))
@@ -942,7 +942,7 @@ pl_5102_groups_l2_bdo_all_facets <- map2_df(.x = names(bdo_titles),
 
 
 
-```{r}
+```{r }
 #### To make plots
 pl_5102_groups_l2_bdo_all <- map2(.x = names(bdo_titles), 
                                   .y = unname(bdo_titles), 
@@ -963,8 +963,20 @@ pl_5102_groups_l2_bdo_all <- map2(.x = names(bdo_titles),
                                       fun_plot_5102_groups_l2_stack(plot_title = glue('{.x} Workforce by Occupation and Ethnicity Group vs. State Population (Year {report_year})')) %>%
                                       {.}
 )
-## View one plot
-pl_5102_groups_l2_bdo_all[[3]]
+
+# ## View one plot
+# pl_5102_groups_l2_bdo_all[[2]]
+
+## print all plots
+for (i in seq_along(pl_5102_groups_l2_bdo_all)) {
+    print(pl_5102_groups_l2_bdo_all[[i]] + 
+              theme(legend.position = 'bottom', 
+                    legend.title = element_blank(),
+                    plot.margin = margin(t = 30, r = 0, b = 30, l = 0, unit = 'pt') # adding a little bit of space between plots
+                    )
+          ) 
+}
+
 ```
 
 *To save these graphs as png image files, remove the comment symbols (#) from the* 
