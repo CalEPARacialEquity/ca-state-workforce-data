@@ -256,7 +256,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">5102 Data Analysis by Agency / Department</h1>
 <h4 class="author">CalEPA Racial Equity Workgroup</h4>
-<h4 class="date"><em>Updated: 2021-06-25</em></h4>
+<h4 class="date"><em>Updated: 2021-06-29</em></h4>
 
 </div>
 
@@ -267,27 +267,12 @@ div.tocify {
 <h2>Introduction</h2>
 <p>This code can be modified and applied to any department(s) in the California state system listed in California Department of Human Resource’s (CalHR) 5102 data set. This code was written by California Environmental Protection Agency’s (CalEPA) Racial Equity Team (CRET) Data Subteam in Spring 2021 to provide helpful racial demographics visualizations for the workforce of the Agency and its Boards, Departments, and Office (BDOs). The effort came out of a desire to supplement the Agency’s Race Forward survey results with workforce demographic data. The Data Subteam intends on maintaining and building off this and other resources and datasets. The vision of the Workforce Equity Subteam’s work is to create a workforce in which one’s work and/or career outcomes are not predicted by one’s race. The Data Subteam’s efforts support this vision. This vision is informed by more detailed goals and objectives related to work/career satisfaction, promotion and retention, compensation, inclusion, mental and other health safety, and more. CRET’s model of change - normalize, organize and operationalize – is aligned with over 200 government organizations part of a nationwide network to transform governments to deliver more racial equity. We anticipate that these demographic metrics and resulting performance measures will evolve over time and will be informed by future data and analyses of surveys, workforce demographics, and research. Finally, the Data Subteam acknowledges that racial equity work is complex and cannot be pared down to simple numbers in bins. This code and resulting visualizations seeks to be the first step in critically examining an agency’s racial demographics, and may be more helpful in developing the right questions that need to be asked, rather than immediate answers and/or numeric targets. If you have any questions about this code, please email Leah Jones at <a href="mailto:leah.jones@waterboards.ca.gov" class="email">leah.jones@waterboards.ca.gov</a>.</p>
 </div>
-<div id="resources" class="section level2">
-<h2>Resources</h2>
-<div id="census-data" class="section level3">
-<h3>Census Data:</h3>
-<ul>
-<li><p>tidycensus R package: <a href="https://walker-data.com/tidycensus/articles/basic-usage.html" class="uri">https://walker-data.com/tidycensus/articles/basic-usage.html</a></p></li>
-<li><p>general census workshop w/ R: <a href="https://jennhuck.github.io/workshops/tidycensus.html" class="uri">https://jennhuck.github.io/workshops/tidycensus.html</a></p></li>
-<li><p>ACS Table B02001 data (race w/o hispanic/latino data): <a href="https://censusreporter.org/data/table/?table=B02001&amp;geo_ids=04000US06" class="uri">https://censusreporter.org/data/table/?table=B02001&amp;geo_ids=04000US06</a></p></li>
-<li><p>ACS Table B03002 data (race with hispanic/latino data): <a href="https://censusreporter.org/data/table/?table=B03002&amp;geo_ids=04000US06" class="uri">https://censusreporter.org/data/table/?table=B03002&amp;geo_ids=04000US06</a></p></li>
-<li><p>info about race in census data: <a href="https://censusreporter.org/topics/race-hispanic/" class="uri">https://censusreporter.org/topics/race-hispanic/</a></p></li>
-<li><p>other general info about concepts and tables in census data: <a href="https://censusreporter.org/topics/" class="uri">https://censusreporter.org/topics/</a></p></li>
-<li><p>check/validation of the numbers for CA: <a href="https://www.ppic.org/publication/californias-population/" class="uri">https://www.ppic.org/publication/californias-population/</a></p></li>
-</ul>
-</div>
-<div id="ca-workforce-data" class="section level3">
-<h3>CA Workforce Data:</h3>
+<div id="ca-workforce-data-resources" class="section level2">
+<h2>CA Workforce Data Resources</h2>
 <ul>
 <li><p>CalHR data page: <a href="https://www.calhr.ca.gov/pages/statewide-reports.aspx" class="uri">https://www.calhr.ca.gov/pages/statewide-reports.aspx</a></p></li>
 <li><p>Workforce data on CA open data portal: <a href="https://data.ca.gov/dataset/calhr-civil-rights-data-for-gare-capital-cohort-2019" class="uri">https://data.ca.gov/dataset/calhr-civil-rights-data-for-gare-capital-cohort-2019</a></p></li>
 </ul>
-</div>
 </div>
 <div id="enter-parameters" class="section level2">
 <h2>Enter Parameters</h2>
@@ -1200,20 +1185,26 @@ df_5102_dept_1yr &lt;- df_5102_dept %&gt;%
     filter(reporting_year == report_year)</code></pre>
 </div>
 </div>
-<div id="census-data-1" class="section level3">
+<div id="census-data" class="section level3">
 <h3>Census Data</h3>
-<p>explain ethnicity levels available in the data…</p>
+<p>For this report, we use data from the U.S. Census Bureau’s 1-year American Community Survey (ACS) dataset, which provides a statewide estimate of population and demographic data for a given year. The selected year (entered above) should match the year of the workforce data being analyzed, or if the ACS data for the desired year is not yet available the previous year’s 1-year ACS dataset can be used. To access the ACS data we use the tidycensus R package, which provides a user friendly interface to to the Census Bureau’s API via R.</p>
+<p>The ACS dataset provides information about a wide variety of topics, with different data types provided in separate tables, and fields within those tables defined by codes. We used ACS table B03002 to obtain estimates of statewide population by racial/ethnic group, because that table includes information about hispanic/latino origin (note that the primary ACS table for race/ethnicity information is table B02001, but that table does not contain information about hispanic/latino origin, as hispanic/latino orginin considered to be a characteristic that is tracked independent of race).</p>
+<p>The ethnicity groupings provided in ACS table B03002 are roughly analogous to the “level 2” ethnicity groupings described above for the state workforce data. To make the census data consistent with the level 2 groupings state workforce data, the only transformation applied to the census data is grouping the “Other” and “Multiple” category into one ‘Other or Multiple Race’ category. We also create an ACS dataset consistent with the level 1 ethnicity groupings described above by combining all of the racial/ethnic categories except “White” into one “BIOPOC” category.</p>
+<p>For more information about the tidycensus R package or the various types of data available from the U.S. Census Bureau, see the resources listed below.</p>
 <div id="census-data-resources" class="section level4">
 <h4>Census Data Resources</h4>
 <ul>
-<li>ACS Table B02001 data (race w/o hispanic/latino data): <a href="https://censusreporter.org/data/table/?table=B02001&amp;geo_ids=04000US06" class="uri">https://censusreporter.org/data/table/?table=B02001&amp;geo_ids=04000US06</a></li>
-<li>ACS Table B03002 data (race with hispanic/latino data): <a href="https://censusreporter.org/data/table/?table=B03002&amp;geo_ids=04000US06" class="uri">https://censusreporter.org/data/table/?table=B03002&amp;geo_ids=04000US06</a></li>
-<li>info about race in census data: <a href="https://censusreporter.org/topics/race-hispanic/" class="uri">https://censusreporter.org/topics/race-hispanic/</a></li>
+<li><p>tidycensus R package: <a href="https://walker-data.com/tidycensus/articles/basic-usage.html" class="uri">https://walker-data.com/tidycensus/articles/basic-usage.html</a></p></li>
+<li><p>general census workshop w/ R: <a href="https://jennhuck.github.io/workshops/tidycensus.html" class="uri">https://jennhuck.github.io/workshops/tidycensus.html</a></p></li>
+<li><p>ACS Table B02001 data (race w/o hispanic/latino data): <a href="https://censusreporter.org/data/table/?table=B02001&amp;geo_ids=04000US06" class="uri">https://censusreporter.org/data/table/?table=B02001&amp;geo_ids=04000US06</a></p></li>
+<li><p>ACS Table B03002 data (race with hispanic/latino data): <a href="https://censusreporter.org/data/table/?table=B03002&amp;geo_ids=04000US06" class="uri">https://censusreporter.org/data/table/?table=B03002&amp;geo_ids=04000US06</a></p></li>
+<li><p>info about race in census data: <a href="https://censusreporter.org/topics/race-hispanic/" class="uri">https://censusreporter.org/topics/race-hispanic/</a></p></li>
+<li><p>other general info about concepts and tables in census data: <a href="https://censusreporter.org/topics/" class="uri">https://censusreporter.org/topics/</a></p></li>
+<li><p>check/validation of the numbers for CA: <a href="https://www.ppic.org/publication/californias-population/" class="uri">https://www.ppic.org/publication/californias-population/</a></p></li>
 </ul>
 </div>
 <div id="download-census-data" class="section level4">
 <h4>Download Census Data</h4>
-<p>explain selected table / variables?…</p>
 <p>To download the census data, you need to first request a key here: <a href="https://api.census.gov/data/key_signup.html/" class="uri">https://api.census.gov/data/key_signup.html/</a> Then, enter census_api_key(“<em>your_key</em>”, install = TRUE) in your console.</p>
 <pre class="r"><code>## census data (ACS 1 yr) ----
 
