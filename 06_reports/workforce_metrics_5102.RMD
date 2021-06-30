@@ -39,32 +39,7 @@ racial demographics, and may be more helpful in developing the right questions
 that need to be asked, rather than immediate answers and/or numeric targets.
 If you have any questions about this code, please email Leah Jones at <leah.jones@waterboards.ca.gov>.
 
-## Resources
-
-### Census Data:
-
--   tidycensus R package:
-    <https://walker-data.com/tidycensus/articles/basic-usage.html>
-
--   general census workshop w/ R:
-    <https://jennhuck.github.io/workshops/tidycensus.html>
-
--   ACS Table B02001 data (race w/o hispanic/latino data):
-    <https://censusreporter.org/data/table/?table=B02001&geo_ids=04000US06>
-
--   ACS Table B03002 data (race with hispanic/latino data):
-    <https://censusreporter.org/data/table/?table=B03002&geo_ids=04000US06>
-
--   info about race in census data:
-    <https://censusreporter.org/topics/race-hispanic/>
-
--   other general info about concepts and tables in census data:
-    <https://censusreporter.org/topics/>
-
--   check/validation of the numbers for CA:
-    <https://www.ppic.org/publication/californias-population/>
-
-### CA Workforce Data:
+## CA Workforce Data Resources
 
 -   CalHR data page:
     <https://www.calhr.ca.gov/pages/statewide-reports.aspx>
@@ -214,20 +189,38 @@ df_5102_dept_1yr <- df_5102_dept %>%
 
 ### Census Data
 
-explain ethnicity levels available in the data...
+For this report, we use data from the U.S. Census Bureau's 1-year American Community Survey (ACS) dataset, which provides a statewide estimate of population and demographic data for a given year. The selected year (entered above) should match the year of the workforce data being analyzed, or if the ACS data for the desired year is not yet available the previous year's 1-year ACS dataset can be used. To access the ACS data we use the tidycensus R package, which provides a user friendly interface to to the Census Bureau's API via R. 
+
+The ACS dataset provides information about a wide variety of topics, with different data types provided in separate tables, and fields within those tables defined by codes. We used ACS table B03002 to obtain estimates of statewide population by racial/ethnic group, because that table includes information about hispanic/latino origin (note that the primary ACS table for race/ethnicity information is table B02001, but that table does not contain information about hispanic/latino origin, as hispanic/latino orginin considered to be a characteristic that is tracked independent of race). 
+
+The ethnicity groupings provided in ACS table B03002 are roughly analogous to the "level 2" ethnicity groupings described above for the state workforce data. To make the census data consistent with the level 2 groupings state workforce data, the only transformation applied to the census data is grouping the "Other" and "Multiple" category into one 'Other or Multiple Race' category. We also create an ACS dataset consistent with the level 1 ethnicity groupings described above by combining all of the racial/ethnic categories except "White" into one "BIOPOC" category.
+
+For more information about the tidycensus R package or the various types of data available from the U.S. Census Bureau, see the resources listed below.
 
 #### Census Data Resources
 
+-   tidycensus R package:
+    <https://walker-data.com/tidycensus/articles/basic-usage.html>
+
+-   general census workshop w/ R:
+    <https://jennhuck.github.io/workshops/tidycensus.html>
+
 -   ACS Table B02001 data (race w/o hispanic/latino data):
     <https://censusreporter.org/data/table/?table=B02001&geo_ids=04000US06>
+
 -   ACS Table B03002 data (race with hispanic/latino data):
     <https://censusreporter.org/data/table/?table=B03002&geo_ids=04000US06>
+
 -   info about race in census data:
     <https://censusreporter.org/topics/race-hispanic/>
 
-#### Download Census Data
+-   other general info about concepts and tables in census data:
+    <https://censusreporter.org/topics/>
 
-explain selected table / variables?...
+-   check/validation of the numbers for CA:
+    <https://www.ppic.org/publication/californias-population/>
+
+#### Download Census Data
 
 To download the census data, you need to first request a key here: <https://api.census.gov/data/key_signup.html/>
 Then, enter census_api_key("*your_key*", install = TRUE) in your console.
