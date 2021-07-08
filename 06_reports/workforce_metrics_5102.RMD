@@ -1,6 +1,6 @@
 ---
 title: "5102 Data Analysis by Agency / Department"
-author: "CalEPA Racial Equity Workgroup"
+author: "CalEPA Racial Equity Team"
 date: "*Updated: `r format(Sys.Date())`*"
 output:
   html_document:
