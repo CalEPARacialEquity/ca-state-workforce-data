@@ -3,11 +3,17 @@ title: "5102 Data Analysis by Agency / Department"
 author: "CalEPA Racial Equity Team"
 date: "*Updated: `r format(Sys.Date())`*"
 output:
-  html_document:
-    code_folding: hide
+  # html_document:
+  #   code_folding: hide
+  #   toc: TRUE
+  #   toc_float: TRUE
+  #   toc_depth: 5
+  github_document:
     toc: TRUE
-    toc_float: TRUE
     toc_depth: 5
+    html_preview: TRUE
+    keep_html: TRUE
+always_allow_html: true
 ---
 
 # 5102 Data Analysis by Agency / Department
@@ -48,7 +54,7 @@ If you have any questions about this code, please email Leah Jones at <leah.jone
     <https://data.ca.gov/dataset/calhr-civil-rights-data-for-gare-capital-cohort-2019>
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, message = FALSE)
+knitr::opts_chunk$set(echo = TRUE, message = FALSE) # set "echo = FALSE" to prevent all code from displaying in the output
 
 # load packages ----
 library(readxl)
@@ -159,8 +165,8 @@ depts_list <- df_5102 %>%
     rename('Department Name' = dept)
 
 
-depts_list %>% 
-    kbl() %>% 
+depts_list %>%
+    kbl() %>%
     kable_paper() %>%
     scroll_box(width = "500px", height = "200px") %>%
     {.}
