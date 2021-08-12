@@ -3,17 +3,17 @@ title: "5102 Data Analysis by Agency / Department"
 author: "CalEPA Racial Equity Team"
 date: "*Updated: `r format(Sys.Date())`*"
 output:
-  # html_document:
-  #   code_folding: hide
-  #   toc: TRUE
-  #   toc_float: TRUE
-  #   toc_depth: 5
-  github_document:
+  html_document:
+    code_folding: hide
     toc: TRUE
+    toc_float: TRUE
     toc_depth: 5
-    html_preview: TRUE
-    keep_html: TRUE
-always_allow_html: true
+#   github_document:
+#     toc: TRUE
+#     toc_depth: 5
+#     html_preview: TRUE
+#     keep_html: TRUE
+# always_allow_html: true
 ---
 
 # 5102 Data Analysis by Agency / Department
