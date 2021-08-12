@@ -24,7 +24,7 @@ To create graphs visualizing your department's workforce demographics, use the s
 
 ## Reports / Slides
 
-- [2020 Workforce Data Analysis slides available](https://cawaterboarddatacenter.github.io/ca-state-workforce-data/07_slides/2021-05-14/workforce_data_summary_2021-05-14.html)
+- [2020 Workforce Data Analysis slides](https://cawaterboarddatacenter.github.io/ca-state-workforce-data/07_slides/2021-05-14/workforce_data_summary_2021-05-14.html)
    - Shortened Link: http://bit.ly/calepa_workforce_2020-05-14
 - [5102 Data Analysis by Agency / Department](https://cawaterboarddatacenter.github.io/ca-state-workforce-data/06_reports/workforce_metrics_5102.html)
 - PowerBI prototypes and older data viz tools:
