@@ -4,17 +4,39 @@ author: "CalEPA Racial Equity Team"
 date: "*Updated: `r format(Sys.Date())`*"
 output:
   html_document:
-    code_folding: hide
+    code_folding: show
     toc: TRUE
-    toc_float: TRUE
-    toc_depth: 5
-#   github_document:
-#     toc: TRUE
-#     toc_depth: 5
-#     html_preview: TRUE
-#     keep_html: TRUE
-# always_allow_html: true
+    toc_float: FALSE
+    toc_depth: 3
+runtime: shiny
+assets:
+  css:
+    - "http://fonts.googleapis.com/css?family=Raleway:300"
+    - "http://fonts.googleapis.com/css?family=Oxygen"
 ---
+
+<style>
+body{
+  font-family: 'Oxygen', sans-serif;
+  font-size: 16px;
+  line-height: 24px;
+}
+
+h1,h2,h3,h4 {
+  font-family: 'Raleway', sans-serif;
+}
+
+.container { width: 1250px; }
+h3 {
+  background-color: #D4DAEC;
+  text-indent: 50px; 
+}
+h4 {
+  text-indent: 75px;
+  margin-top: 35px;
+  margin-bottom: 5px;
+}
+</style>
 
 # 5102 Data Analysis by Agency / Department
 
@@ -53,28 +75,42 @@ If you have any questions about this code, please email Leah Jones at <leah.jone
 -   Workforce data on CA open data portal:
     <https://data.ca.gov/dataset/calhr-civil-rights-data-for-gare-capital-cohort-2019>
 
+
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, message = FALSE) # set "echo = FALSE" to prevent all code from displaying in the output
+knitr::opts_chunk$set(echo=TRUE, warning=FALSE, message=FALSE) # set "echo = FALSE" to prevent all code from displaying in the output
+```
+
+
+```{r Libraries, include=TRUE, message=FALSE}
+# If you need to install the packages first, use the following code:
+# install.packages("readxl")
+# install.packages("tidyverse")
+# install.packages("janitor")
+# install.packages("here")
+# install.packages("glue")
+# install.packages("lubridate")
+# install.packages("scales")
+# install.packages("tidycensus")
+# install.packages("sf")
+# install.packages("patchwork")
+# install.packages("knitr")
+# install.packages("kableExtra")
+# install.packages("DT")
 
 # load packages ----
 library(readxl)
-library(readr)
-library(dplyr)
+library(tidyverse)
 library(janitor)
 library(here)
-library(purrr)
 library(glue)
 library(lubridate)
-library(ggplot2)
-library(forcats)
 library(scales)
 library(tidycensus)
 library(sf)
-library(stringr)
-library(glue)
-library(tidyr)
 library(patchwork)
-library(kableExtra)
+library(knitr)      # generate html tables for this report
+library(kableExtra) # better formatting of tables
+library(DT)         # creates sortable tables
 ```
 
 ## Enter Parameters
@@ -90,6 +126,7 @@ and Offices [BDOs] are the examples used here).
 report_year <- 2020
 acs_data_year <- 2019
 
+# enter agency name
 agency_name <- 'CalEPA'
 
 url_data_all_yrs <- 'https://data.ca.gov/dataset/e620a64f-6b86-4ce0-ab4b-03d06674287b/resource/aba87ad9-f6b0-4a7e-a45e-d1452417eb7f/download/calhr_5102_statewide_2011-2020.csv'
@@ -147,7 +184,6 @@ df_5102 <- df_5102 %>%
 # add a year column
 df_5102 <- df_5102 %>% 
     mutate(reporting_year = year(as_of_date))
-
 ```
 
 #### Filter for Selected Agency
@@ -172,6 +208,24 @@ depts_list %>%
     {.}
 ```
 
+
+TESTING SHINY
+# ```{r}
+# ui <- fluidPage(
+#   selectInput('Department Name', label='Select Department', choices=names(dept), selected=1),
+#   plotOutput('distPlot')
+# )
+# 
+# server <- function(input, output, session) {
+#   output$distPlot <- renderPlot({
+#   plot(dept[[input$distName]]$fitmodel) # view plot fits
+#     title(input$distName, outer=T)
+# })
+# }
+# 
+# shinyApp(ui, server, options=list(height=500))
+# )
+# ```
 
 Enter departments to be included in the analysis, and modify the variable 
 names as you see fit:
