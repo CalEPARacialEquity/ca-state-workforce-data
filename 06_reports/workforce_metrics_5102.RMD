@@ -45,7 +45,7 @@ h4 {
 ### This Report
 Understanding the composition of a workforce is useful for anticipating future hiring needs and associated budgets (such as succession planning), program and/or policy implementation, and contextually understanding workforce survey results. The purpose of this workforce demographics report is to provide initial data to assess whether California government workforce resemble the state's population demographics. Annual updates of workforce demographics will provide a baseline for understanding whether future racial equity initiatives foster a diverse workforce within and across agencies. Alternatively, it can serve as a guide to reflect whether we adequately represent the populations in the communities we serve.
 
-This code can be modified and applied to any department(s) in the California state system listed in California Department of Human Resource's (CalHR) 5102 data  set. This code was written by California Environmental Protection Agency's (CalEPA)  Racial Equity Team (CRET) Data Subteam in Spring 2021 to provide helpful  racial demographics visualizations for the workforce of the Agency and its Boards,  Departments, and Office (BDOs). The effort came out of a desire to supplement the Agency's Race Forward survey results with workforce demographic data. The Data Subteam intends on maintaining and building off this and other resources and datasets. If you have any questions about this code, please email Leah Jones at <leah.jones@waterboards.ca.gov>.
+This code can be modified and applied to any department(s) in the California state system listed in California Department of Human Resource's (CalHR) 5102 data  set. This code was written by California Environmental Protection Agency's (CalEPA)  Racial Equity Team (CRET) Data Subteam in Spring 2021 to provide helpful  racial demographics visualizations for the workforce of the Agency and its Boards,  Departments, and Office (BDOs). The effort came out of a desire to supplement the Agency's Race Forward survey results with workforce demographic data. The Data Subteam intends on maintaining and building off this and other resources and datasets. Future developments include adding RShiny components, analyzing entry-level vs promotional classification demographics, and incorporating data on gender identity, veteran status, and ability. If you have any questions about this code, please email Leah Jones at <leah.jones@waterboards.ca.gov>.
 
 The Data Subteam acknowledges that racial equity work is complex and  cannot be pared down to simple numbers in bins. In addition, diversity is intersectional and includes identities such as gender identity, race/ethnicity, sexual orientation, veteran status, and ability. This code and resulting  visualizations seeks to be the first step in critically examining an agency's  racial demographics, and may be more helpful in developing the right questions  that need to be asked, rather than immediate answers and/or numeric targets.
 
@@ -138,21 +138,13 @@ default_pl_caption <- glue('Data sources: state population data from {acs_data_y
 
 ### 5102 Data
 
-CalHR's biannual 5102 report "captures the race/ethnicity, gender, disability, 
-and veteran status by occupational group and classification for all state employees."
+CalHR's biannual 5102 report "captures the race/ethnicity, gender, disability, and veteran status by occupational group and classification for all state employees."
 Data source: [CalHR's Statewide 5102 report](https://www.calhr.ca.gov/pages/statewide-reports.aspx). 
 A cleaned and compiled version of that data is available on the California Open Data Portal at: <https://data.ca.gov/dataset/calhr-civil-rights-data-for-gare-capital-cohort-2019>
 
 #### Ethnicity Groupings
 
-The ethnicity groupings were thought of in two levels. Level one is "white" versus
-"BIPOC", where BIPOC stands for black, indigenous, and people of color, and includes 
-all ethnicity values other than white. Level two ethnicity groups some sub-groupings,
-in this case all Asian identities. We recognize that all ethnicities, including
-sub-groups of Asian ethnicities, experience discrimination differently. However,
-for the purposes of creating useful visualizations with a relatively small dataset, 
-we chose to group the identity variables in this way. Feel free to explore the
-data and re-group for your purposes as you see fit.
+The ethnicity groupings were thought of in two levels. Level one is "white" versus "BIPOC", where BIPOC stands for black, indigenous, and people of color, and includes  all ethnicity values other than white. Level two ethnicity groups some sub-groupings, in this case all Asian identities. We recognize that all ethnicities, including sub-groups of Asian ethnicities, experience discrimination differently. However, for the purposes of creating useful visualizations with a relatively small dataset,  we chose to group the identity variables in this way. Feel free to explore the data and re-group for your purposes as you see fit.
 
 ```{r}
 # 1 - load / transform data ---------------------------------------------------------------
@@ -183,8 +175,7 @@ df_5102 <- df_5102 %>%
 
 #### Filter for Selected Agency
 
-Search for the name of your selected agency from the box below, then copy and 
-paste into the subsequent code chunk.
+Search for the name of your selected agency from the box below, then copy and paste into the subsequent code chunk.
 
 List of agency names in the 5102 data set:
 
@@ -203,27 +194,7 @@ depts_list %>%
     {.}
 ```
 
-
-TESTING SHINY
-# ```{r}
-# ui <- fluidPage(
-#   selectInput('Department Name', label='Select Department', choices=names(dept), selected=1),
-#   plotOutput('distPlot')
-# )
-# 
-# server <- function(input, output, session) {
-#   output$distPlot <- renderPlot({
-#   plot(dept[[input$distName]]$fitmodel) # view plot fits
-#     title(input$distName, outer=T)
-# })
-# }
-# 
-# shinyApp(ui, server, options=list(height=500))
-# )
-# ```
-
-Enter departments to be included in the analysis, and modify the variable 
-names as you see fit:
+Enter departments to be included in the analysis, and modify the variable names as you see fit:
 
 ```{r}
 # Filtering for EPA and related BDOs 
@@ -376,8 +347,7 @@ colors_5102_7 <- brewer_colors # detailed ethnic groups: Asian ... White
 
 ### Format Data & Create Plotting Functions
 
-No changes necessary here, unless you would like to update variable and/or title 
-names:
+No changes necessary here, unless you would like to update variable and/or title names:
 
 ```{r}
 
@@ -510,8 +480,7 @@ fun_plot_5102_l2_stack <- function(dataset, plot_title, plot_caption) {
 
 ### Department Summary Plots
 
-*To save the graphs as png image files, remove the comment symbols (#) from the* 
-*ggsave lines.*
+*To save the graphs as png image files, remove the comment symbols (#) from the ggsave lines.*
 
 
 #### Level 1 Ethnicity
