@@ -42,31 +42,25 @@ h4 {
 # 5102 Data Analysis by Agency / Department
 
 ## Introduction
-This code can be modified and applied to any department(s) in the California
-state system listed in California Department of Human Resource's (CalHR) 5102 data 
-set. This code was written by California Environmental Protection Agency's (CalEPA) 
-Racial Equity Team (CRET) Data Subteam in Spring 2021 to provide helpful 
-racial demographics visualizations for the workforce of the Agency and its Boards, 
-Departments, and Office (BDOs). The effort came out of a desire to supplement the
-Agency's Race Forward survey results with workforce demographic data. The Data 
-Subteam intends on maintaining and building off this and other resources and datasets.
-The vision of the Workforce Equity Subteam's work is to create a workforce in which 
-one's work and/or career outcomes are not predicted by one's race. The Data Subteam's 
-efforts support this vision. This vision is informed by more detailed goals and objectives 
-related to work/career satisfaction, promotion and retention, compensation, 
-inclusion, mental and other health safety, and more. 
-CRET's model of change - normalize, organize and operationalize – is 
-aligned with over 200 government organizations part of a nationwide network to 
-transform governments to deliver more racial equity. We anticipate that these
-demographic metrics and resulting performance measures will evolve over time and 
-will be informed by future data and analyses of surveys, workforce demographics, 
-and research.
-Finally, the Data Subteam acknowledges that racial equity work is complex and 
-cannot be pared down to simple numbers in bins. This code and resulting 
-visualizations seeks to be the first step in critically examining an agency's 
-racial demographics, and may be more helpful in developing the right questions 
-that need to be asked, rather than immediate answers and/or numeric targets.
-If you have any questions about this code, please email Leah Jones at <leah.jones@waterboards.ca.gov>.
+### This Report
+Understanding the composition of a workforce is useful for anticipating future hiring needs and associated budgets (such as succession planning), program and/or policy implementation, and contextually understanding workforce survey results. The purpose of this workforce demographics report is to provide initial data to assess whether California government workforce resemble the state's population demographics. Annual updates of workforce demographics will provide a baseline for understanding whether future racial equity initiatives foster a diverse workforce within and across agencies. Alternatively, it can serve as a guide to reflect whether we adequately represent the populations in the communities we serve.
+
+This code can be modified and applied to any department(s) in the California state system listed in California Department of Human Resource's (CalHR) 5102 data  set. This code was written by California Environmental Protection Agency's (CalEPA)  Racial Equity Team (CRET) Data Subteam in Spring 2021 to provide helpful  racial demographics visualizations for the workforce of the Agency and its Boards,  Departments, and Office (BDOs). The effort came out of a desire to supplement the Agency's Race Forward survey results with workforce demographic data. The Data Subteam intends on maintaining and building off this and other resources and datasets. If you have any questions about this code, please email Leah Jones at <leah.jones@waterboards.ca.gov>.
+
+The Data Subteam acknowledges that racial equity work is complex and  cannot be pared down to simple numbers in bins. In addition, diversity is intersectional and includes identities such as gender identity, race/ethnicity, sexual orientation, veteran status, and ability. This code and resulting  visualizations seeks to be the first step in critically examining an agency's  racial demographics, and may be more helpful in developing the right questions  that need to be asked, rather than immediate answers and/or numeric targets.
+
+
+### CRET Workforce Equity Subteam
+The vision of CRET Workforce Equity Subteam's work is to create a workforce in which  one's work and/or career outcomes are not predicted by one's race. This vision is informed by more detailed goals and objectives related to work/career satisfaction, promotion and retention, compensation, inclusion, mental and other health safety, and more.  CRET's model of change - normalize, organize and operationalize – is  aligned with over 200 government organizations part of a nationwide network to  transform governments to deliver more racial equity. We anticipate that these demographic metrics and resulting performance measures will evolve over time and  will be informed by future data and analyses of surveys, workforce demographics,  and research.
+
+
+### Why Diversity and Inclusion in Representation Matters
+The workforce composition of state agencies matters and conversations based on data help drive meaningful change. Inadequate diversity has been proven to lead to less innovation (Hofstra et al., 2020). Workforce diversity enhances our ability to protect public health and the environment by helping the state to understand exposures to pollutants, set priorities, and improve communication.
+
+It is well-known that people relate to people like themselves. In order to fully engage in conversations regarding policies that affect all communities in California, we must improve our conversations with the communities we serve. One of the first steps to engaging in meaningful conversations is to build trust within the communities. Looking to our own workforce’s experiences by listening to and empowering those who grew up, live, and work in our communities may help us engage and build that trust. In addition, nearly half of Californians speak a language other than English at home. Communicating our messages in locally spoken languages enhances the effectiveness of our programs and protects people in emergencies.
+
+Specific to CalEPA's concerns, CalEnviroscreen data have shown us that communities of color experience the highest levels of environmental burdens and the greatest effects of climate change (Figure 1). COVID-19 has also been shown to exacerbate existing social, health, educational, criminal justice, and housing inequities that were already disproportionately affecting these communities. CalEPA’s environmental regulations and policies have real effects on California residents. Finding ways to better engage with communities to effectively address these disparate impacts can help us better serve those who are the most burdened by these inequities.
+
 
 ## CA Workforce Data Resources
 
@@ -628,8 +622,11 @@ pl_5102_patch_dept_l2 <- pl_5102_patch_dept_l2 +
 
 ### Department by Employee Class
 
-To compare across employee categories, use the code chunks below to identify your 
-desired groupings and modify the categories/classes as you see fit.
+At CalEPA, we examined the demographic differences between classifications. We split up the data into technical, legal, administrative, and management classifications. As a general finding, our examination revealed more diversity in administrative classifications and decreasing diversity as one looks toward technical, legal, and management classifications. In addition, administrative demographics are more representative of California's population. How do we explain persistent inequalities in careers between minority and majority groups?
+
+The issues related to representation are exacerbated when administrative professionals, who support generally higher-paying technical and management classifications, work along technical and managerial staff to support programmatic goals. Further analysis to be done includes looking at differences in demographics between entry-level and promotional titles. Administrative classifications at the lower ranks have traditionally been, and continue to be, among the lowest-paying in civil service. This is a very complicated matter of workforce equity with vast intersectionality. 
+
+To compare across employee categories for your agency, use the code chunks below to identify your desired groupings and modify the categories/classes as you see fit.
 
 ```{r}
 ## 2.2. - Department By Group ----
@@ -650,12 +647,6 @@ categories_list %>%
     {.}
 ```
 
-Create your employee class groupings in the code below. Investigate the table 
-above and code below to determine how you would like to group your classes.
-In our example, we grouped by Legal, Management, Technical, Administrative,
-and Technical, because we wanted to see the differences in demographics between
-these groups. We chose these groupings to investigate assumptions about diversity
-in these varying categories.
 
 ```{r}
 ## you can also use the code below to view your table in RStudio, to examine
@@ -1051,3 +1042,16 @@ for (i in seq_along(pl_5102_groups_l2_bdo_all)) {
 #                     dpi = 125)
 # )
 ```
+
+
+## Resources
+Below is a compilation of resources that may be helpful to human resources professionals in addressing some classification issues, such as the one mentioned earlier in this report regarding administrative classifications. 
+
+-   CalHR’s Civil Rights Office page:
+    <https://www.calhr.ca.gov/state-hr-professionals/Pages/ocr-description.aspx>
+-   Additional information about the annual Workforce Analysis Report, which is the traditional     purpose of the 5102 reports:
+    <https://www.calhr.ca.gov/state-hr-professionals/Pages/WFA-and-Census.aspx>
+-   Upward Mobility Program component of the WFA Report:
+    <https://www.calhr.ca.gov/state-hr-professionals/Pages/Upward-Mobility.aspx>
+-   CalHR manual page about Upward Mobility:  
+    <https://hrmanual.calhr.ca.gov/Home/ManualItem/1/1005>  
