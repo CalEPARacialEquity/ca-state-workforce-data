@@ -290,7 +290,7 @@ h4 {
 <div id="this-report" class="section level3">
 <h3>This Report</h3>
 <p>Understanding the composition of a workforce is useful for anticipating future hiring needs and associated budgets (such as succession planning), program and/or policy implementation, and contextually understanding workforce survey results. The purpose of this workforce demographics report is to provide initial data to assess whether California government workforce resemble the state’s population demographics. Annual updates of workforce demographics will provide a baseline for understanding whether future racial equity initiatives foster a diverse workforce within and across agencies. Alternatively, it can serve as a guide to reflect whether we adequately represent the populations in the communities we serve.</p>
-<p>This code can be modified and applied to any department(s) in the California state system listed in California Department of Human Resource’s (CalHR) 5102 data set. This code was written by California Environmental Protection Agency’s (CalEPA) Racial Equity Team (CRET) Data Subteam in Spring 2021 to provide helpful racial demographics visualizations for the workforce of the Agency and its Boards, Departments, and Office (BDOs). The effort came out of a desire to supplement the Agency’s Race Forward survey results with workforce demographic data. The Data Subteam intends on maintaining and building off this and other resources and datasets. If you have any questions about this code, please email Leah Jones at <a href="mailto:leah.jones@waterboards.ca.gov" class="email">leah.jones@waterboards.ca.gov</a>.</p>
+<p>This code can be modified and applied to any department(s) in the California state system listed in California Department of Human Resource’s (CalHR) 5102 data set. This code was written by California Environmental Protection Agency’s (CalEPA) Racial Equity Team (CRET) Data Subteam in Spring 2021 to provide helpful racial demographics visualizations for the workforce of the Agency and its Boards, Departments, and Office (BDOs). The effort came out of a desire to supplement the Agency’s Race Forward survey results with workforce demographic data. The Data Subteam intends on maintaining and building off this and other resources and datasets. Future developments include adding RShiny components, analyzing entry-level vs promotional classification demographics, and incorporating data on gender identity, veteran status, and ability. If you have any questions about this code, please email Leah Jones at <a href="mailto:leah.jones@waterboards.ca.gov" class="email">leah.jones@waterboards.ca.gov</a>.</p>
 <p>The Data Subteam acknowledges that racial equity work is complex and cannot be pared down to simple numbers in bins. In addition, diversity is intersectional and includes identities such as gender identity, race/ethnicity, sexual orientation, veteran status, and ability. This code and resulting visualizations seeks to be the first step in critically examining an agency’s racial demographics, and may be more helpful in developing the right questions that need to be asked, rather than immediate answers and/or numeric targets.</p>
 </div>
 <div id="cret-workforce-equity-subteam" class="section level3">
@@ -1236,7 +1236,6 @@ Workforce Development Board, California
 </tbody>
 </table>
 </div>
-<p>TESTING SHINY # <code>{r} # ui &lt;- fluidPage( #   selectInput(&#39;Department Name&#39;, label=&#39;Select Department&#39;, choices=names(dept), selected=1), #   plotOutput(&#39;distPlot&#39;) # ) #  # server &lt;- function(input, output, session) { #   output$distPlot &lt;- renderPlot({ #   plot(dept[[input$distName]]$fitmodel) # view plot fits #     title(input$distName, outer=T) # }) # } #  # shinyApp(ui, server, options=list(height=500)) # ) #</code></p>
 <p>Enter departments to be included in the analysis, and modify the variable names as you see fit:</p>
 <pre class="r"><code># Filtering for EPA and related BDOs 
 df_5102_dept &lt;- df_5102 %&gt;% 
@@ -1491,7 +1490,7 @@ fun_plot_5102_l2_stack &lt;- function(dataset, plot_title, plot_caption) {
 </div>
 <div id="department-summary-plots" class="section level3">
 <h3>Department Summary Plots</h3>
-<p><em>To save the graphs as png image files, remove the comment symbols (#) from the</em> <em>ggsave lines.</em></p>
+<p><em>To save the graphs as png image files, remove the comment symbols (#) from the ggsave lines.</em></p>
 <div id="level-1-ethnicity" class="section level4">
 <h4>Level 1 Ethnicity</h4>
 <pre class="r"><code>#### Level 1 ---- 
