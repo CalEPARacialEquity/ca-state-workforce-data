@@ -23,7 +23,7 @@ library(sf)
 url_data_all_yrs <- 'https://data.ca.gov/dataset/e620a64f-6b86-4ce0-ab4b-03d06674287b/resource/aba87ad9-f6b0-4a7e-a45e-d1452417eb7f/download/calhr_5102_statewide_2011-2020.csv'
 
 df_5102_report <- read_csv('data\\calhr_5102_statewide_2011-2020.csv.gz',
-                        col_types = cols(.default = col_character())) %>%  
+                           col_types = cols(.default = col_character())) %>%  
     type_convert() %>% 
     clean_names() %>% 
     # mutate(record_count = as.integer(record_count)) %>% 
@@ -36,23 +36,23 @@ years <- c(2011:2019)
 acs_data_raw <- map_dfr(
     years,
     ~ get_acs(geography = 'state', 
-                        variables = c(# total_state_pop = 'B02001_001',
-                            'Hispanic or Latino' = 'B03002_012', # Total Hispanic or Latino
-                            'White' = 'B03002_003', # White (Not Hispanic or Latino)
-                            'Black or African American' = 'B03002_004', # Black or African American (Not Hispanic or Latino)
-                            'Native American or Alaska Native' = 'B03002_005', # American Indian and Alaska Native (Not Hispanic or Latino)
-                            'Asian' = 'B03002_006', # Asian (Not Hispanic or Latino)
-                            'Pacific Islander' = 'B03002_007', # Native Hawaiian and Other Pacific Islander (Not Hispanic or Latino)
-                            'Other' = 'B03002_008', # Some other race (Not Hispanic or Latino)
-                            'Multiple' = 'B03002_009'# Two or more races (Not Hispanic or Latino)
-                        ),
-                        summary_var = c(total_state_pop = 'B02001_001'), 
-                        survey = 'acs1', # use 'acs1' or 'acs5' to get 1 or 5 year acs
-                        state = 'CA', 
-                        geometry = FALSE, # set to TRUE to get as geospatial data
-                        year = .x),
+              variables = c(# total_state_pop = 'B02001_001',
+                  'Hispanic or Latino' = 'B03002_012', # Total Hispanic or Latino
+                  'White' = 'B03002_003', # White (Not Hispanic or Latino)
+                  'Black or African American' = 'B03002_004', # Black or African American (Not Hispanic or Latino)
+                  'Native American or Alaska Native' = 'B03002_005', # American Indian and Alaska Native (Not Hispanic or Latino)
+                  'Asian' = 'B03002_006', # Asian (Not Hispanic or Latino)
+                  'Pacific Islander' = 'B03002_007', # Native Hawaiian and Other Pacific Islander (Not Hispanic or Latino)
+                  'Other' = 'B03002_008', # Some other race (Not Hispanic or Latino)
+                  'Multiple' = 'B03002_009'# Two or more races (Not Hispanic or Latino)
+              ),
+              summary_var = c(total_state_pop = 'B02001_001'), 
+              survey = 'acs1', # use 'acs1' or 'acs5' to get 1 or 5 year acs
+              state = 'CA', 
+              geometry = FALSE, # set to TRUE to get as geospatial data
+              year = .x),
     .id = "year"
-    )
+)
 
 
 # Clean/Transform Data ---------------
@@ -134,10 +134,10 @@ acs_data_level2 <- acs_data_level2 %>%
 
 # Define UI for application ###################################################
 ui <- fluidPage(
-
+    
     # Application title
     titlePanel("CA State Workforce Data"),
-
+    
     # Sidebar with filters 
     sidebarLayout(
         sidebarPanel(
@@ -145,19 +145,18 @@ ui <- fluidPage(
                         label = "Reporting Year:", 
                         choices = # rev(
                             df_5102_report %>% 
-                                          distinct(report_year) %>% 
-                                          arrange(desc(report_year)) %>% 
-                                          pull(report_year)
-                            #)
-                        ),
+                            distinct(report_year) %>% 
+                            arrange(desc(report_year)) %>% 
+                            pull(report_year)
+                        #)
+            ),
             selectInput(inputId = "department", 
                         label = "Department:", 
                         choices = c('All', 
-                                    df_5102_report %>% 
-                                        distinct(dept) %>% 
-                                        arrange(dept) %>% 
-                                        pull(dept))
-                        ),
+                                    unique(df_5102_report$dept)),
+                        multiple = TRUE,
+                        selectize = TRUE
+            ),
             selectInput(inputId = "class_selected",
                         label = "Class Title:",
                         choices = c('All',
@@ -165,12 +164,12 @@ ui <- fluidPage(
                                                      distinct(class_title) %>% 
                                                      arrange(class_title) %>% 
                                                      pull(class_title)))
-                        ),
+            ),
             # uiOutput('cl_title')
         ),
         
         
-
+        
         # outputs
         mainPanel(
             column(12, align = 'center',
@@ -205,7 +204,7 @@ server <- function(input, output, session) {
     
     # --------------- get filters ---------------
     # department
-    filter_dpt <- reactive({
+    filter_dpt <- reactiveValues({
         if(input$department == 'All')
             return(unique(df_5102_report$dept))
         else
@@ -230,12 +229,12 @@ server <- function(input, output, session) {
                  {updateSelectInput(session = session,
                                     inputId = 'rpt_year',
                                     choices = c(#'All',
-                                                df_5102_report %>%
-                                                    filter(dept %in% filter_dpt(), 
-                                                           class_title %in% toupper(filter_title())) %>%
-                                                    distinct(report_year) %>% 
-                                                    arrange(desc(report_year)) %>%
-                                                    pull(report_year)),
+                                        df_5102_report %>%
+                                            filter(dept %in% filter_dpt(), 
+                                                   class_title %in% toupper(filter_title())) %>%
+                                            distinct(report_year) %>% 
+                                            arrange(desc(report_year)) %>%
+                                            pull(report_year)),
                                     selected = input$rpt_year
                  )})
     
@@ -273,7 +272,7 @@ server <- function(input, output, session) {
                                                                  pull(class_title))),
                                     selected = input$class_selected
                  )})
-
+    
     # --------------- make plot --------------- 
     
     # create function factory for getting integer y-axis values (see: https://joshuacook.netlify.app/post/integer-values-ggplot-axis/)
@@ -349,8 +348,8 @@ server <- function(input, output, session) {
         pl_class_title
     })
     
-        
-        
+    
+    
     # --------------- create plot by agency --------------- 
     # output$plot_agency <- renderPlot({
     #     pl_agency <- ggplot(data = df_5102_report %>% 
