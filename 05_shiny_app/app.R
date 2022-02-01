@@ -15,6 +15,7 @@ library(forcats)
 library(scales)
 library(tidycensus)
 library(sf)
+library(shinyWidgets)
 
 
 # Write Necessary Functions -----------------------------------------------
@@ -37,7 +38,7 @@ url_data_all_yrs <-
 
 df_5102_report <-
     read_csv(
-        'data\\calhr_5102_statewide_2011-2020.csv.gz',
+        url_data_all_yrs,
         col_types = cols(.default = col_character())
     ) %>%
     type_convert() %>%
@@ -124,21 +125,20 @@ acs_data_level2 <- acs_data_raw %>%
 # sum(acs_data_level2$estimate) == acs_data_level2$total_state_pop[1]
 
 # Group the 'Other' and 'Multiple' rows into one 'Other or Multiple Race' row
-acs_data_level2_final <- acs_data_level2 %>%
+acs_data_level2 <- acs_data_level2 %>%
     mutate(
         ethnicity_level2 =
             case_when(
-                ethnicity_level2 == 'Other' |
-                    ethnicity_level2 == 'Multiple' ~
-                    'Other or Multiple Race',
+                ethnicity_level2 == 'Other' | ethnicity_level2 == 'Multiple' ~ 'Other or Multiple Race',
                 TRUE ~ ethnicity_level2
             )
     ) %>%
     group_by(year, geoid, location_name, ethnicity_level2, total_state_pop) %>%
-    summarize(estimate = sum(estimate)) %>%
+    summarize(ethnicity_total = sum(estimate)) %>%
     ungroup() %>%
     # Add a column with each ethnicity's % of total state population
-    mutate(pop_pct = estimate / total_state_pop) %>% 
+    mutate(rate = ethnicity_total / total_state_pop) %>% 
+    mutate(type = factor('State Population')) %>%
     {.}
 
 
@@ -146,16 +146,24 @@ acs_data_level2_final <- acs_data_level2 %>%
 # sum(acs_data_level2$estimate) == acs_data_level2$total_state_pop[1]
 
 ## create a dataset grouped at level 1 - all BIPOC together (resulting groups are BIPOC and white)
-acs_data_level1 <- acs_data_level2_final %>%
+acs_data_level1 <- acs_data_raw %>%
+    clean_names() %>%
+    rename(
+        total_state_pop = summary_est,
+        total_state_pop_moe = summary_moe,
+        location_name = name,
+        ethnicity_level2 = variable
+    ) %>% 
     mutate(
         ethnicity_level1 = case_when(
             ethnicity_level2 == 'White' ~ 'White',
             TRUE ~ 'BIPOC')
     ) %>%
-    group_by(geoid, location_name, ethnicity_level1, total_state_pop) %>%
-    summarize(estimate = sum(estimate)) %>%
+    group_by(year, geoid, location_name, ethnicity_level1, total_state_pop) %>%
+    summarize(ethnicity_total = sum(estimate)) %>%
     ungroup() %>%
-    mutate(pop_pct = estimate / total_state_pop) %>% # update the pop_pct to reflect level 1 numbers
+    mutate(rate = ethnicity_total / total_state_pop) %>% # update the rate to reflect level 1 numbers
+    mutate(type = factor('State Population')) %>% 
     {.}
 
 ## check (should be TRUE)
@@ -163,127 +171,150 @@ acs_data_level1 <- acs_data_level2_final %>%
 
 
 # Define UI for application -----------------------------------------------
-ui <- fluidPage(
-    tabsetPanel(
-        tabPanel("Introduction",
-                 h2("This Report"),
-                 tags$body("Understanding the composition of a workforce is useful for anticipating future hiring needs and associated budgets (such as succession planning), program and/or policy implementation, and contextually understanding workforce survey results. The purpose of this workforce demographics report is to provide initial data to assess whether California government workforce resemble the state's population demographics. Annual updates of workforce demographics will provide a baseline for understanding whether future racial equity initiatives foster a diverse workforce within and across agencies. Alternatively, it can serve as a guide to reflect whether we adequately represent the populations in the communities we serve."),
-                 br(),
-                 tags$body("This code can be modified and applied to any department(s) in the California state system listed in California Department of Human Resource's (CalHR) 5102 data  set. This code was written by California Environmental Protection Agency's (CalEPA)  Racial Equity Team (CRET) Data Subteam in Spring 2021 to provide helpful  racial demographics visualizations for the workforce of the Agency and its Boards,  Departments, and Office (BDOs). The effort came out of a desire to supplement the Agency's Race Forward survey results with workforce demographic data. The Data Subteam intends on maintaining and building off this and other resources and datasets. Future developments include adding RShiny components, analyzing entry-level vs promotional classification demographics, and incorporating data on gender identity, veteran status, and ability."),
-                 br(),
-                 tags$body("The Data Subteam acknowledges that racial equity work is complex and  cannot be pared down to simple numbers in bins. In addition, diversity is intersectional and includes identities such as gender identity, race/ethnicity, sexual orientation, veteran status, and ability. This code and resulting  visualizations seeks to be the first step in critically examining an agency's  racial demographics, and may be more helpful in developing the right questions  that need to be asked, rather than immediate answers and/or numeric targets. If you have any questions about this code, please email Leah Jones at"),
-                 tags$link("leah.jones@waterboards.ca.gov"),
-                 tags$body("."),
-                 br(),
-                 tags$h2("CRET Workforce Equity Subteam"),
-                 tags$body("The vision of CRET Workforce Equity Subteam's work is to create a workforce in which  one's work and/or career outcomes are not predicted by one's race. This vision is informed by more detailed goals and objectives related to work/career satisfaction, promotion and retention, compensation, inclusion, mental and other health safety, and more.  CRET's model of change - normalize, organize and operationalize – is  aligned with over 200 government organizations part of a nationwide network to  transform governments to deliver more racial equity. We anticipate that these demographic metrics and resulting performance measures will evolve over time and  will be informed by future data and analyses of surveys, workforce demographics,  and research."),
-                 br(),
-                 tags$h2("Why Diversity and Inclusion in Representation Matters"),
-                 tags$body("The workforce composition of state agencies matters and conversations based on data help drive meaningful change. Inadequate diversity has been proven to lead to less innovation (Hofstra et al., 2020). Workforce diversity enhances our ability to protect public health and the environment by helping the state to understand exposures to pollutants, set priorities, and improve communication."),
-                 br(),
-                 tags$body("It is well-known that people relate to people like themselves. In order to fully engage in conversations regarding policies that affect all communities in California, we must improve our conversations with the communities we serve. One of the first steps to engaging in meaningful conversations is to build trust within the communities. Looking to our own workforce’s experiences by listening to and empowering those who grew up, live, and work in our communities may help us engage and build that trust. In addition, nearly half of Californians speak a language other than English at home. Communicating our messages in locally spoken languages enhances the effectiveness of our programs and protects people in emergencies."),
-                 br(),
-                 tags$body("Specific to CalEPA's concerns, CalEnviroscreen data have shown us that communities of color experience the highest levels of environmental burdens and the greatest effects of climate change (Figure 1). COVID-19 has also exacerbated existing social, health, educational, criminal justice, and housing inequities that were already disproportionately affecting these communities. CalEPA’s environmental regulations and policies have real effects on California residents. Finding ways to better engage with communities to effectively address these disparate impacts can help us better serve those who are the most burdened by these inequities."),
-                 br()
+ui <- navbarPage(
+    title = "Workforce Demographic Tools",
+    tabPanel(
+        "Introduction",
+        h2("This Report"),
+        tags$p(
+            "Understanding the composition of a workforce is useful for anticipating future hiring needs and associated budgets (such as succession planning), program and/or policy implementation, and contextually understanding workforce survey results. The purpose of this workforce demographics report is to provide initial data to assess whether California government workforce resemble the state's population demographics. Annual updates of workforce demographics will provide a baseline for understanding whether future racial equity initiatives foster a diverse workforce within and across agencies. Alternatively, it can serve as a guide to reflect whether we adequately represent the populations in the communities we serve."
         ),
-        tabPanel("Department Summary Plots",
-                 # Sidebar with filters (inputs)
-                 # Broken down by department(s) and reporting year, not class
-                 sidebarLayout(
-                     sidebarPanel(
-                         selectInput(
-                             inputId = "sum_rpt_year",
-                             label = "Reporting Year:",
-                             choices = df_5102_report %>%
-                                 distinct(report_year) %>%
-                                 arrange(desc(report_year)) %>%
-                                 pull(report_year)
-                         ),
-                         selectInput(inputId = "sum_department",
-                                     label = "Department:",
-                                     choices = c('All',
-                                                 df_5102_report %>% 
-                                                     distinct(dept) %>% 
-                                                     arrange(dept) %>% 
-                                                     pull(dept)
-                                     )
-                                     #,
-                                     #multiple = TRUE
-                         )
-                         #,
-                         # textInput(inputId = "sum_title",
-                         #           label = "Add a title:",
-                         #           placeholder = "CalEPA Workforce Demographics")
-                     ),
-                     
-                     # Main panel with plot (output)
-                     mainPanel(
-                         column(
-                             12,
-                             align = 'center',
-                             plotOutput('sum_plot',
-                                        height = 500)
-                         )
-                     )
-                 )
+        br(),
+        tags$p(
+            "This code can be modified and applied to any department(s) in the California state system listed in California Department of Human Resource's (CalHR) 5102 data  set. This code was written by California Environmental Protection Agency's (CalEPA)  Racial Equity Team (CRET) Data Subteam in Spring 2021 to provide helpful  racial demographics visualizations for the workforce of the Agency and its Boards,  Departments, and Office (BDOs). The effort came out of a desire to supplement the Agency's Race Forward survey results with workforce demographic data. The Data Subteam intends on maintaining and building off this and other resources and datasets. Future developments include adding RShiny components, analyzing entry-level vs promotional classification demographics, and incorporating data on gender identity, veteran status, and ability."
         ),
-        tabPanel("Exploratory Tool: Department Ethnicity and Gender",
-                 # Sidebar with filters (inputs)
-                 sidebarLayout(
-                     sidebarPanel(
-                         selectInput(
-                             inputId = "exp_rpt_year",
-                             label = "Reporting Year:",
-                             choices = #rev(
-                                 df_5102_report %>%
-                                 distinct(report_year) %>%
-                                 arrange(desc(report_year)) %>%
-                                 pull(report_year)
-                             #)
-                         ),
-                         selectInput(
-                             inputId = "exp_department",
-                             label = "Department:",
-                             choices = c('All',
-                                         df_5102_report %>% 
-                                             distinct(dept) %>% 
-                                             arrange(dept) %>% 
-                                             pull(dept))
-                         ),
-                         selectInput(
-                             inputId = "exp_class_selected",
-                             label = "Class Title:",
-                             choices = c(
-                                 'All',
-                                 str_to_title(
-                                     df_5102_report %>%
-                                         distinct(class_title) %>%
-                                         arrange(class_title) %>%
-                                         pull(class_title)
-                                 )
-                             )
-                         ),
-                     ),
-                     
-                     # Main panel with plot (output)
-                     mainPanel(
-                         column(
-                             12,
-                             align = 'center',
-                             plotOutput('exp_plot',
-                                        height = 500),
-                             radioButtons(
-                                 inputId = 'bar_type',
-                                 label = 'bar type:',
-                                 choices = c('stacked', 'grouped'),
-                                 selected = 'stacked'
-                             )
-                         )
-                     )
-                 )
+        br(),
+        tags$p(
+            "The Data Subteam acknowledges that racial equity work is complex and  cannot be pared down to simple numbers in bins. In addition, diversity is intersectional and includes identities such as gender identity, race/ethnicity, sexual orientation, veteran status, and ability. This code and resulting  visualizations seeks to be the first step in critically examining an agency's  racial demographics, and may be more helpful in developing the right questions  that need to be asked, rather than immediate answers and /
+or numeric targets. If you have any questions about this code, please email Leah Jones at",
+            tags$a(href = "mailto:leah.jones@waterboards.ca.gov", "leah.jones@waterboards.ca.gov"),
+            "."
+        ),
+        br(),
+        tags$h2("CRET Workforce Equity Subteam"),
+        tags$p(
+            "The vision of CRET Workforce Equity Subteam's work is to create a workforce in which  one's work and /
+or career outcomes are not predicted by one's race. This vision is informed by more detailed goals and objectives related to work/career satisfaction, promotion and retention, compensation, inclusion, mental and other health safety, and more.  CRET's model of change - normalize, organize and operationalize – is  aligned with over 200 government organizations part of a nationwide network to  transform governments to deliver more racial equity. We anticipate that these demographic metrics and resulting performance measures will evolve over time and  will be informed by future data and analyses of surveys, workforce demographics,  and research."
+        ),
+        br(),
+        tags$h2("Why Diversity and Inclusion in Representation Matters"),
+        tags$p(
+            "The workforce composition of state agencies matters and conversations based on data help drive meaningful change. Inadequate diversity has been proven to lead to less innovation (Hofstra et al., 2020). Workforce diversity enhances our ability to protect public health and the environment by helping the state to understand exposures to pollutants, set priorities, and improve communication."
+        ),
+        br(),
+        tags$p(
+            "It is well-known that people relate to people like themselves. In order to fully engage in conversations regarding policies that affect all communities in California, we must improve our conversations with the communities we serve. One of the first steps to engaging in meaningful conversations is to build trust within the communities. Looking to our own workforce’s experiences by listening to and empowering those who grew up, live, and work in our communities may help us engage and build that trust. In addition, nearly half of Californians speak a language other than English at home. Communicating our messages in locally spoken languages enhances the effectiveness of our programs and protects people in emergencies."
+        ),
+        br(),
+        tags$p(
+            "Specific to CalEPA's concerns, CalEnviroscreen data have shown us that communities of color experience the highest levels of environmental burdens and the greatest effects of climate change (Figure 1). COVID-19 has also exacerbated existing social, health, educational, criminal justice, and housing inequities that were already disproportionately affecting these communities. CalEPA’s environmental regulations and policies have real effects on California residents. Finding ways to better engage with communities to effectively address these disparate impacts can help us better serve those who are the most burdened by these inequities."
+        ),
+        br()
+    ),
+    tabPanel(
+        "Department Summary Plots",
+        # Sidebar with filters (inputs)
+        # Broken down by department(s) and reporting year, not class
+        sidebarLayout(sidebarPanel(
+            selectInput(
+                inputId = "sum_rpt_year",
+                label = "Reporting Year:",
+                choices = df_5102_report %>%
+                    distinct(report_year) %>%
+                    arrange(desc(report_year)) %>%
+                    pull(report_year)
+            ),
+            pickerInput(
+                inputId = "sum_department",
+                label = "Department:",
+                choices = c(
+                    df_5102_report %>%
+                        distinct(dept) %>%
+                        arrange(dept) %>%
+                        pull(dept)
+                ),
+                options = pickerOptions(`actions-box` = TRUE,
+                               `liveSearch` = TRUE,
+                               `virtual-scroll` = 10,
+                               `multiple-separator` = "\n",
+                               size = 10),
+                multiple = TRUE
+            ),
+            tags$h6(em("Note: Hover over the department input bar to see a list of the currently selected department(s).")),
+            textInput(
+                inputId = "sum_graph_title",
+                label = "Graph title:",
+                placeholder = "CalEPA Workforce Demographics"
+            )
+            
+        ),
+        
+        # Main panel with plot (output)
+        mainPanel(column(
+            12,
+            align = 'center',
+            plotOutput('sum_plot',
+                       height = 500)
+        )))
+    ),
+    tabPanel(
+        "Exploratory Tool: Department Ethnicity and Gender",
+        # Sidebar with filters (inputs)
+        sidebarLayout(
+            sidebarPanel(
+                selectInput(
+                    inputId = "exp_rpt_year",
+                    label = "Reporting Year:",
+                    choices = #rev(
+                        df_5102_report %>%
+                        distinct(report_year) %>%
+                        arrange(desc(report_year)) %>%
+                        pull(report_year)
+                    #)
+                ),
+                selectInput(
+                    inputId = "exp_department",
+                    label = "Department:",
+                    choices = c(
+                        'All',
+                        df_5102_report %>%
+                            distinct(dept) %>%
+                            arrange(dept) %>%
+                            pull(dept)
+                    )
+                ),
+                selectizeInput(
+                    inputId = "exp_class_selected",
+                    label = "Class Title:",
+                    choices = c(
+                        'All',
+                        str_to_title(
+                            df_5102_report %>%
+                                distinct(class_title) %>%
+                                arrange(class_title) %>%
+                                pull(class_title)
+                        )
+                    )
+                ),
+            ),
+            
+            # Main panel with plot (output)
+            mainPanel(column(
+                12,
+                align = 'center',
+                plotOutput('exp_plot',
+                           height = 500),
+                radioButtons(
+                    inputId = 'bar_type',
+                    label = 'bar type:',
+                    choices = c('stacked', 'grouped'),
+                    selected = 'stacked'
+                )
+            ))
         )
     )
 )
+
 
 
 # Define server logic -----------------------------------------------------
@@ -292,28 +323,36 @@ server <- function(input, output, session) {
     ## Department Summary Plot -------------------------------------------------
     # --------------- Reactive values ---------------
     # Filter department
-    sum_filter_dpt <- reactive({
-        if(input$sum_department == 'All')
-            return(unique(df_5102_report$dept))
-        else
-            return(input$sum_department)
-    })
-    
+    # sum_filter_dpt <- reactive({
+    #     if(input$sum_department == 'All'){
+    #         list(unique(df_5102_report$dept))
+    #     } else{if(input$sum_department != 'All'){
+    #         input$sum_department
+    #     } else{TRUE}}
+    # })
+    # 
+    # output$sum_secondary_select <- renderUI({
+    #     if ('All' %in% input$sum_department) {
+    #         sum_filter_dpt <- unique(df_5102_report$dept)
+    #     } else {
+    #         df <- df_5102_report %>% filter(dept == input$sum_department)
+    #         sum_filter_dpt <- unique(df$dept)
+    #     }
+    #     selectizeInput('test', 'Test', choices = c('All', sum_filter_dpt))
+    # })
+    # 
     # --------------- Update filter options ---------------
     # Reactive update to available selections in dropdown for report year
-    sum_observer_year <- reactive({
-        list(input$sum_department)
-    })
-    observeEvent(sum_observer_year(),
+    observeEvent(input$sum_department,
                  {
                      updateSelectInput(
                          session = session,
                          inputId = 'sum_rpt_year',
                          choices = c(
-                             #'All',
+                             # 'All',
                              df_5102_report %>%
                                  filter(
-                                     dept %in% sum_filter_dpt()
+                                     dept %in% input$sum_department
                                  ) %>%
                                  distinct(report_year) %>%
                                  arrange(desc(report_year)) %>%
@@ -324,16 +363,13 @@ server <- function(input, output, session) {
                  })
     
     # Reactive update to available selections in dropdown for department
-    sum_observer_department <- reactive({
-        list(input$sum_rpt_year)
-    })
-    observeEvent(sum_observer_department(),
+    observeEvent(input$sum_rpt_year,
                  {
                      updateSelectInput(
                          session = session,
                          inputId = 'sum_department',
                          choices = c(
-                             'All',
+                             # 'All',
                              df_5102_report %>%
                                  filter(
                                      report_year == input$sum_rpt_year
@@ -346,41 +382,41 @@ server <- function(input, output, session) {
                      )
                  })
     # --------------- Render text ---------------
-    # output$sum_title <- renderText({input$sum_title})
+    # output$sum_graph_title <- renderText({input$sum_graph_title})
     # --------------- Render plot ---------------
     # Plot class title
     output$sum_plot <- renderPlot({
         pl_dept_sum <- df_5102_report %>%
             filter(
-                dept %in% sum_filter_dpt(),
+                dept %in% input$sum_department,
                 report_year == input$sum_rpt_year
-            ) %>%
+            ) %>% 
             add_count(ethnicity_level2,
                       wt = record_count,
                       name = 'ethnicity_total') %>%
             select(ethnicity_level2, ethnicity_total) %>%
             distinct() %>%
             mutate(rate = ethnicity_total / sum(ethnicity_total)) %>%
-            mutate(type = 'Department Workforce') %>%
+            mutate(type = factor('Department Workforce')) %>%
             arrange(ethnicity_level2) %>%
-            mutate(type = factor(type)) %>%
-            bind_rows(acs_data_level2_final) %>% 
+            bind_rows(acs_data_level2) %>% 
             ggplot() + # code below this line actually creates the plot
             geom_bar(mapping = aes(x = ethnicity_level2,
                                    y = rate,
                                    fill = factor(type, levels = rev(levels(type)))),
                      stat = 'identity',
                      position = 'dodge') +
+            ggtitle(input$sum_graph_title) +
             scale_fill_manual(values = colors_5102_state_dept) +
             scale_y_continuous(labels = label_percent(accuracy = 1L)) +
-            labs(title = "plot_title",
-                 x = 'Ethnicity Group',
+            labs(x = 'Ethnicity Group',
                  y = 'Percent of Total',
-                 caption = "plot_caption") +
+                 caption = "Data sources: state population data from 1 yr American Community Survey  |  workforce data from CalHR 5102 Report") +
             coord_flip() +
             theme(legend.position = 'bottom',
                   legend.title = element_blank()) +
             guides(fill = guide_legend(reverse = TRUE))
+            
         
         # output the plot
         pl_dept_sum
