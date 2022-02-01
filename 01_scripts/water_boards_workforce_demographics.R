@@ -29,9 +29,8 @@ default_pl_caption <- glue('Data sources: workforce data from {report_year} CalH
 ## Ethnicity Groupings ----
 # The ethnicity groupings were thought of in two levels. Level one is "white" versus "BIPOC", where BIPOC stands for black, indigenous, and people of color, and includes  all ethnicity values other than white. Level two ethnicity groups some sub-groupings, in this case all Asian identities. We recognize that all ethnicities, including sub-groups of Asian ethnicities, experience discrimination differently. However, for the purposes of creating useful visualizations with a relatively small dataset,  we chose to group the identity variables in this way.
 
-water_boards_demog <- read_excel(here("02_data_raw", "Workforce Demographics Water Boards"),
-                               sheet = 1) %>%
-    clean_names()
+water_boards_demog <- read_xlsx("02_data_raw\water_boards_workforce_demographics.xlsx",
+                               sheet = 1)
 
 org_codes <- read_excel(here("02_data_raw", "Workforce Demographics Water Boards"),
                         sheet = 2) %>%
