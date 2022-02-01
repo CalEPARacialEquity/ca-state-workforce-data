@@ -1,0 +1,898 @@
+# Report for Water Board Workforce Demographics ----
+
+# Load packages
+library(readxl)
+library(tidyverse)
+library(janitor)
+library(here)
+library(glue)
+library(lubridate)
+library(scales)
+library(tidycensus)
+library(sf)
+library(patchwork)
+library(knitr)      # generate html tables for this report
+library(kableExtra) # better formatting of tables
+library(DT)         # creates sortable tables
+
+# Load and Tidy Data 
+agency_name <- 'California Water Boards'
+report_year <- 2022
+
+default_pl_title <- glue('{agency_name} Workforce (Year {report_year})')
+default_pl_title_groups <- glue('{agency_name} Workforce by Occupation and Ethnicity Group (Year {report_year})')
+default_pl_title_bdo <- glue('{agency_name} Workforce by Organization (Year {report_year})')
+
+default_pl_subtitle <- element_blank()
+default_pl_caption <- glue('Data sources: workforce data from {report_year} CalHR 5102 Report')
+    
+## Ethnicity Groupings ----
+# The ethnicity groupings were thought of in two levels. Level one is "white" versus "BIPOC", where BIPOC stands for black, indigenous, and people of color, and includes  all ethnicity values other than white. Level two ethnicity groups some sub-groupings, in this case all Asian identities. We recognize that all ethnicities, including sub-groups of Asian ethnicities, experience discrimination differently. However, for the purposes of creating useful visualizations with a relatively small dataset,  we chose to group the identity variables in this way.
+
+water_boards_demog <- read_excel(here("02_data_raw", "Workforce Demographics Water Boards"),
+                               sheet = 1) %>%
+    clean_names()
+
+org_codes <- read_excel(here("02_data_raw", "Workforce Demographics Water Boards"),
+                        sheet = 2) %>%
+    clean_names()
+
+# add additional levels for ethnicity grouping
+#   identity_variable (in original dataset) is most detailed level
+#   level 1 groups all BIPOC together (resulting groups are BIPOC and white)
+#   level 2 groups some identity_variable sub-groupings together (Asian group and Pacific Islander group)
+df_5102 <- df_5102 %>% 
+    mutate(
+        ethnicity_level1 = case_when(
+            identity_variable == 'White' ~ 'White', 
+            TRUE ~ 'BIPOC'),
+        ethnicity_level2 = case_when(
+            str_detect(identity_variable, 'Pacific Islander') ~ 'Pacific Islander', # groups (all start with "Pacific Islander - "): Guamanian, Hawaiian, Other or Multiple, and Samoan
+            str_detect(identity_variable, 'Asian') ~ 'Asian', # groups (all start with "Asian - "): Cambodian, Chinese, Filipino, Indian, Japanese, Korean, Laotian, Other or Multiple, Vietnamese
+            TRUE ~ identity_variable)
+    )
+
+# add a year column
+df_5102 <- df_5102 %>% 
+    mutate(reporting_year = year(as_of_date))
+```
+
+#### Filter for Selected Agency
+
+Search for the name of your selected agency from the box below, then copy and paste into the subsequent code chunk.
+
+List of agency names in the 5102 data set:
+    
+    ```{r}
+# list of all departments
+depts_list <- df_5102 %>% 
+    distinct(dept) %>% 
+    arrange(dept) %>% 
+    rename('Department Name' = dept)
+
+
+depts_list %>%
+    kbl() %>%
+    kable_paper() %>%
+    scroll_box(width = "500px", height = "200px") %>%
+    {.}
+```
+
+Enter departments to be included in the analysis, and modify the variable names as you see fit:
+    
+    ```{r}
+# Filtering for EPA and related BDOs 
+df_5102_dept <- df_5102 %>% 
+    filter(dept == "Air Resources Board"|
+               dept == "Environmental Health Hazard Assessment, Office of"|
+               dept == "Environmental Protection Agency"|
+               dept == "Pesticide Regulation, Department of"|
+               dept == "Resources Recycling and Recovery, Department of"|
+               dept == "Toxic Substances Control, Department of"|
+               dept == "Water Resources Control Board")
+
+# filter for data from the report year (selected above)
+df_5102_dept_1yr <- df_5102_dept %>% 
+    filter(reporting_year == report_year)
+
+```
+
+### Census Data
+
+For this report, we use data from the U.S. Census Bureau's 1-year American Community Survey (ACS) dataset, which provides a statewide estimate of population and demographic data for a given year. The selected year (entered above) should match the year of the workforce data being analyzed, or if the ACS data for the desired year is not yet available the previous year's 1-year ACS dataset can be used. To access the ACS data we use the tidycensus R package, which provides a user friendly interface to to the Census Bureau's API via R. 
+
+The ACS dataset provides information about a wide variety of topics, with different data types provided in separate tables, and fields within those tables defined by codes. We used ACS table B03002 to obtain estimates of statewide population by racial/ethnic group, because that table includes information about hispanic/latino origin (note that the primary ACS table for race/ethnicity information is table B02001, but that table does not contain information about hispanic/latino origin, as hispanic/latino orginin considered to be a characteristic that is tracked independent of race). 
+
+The ethnicity groupings provided in ACS table B03002 are roughly analogous to the "level 2" ethnicity groupings described above for the state workforce data. To make the census data consistent with the level 2 groupings state workforce data, the only transformation applied to the census data is grouping the "Other" and "Multiple" category into one 'Other or Multiple Race' category. We also create an ACS dataset consistent with the level 1 ethnicity groupings described above by combining all of the racial/ethnic categories except "White" into one "BIOPOC" category.
+
+For more information about the tidycensus R package or the various types of data available from the U.S. Census Bureau, see the resources listed below.
+
+#### Census Data Resources
+
+-   tidycensus R package:
+    <https://walker-data.com/tidycensus/articles/basic-usage.html>
+
+-   general census workshop w/ R:
+    <https://jennhuck.github.io/workshops/tidycensus.html>
+
+-   ACS Table B02001 data (race w/o hispanic/latino data):
+    <https://censusreporter.org/data/table/?table=B02001&geo_ids=04000US06>
+
+-   ACS Table B03002 data (race with hispanic/latino data):
+    <https://censusreporter.org/data/table/?table=B03002&geo_ids=04000US06>
+
+-   info about race in census data:
+    <https://censusreporter.org/topics/race-hispanic/>
+
+-   other general info about concepts and tables in census data:
+    <https://censusreporter.org/topics/>
+
+-   check/validation of the numbers for CA:
+    <https://www.ppic.org/publication/californias-population/>
+
+#### Download Census Data
+
+To download the census data, you need to first request a key here: <https://api.census.gov/data/key_signup.html/>
+Then, enter census_api_key("*your_key*", install = TRUE) in your console.
+
+
+```{r}
+## census data (ACS 1 yr) ----
+
+### get ACS data
+acs_data_raw <- get_acs(geography = 'state', 
+                        variables = c(# total_state_pop = 'B02001_001',
+                            'Hispanic or Latino' = 'B03002_012', # Total Hispanic or Latino
+                            'White' = 'B03002_003', # White (Not Hispanic or Latino)
+                            'Black or African American' = 'B03002_004', # Black or African American (Not Hispanic or Latino)
+                            'Native American or Alaska Native' = 'B03002_005', # American Indian and Alaska Native (Not Hispanic or Latino)
+                            'Asian' = 'B03002_006', # Asian (Not Hispanic or Latino)
+                            'Pacific Islander' = 'B03002_007', # Native Hawaiian and Other Pacific Islander (Not Hispanic or Latino)
+                            'Other' = 'B03002_008', # Some other race (Not Hispanic or Latino)
+                            'Multiple' = 'B03002_009'# Two or more races (Not Hispanic or Latino)
+                        ),
+                        summary_var = c(total_state_pop = 'B02001_001'), 
+                        survey = 'acs1', # use 'acs1' or 'acs5' to get 1 or 5 year acs
+                        state = 'CA', 
+                        geometry = FALSE, # set to TRUE to get as geospatial data
+                        year = acs_data_year)
+
+# clean / reformat the acs data (the data will be formatted to be 
+# consistent with the "level 2" ethnicity groupings in the workforce 
+# data that are created above)
+acs_data_level2 <- acs_data_raw %>% 
+    clean_names() %>% 
+    rename(total_state_pop = summary_est, 
+           total_state_pop_moe = summary_moe,
+           location_name = name,
+           ethnicity_level2 = variable)
+
+    ## check (should be TRUE) - make sure sum of populations by group == total state population
+    # sum(acs_data_level2$estimate) == acs_data_level2$total_state_pop[1]
+
+### group the 'Other' and 'Multiple' rows into one 'Other or Multiple Race' row
+acs_data_level2 <- acs_data_level2 %>% 
+    mutate(ethnicity_level2 = 
+               case_when(ethnicity_level2 == 'Other' | 
+                             ethnicity_level2 == 'Multiple' ~ 
+                             'Other or Multiple Race',
+                         TRUE ~ ethnicity_level2)) %>% 
+    group_by(geoid, location_name, ethnicity_level2, total_state_pop) %>% 
+    summarize(estimate = sum(estimate)) %>%
+    ungroup() %>% 
+    {.}
+    
+    ## check (should be TRUE) - make sure sum of populations by group == total state population
+    # sum(acs_data_level2$estimate) == acs_data_level2$total_state_pop[1]
+    
+### add a column with each ethnicity's % of total state population
+acs_data_level2 <- acs_data_level2 %>% 
+    mutate(pop_pct = estimate / total_state_pop) %>% 
+    {.}
+
+### create a dataset grouped at level 1 - all BIPOC together (resulting groups are BIPOC and white)
+acs_data_level1 <- acs_data_level2 %>%  
+    mutate(
+        ethnicity_level1 = case_when(
+            ethnicity_level2 == 'White' ~ 'White', 
+            TRUE ~ 'BIPOC')
+    ) %>% 
+    group_by(geoid, location_name, ethnicity_level1, total_state_pop) %>% 
+    summarize(estimate = sum(estimate)) %>% 
+    ungroup() %>% 
+    mutate(pop_pct = estimate / total_state_pop) %>% # update the pop_pct to reflect level 1 numbers
+    {.}
+
+## check 
+# sum(acs_data_level1$estimate) == acs_data_level1$total_state_pop[1]
+```
+
+## Plots
+
+### Enter Plotting Parameters
+
+Here you can modify the plot color palette and other parameters:
+    
+    ```{r}
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# 2 - 5102 summaries (vs CA pop) -----------------------------------------------
+## define color palette for plots
+### state pop vs dept workforce plots
+colors_5102_state_dept <-c('gold', 'darkgreen') # state pop / dept workforce
+### colors for ethnicities (in stacked bar plots) - trying to keep 'white' the same for both levels of plots for consistency/comparison
+brewer_colors <- rev(RColorBrewer::brewer.pal(n = 7, name = 'Set2'))
+colors_5102_2 <- brewer_colors[6:7] # BIPOC / White
+colors_5102_7 <- brewer_colors # detailed ethnic groups: Asian ... White
+
+
+```
+
+
+### Format Data & Create Plotting Functions
+
+No changes necessary here, unless you would like to update variable and/or title names:
+    
+    ```{r}
+
+## format census data for plot (all of CA) ----
+acs_data_level1 <- acs_data_level1 %>%
+    mutate(type = factor('State Population')) %>%
+    rename(ethnicity_total = estimate,
+           rate = pop_pct) %>%
+    
+    {.}
+
+acs_data_level2 <- acs_data_level2 %>%
+    mutate(type = factor('State Population')) %>%
+    rename(ethnicity_total = estimate,
+           rate = pop_pct) %>%
+    {.}
+
+## 5102 summary functions
+fun_summary_5102_l1 <- function(dataset) {
+    dataset %>%
+        add_count(ethnicity_level1,
+                  wt = record_count,
+                  name = 'ethnicity_total') %>%
+        select(ethnicity_level1, ethnicity_total) %>%
+        distinct() %>%
+        mutate(rate = ethnicity_total / sum(ethnicity_total)) %>%
+        mutate(type = 'Department Workforce') %>%
+        arrange(ethnicity_level1) %>%
+        mutate(type = factor(type)) %>% 
+        {.}
+}
+
+fun_summary_5102_l2 <- function(dataset) {
+    dataset %>%
+        add_count(ethnicity_level2,
+                  wt = record_count,
+                  name = 'ethnicity_total') %>%
+        select(ethnicity_level2, ethnicity_total) %>%
+        distinct() %>%
+        mutate(rate = ethnicity_total / sum(ethnicity_total)) %>%
+        mutate(type = 'Department Workforce') %>%
+        arrange(ethnicity_level2) %>%
+        mutate(type = factor(type)) %>% 
+        {.}
+}
+
+## plot function
+fun_plot_5102_l1 <- function(dataset, plot_title, plot_caption) {
+    dataset %>% 
+        ggplot() +
+        geom_bar(mapping = aes(x = ethnicity_level1, 
+                               y = rate, 
+                               fill = factor(type, levels = rev(levels(type)))), 
+                 stat = 'identity', 
+                 position = 'dodge') +
+        scale_fill_manual(values = colors_5102_state_dept) +
+        scale_y_continuous(labels = label_percent(accuracy = 1L)) +
+        labs(title = plot_title,
+             x = 'Ethnicity Group',
+             y = 'Percent of Total', 
+             caption = plot_caption) +
+        coord_flip() + 
+        theme(legend.position = 'bottom', 
+              legend.title = element_blank()) +
+        guides(fill = guide_legend(reverse = TRUE))
+}
+
+fun_plot_5102_l1_stack <- function(dataset, plot_title, plot_caption) {
+    dataset %>% 
+        mutate(type = fct_rev(type)) %>% 
+        ggplot() +
+        geom_bar(mapping = aes(x = type, # ethnicity_level1, 
+                               y = rate, 
+                               fill = ethnicity_level1), # factor(type, levels = rev(levels(type)))), 
+                 stat = 'identity') +
+        scale_fill_manual(values = colors_5102_2) +
+        scale_y_continuous(labels = label_percent(accuracy = 1L)) +
+        labs(title = plot_title,
+             x = element_blank(),
+             y = 'Percent of Total', 
+             caption = plot_caption) + 
+        coord_flip() + 
+        theme(legend.position = 'bottom', 
+              legend.title = element_blank()) +
+        guides(fill = guide_legend(reverse = TRUE))
+}
+
+
+fun_plot_5102_l2 <- function(dataset, plot_title, plot_caption) {
+    dataset %>% 
+        ggplot() +
+        geom_bar(mapping = aes(x = ethnicity_level2, 
+                               y = rate, 
+                               fill = factor(type, levels = rev(levels(type)))), 
+                 stat = 'identity', 
+                 position = 'dodge') +
+        scale_fill_manual(values = colors_5102_state_dept) +
+        scale_y_continuous(labels = label_percent(accuracy = 1L)) +
+        labs(title = plot_title,
+             x = 'Ethnicity Group',
+             y = 'Percent of Total', 
+             caption = plot_caption) +
+        coord_flip() + 
+        theme(legend.position = 'bottom', 
+              legend.title = element_blank()) +
+        guides(fill = guide_legend(reverse = TRUE))
+}
+
+fun_plot_5102_l2_stack <- function(dataset, plot_title, plot_caption) {
+    dataset %>% 
+        mutate(type = fct_rev(type)) %>%
+        ggplot() +
+        geom_bar(mapping = aes(x = type, 
+                               y = rate, 
+                               fill = ethnicity_level2), # factor(type, levels = rev(levels(type)))), 
+                 stat = 'identity') +
+        scale_fill_manual(values = colors_5102_7) +
+        scale_y_continuous(labels = label_percent(accuracy = 1L)) +
+        labs(title = plot_title,
+             x = element_blank(),
+             y = 'Percent of Total', 
+             caption = plot_caption) +
+        coord_flip() + 
+        theme(legend.position = 'bottom', 
+              legend.title = element_blank()) +
+        guides(fill = guide_legend(reverse = TRUE))
+}
+```
+
+
+### Department Summary Plots
+
+*To save the graphs as png image files, remove the comment symbols (#) from the ggsave lines.*
+    
+    
+    #### Level 1 Ethnicity
+    
+    ```{r}
+    #### Level 1 ---- 
+    (pl_5102_dept_l1 <- df_5102_dept_1yr %>% 
+         fun_summary_5102_l1() %>% 
+         bind_rows(acs_data_level1) %>% 
+         fun_plot_5102_l1(plot_title = default_pl_title, 
+                          plot_caption = default_pl_caption))
+    
+    (pl_5102_dept_l1_stack <- df_5102_dept_1yr %>% 
+            fun_summary_5102_l1() %>% 
+            bind_rows(acs_data_level1) %>% 
+            fun_plot_5102_l1_stack(plot_title = default_pl_title, 
+                                   plot_caption = default_pl_caption))
+    
+    # ggsave(filename = here('07_slides', '2021-05-14', 'images', 
+    #                        '5102_dept_level1_stack.png'), 
+    #        plot = pl_5102_dept_l1_stack, 
+    #        width = 10, 
+    #        height = 6, 
+    #        dpi = 125
+    #        )
+    
+    # # patchwork (combine plots) - Level 1
+    # pl_5512_patch_dept_l1 <- pl_5102_dept_l1_stack / pl_5102_dept_l1
+    ```
+    
+    #### Level 2 Ethnicity
+    
+    ```{r}
+    ### Level 2 ----
+    (pl_5102_dept_l2 <- df_5102_dept_1yr %>% 
+         fun_summary_5102_l2() %>% 
+         bind_rows(acs_data_level2) %>% 
+         fun_plot_5102_l2(plot_title = default_pl_title, 
+                          plot_caption = default_pl_caption))
+    
+    # ggsave(filename = here('07_slides', '2021-05-14', 'images', 
+    #                        '5102_dept_level2.png'), 
+    #        plot = pl_5102_dept_l2, 
+    #        width = 10, 
+    #        height = 6, 
+    #        dpi = 125
+    #        )
+    
+    (pl_5102_dept_l2_stack <- df_5102_dept_1yr %>% 
+            fun_summary_5102_l2() %>% 
+            bind_rows(acs_data_level2) %>% 
+            fun_plot_5102_l2_stack(plot_title = default_pl_title, 
+                                   plot_caption = default_pl_caption))
+    
+    # ggsave(filename = here('07_slides', '2021-05-14', 'images', 
+    #                        '5102_dept_level2_stack.png'), 
+    #        plot = pl_5102_dept_l2_stack, 
+    #        width = 10, 
+    #        height = 6, 
+    #        dpi = 125
+    #        )
+    
+    # patchwork (combine plots) - Level 1 and Level 2 stacked plots
+    pl_5102_patch_dept_stack_combined <- pl_5102_dept_l1_stack / pl_5102_dept_l2_stack
+    pl_5102_patch_dept_stack_combined[[1]] <- pl_5102_patch_dept_stack_combined[[1]] + 
+        labs(title = element_blank(),
+             subtitle = element_blank(),
+             caption = element_blank())
+    pl_5102_patch_dept_stack_combined[[2]] <- pl_5102_patch_dept_stack_combined[[2]] + 
+        labs(title = element_blank(),
+             subtitle = element_blank(),
+             caption = element_blank())
+    pl_5102_patch_dept_stack_combined <- pl_5102_patch_dept_stack_combined + 
+        plot_layout(heights = c(1.7, 2)) +
+        plot_annotation(
+            title = default_pl_title,
+            caption = default_pl_caption)
+    # ggsave(filename = here('07_slides', '2021-05-14', 'images', 
+    #                        '5102_dept_level1_2_combined_stack.png'), 
+    #        plot = pl_5102_patch_dept_stack_combined, 
+    #        width = 10, 
+    #        height = 6, 
+    #        dpi = 125
+    #        )
+    
+    # patchwork (combine plots) - both L2 plots
+    pl_5102_patch_dept_l2 <- pl_5102_dept_l2_stack / pl_5102_dept_l2
+    pl_5102_patch_dept_l2[[1]] <- pl_5102_patch_dept_l2[[1]] + 
+        labs(title = element_blank(),
+             subtitle = element_blank(),
+             caption = element_blank())
+    pl_5102_patch_dept_l2[[2]] <- pl_5102_patch_dept_l2[[2]] + 
+        labs(title = element_blank(),
+             subtitle = element_blank(),
+             caption = element_blank())
+    pl_5102_patch_dept_l2 <- pl_5102_patch_dept_l2 + 
+        plot_annotation(
+            title = default_pl_title,
+            caption = default_pl_caption)
+    # ggsave(filename = here('07_slides', '2021-05-14', 'images', 
+    #                        '5102_dept_level2_combined.png'), 
+    #        plot = pl_5102_patch_dept_l2, 
+    #        width = 10, 
+    #        height = 6, 
+    #        dpi = 125
+    #        )
+    ```
+    
+    ### Department by Employee Class
+    
+    At CalEPA, we examined the demographic differences between classifications. We split up the data into technical, legal, administrative, and management classifications. As a general finding, our examination revealed more diversity in administrative classifications and decreasing diversity as one looks toward technical, legal, and management classifications. In addition, administrative demographics are more representative of California's population. How do we explain persistent inequalities in careers between minority and majority groups?
+
+The issues related to representation are exacerbated when administrative professionals, who support generally higher-paying technical and management classifications, work along technical and managerial staff to support programmatic goals. Further analysis to be done includes looking at differences in demographics between entry-level and promotional titles. Administrative classifications at the lower ranks have traditionally been, and continue to be, among the lowest-paying in civil service. This is a very complicated matter of workforce equity with vast intersectionality. 
+
+To compare across employee categories for your agency, use the code chunks below to identify your desired groupings and modify the categories/classes as you see fit.
+
+```{r}
+## 2.2. - Department By Group ----
+
+# To view list of all categories
+categories_list <- df_5102 %>% 
+  distinct(employee_category,sub_category, class_title) %>% 
+  arrange(employee_category) %>% 
+  rename('Employee Category' = employee_category) %>%
+  rename('Sub-Category' = sub_category) %>% 
+  rename('Class Title' = class_title)
+
+
+categories_list %>% 
+    kbl() %>% 
+    kable_paper() %>%
+    scroll_box(width = "500px", height = "200px") %>%
+    {.}
+```
+
+
+```{r}
+## you can also use the code below to view your table in RStudio, to examine
+## what classes and are in your department:
+#View(df_5102_dept_1yr)
+
+### create groupings ----
+df_5102_dept_1yr <- df_5102_dept_1yr %>% 
+    mutate(metrics_group = case_when(
+        # legal
+        employee_category == 'Legal Occupations' ~ 
+            'Legal Occupations', 
+        # management
+        employee_category == 'Management Occupations' ~ 
+            'Management Occupations', 
+        # admin
+        employee_category == 'Office and Administrative Support Occupations' |
+            (employee_category == 'Computer and Mathematical Occupations' & 
+                 sub_category == 'Unmapped Classes') ~ 
+            'Administrative Occupations',
+        # technical
+        employee_category == 'Architecture and Engineering Occupations' |
+            employee_category == 'Life, Physical, and Social Science Occupations' | 
+            (employee_category == 'Computer and Mathematical Occupations' & 
+                 sub_category == 'Operations Research Analysts') ~ 
+            'Technical Occupations')
+    )
+```
+
+
+#### Level 1 Ethnicity
+
+```{r}
+# Level 1 ethnicity
+sum_5102_groups_l1 <- df_5102_dept_1yr %>% 
+    filter(metrics_group == 'Legal Occupations') %>%
+    fun_summary_5102_l1() %>% 
+    bind_rows(acs_data_level1) %>% 
+    mutate(metrics_group = 'Legal Occupations') %>%
+    bind_rows(df_5102_dept_1yr %>% 
+                  filter(metrics_group == 'Management Occupations') %>%
+                  fun_summary_5102_l1() %>% 
+                  bind_rows(acs_data_level1) %>% 
+                  mutate(metrics_group = 'Management Occupations')) %>%
+    bind_rows(df_5102_dept_1yr %>% 
+                  filter(metrics_group == 'Administrative Occupations') %>%
+                  fun_summary_5102_l1() %>% 
+                  bind_rows(acs_data_level1) %>% 
+                  mutate(metrics_group = 'Administrative Occupations')) %>%
+    bind_rows(df_5102_dept_1yr %>% 
+                  filter(metrics_group == 'Technical Occupations') %>%
+                  fun_summary_5102_l1() %>% 
+                  bind_rows(acs_data_level1) %>% 
+                  mutate(metrics_group = 'Technical Occupations')) %>%
+    mutate(type = factor(type)) %>% 
+    {.}
+
+facet_label_5102_groups_l1 <- sum_5102_groups_l1 %>% 
+    filter(type == 'Department Workforce') %>% 
+    count(metrics_group, wt = ethnicity_total) %>% 
+    mutate(facet_label = glue('{metrics_group} (Department n = {n})'))
+
+
+(pl_5102_groups_l1 <- sum_5102_groups_l1 %>%  
+        left_join(facet_label_5102_groups_l1, 
+                  by = c('metrics_group')) %>% 
+        select(-metrics_group) %>% 
+        rename('metrics_group' = 'facet_label') %>% 
+        ggplot() +
+        geom_bar(mapping = aes(x = ethnicity_level1, 
+                               y = rate, 
+                               fill = factor(type, levels = rev(levels(type)))), 
+                 stat = 'identity', 
+                 position = 'dodge') + 
+        facet_wrap(~ metrics_group) +
+        scale_fill_manual(values = colors_5102_state_dept) +
+        scale_y_continuous(labels = label_percent(accuracy = 1L)) +
+        labs(title = default_pl_title_groups,
+             subtitle = default_pl_subtitle,
+             x = 'Ethnicity Group',
+             y = 'Percent of Total', 
+             caption = default_pl_caption) +
+        coord_flip() + 
+        theme(legend.position = 'bottom', 
+              legend.title = element_blank()) +
+        guides(fill = guide_legend(reverse = TRUE)))
+
+# ggsave(filename = here('07_slides', '2021-05-14', 'images', 
+#                        '5102_dept_groups_level1.png'), 
+#        plot = pl_5102_groups_l1, 
+#        width = 10, 
+#        height = 6, 
+#        dpi = 125
+#        )
+
+(pl_5102_groups_l1_stack <- sum_5102_groups_l1 %>%  
+        left_join(facet_label_5102_groups_l1, 
+                  by = c('metrics_group')) %>% 
+        select(-metrics_group) %>% 
+        rename('metrics_group' = 'facet_label') %>% 
+        ggplot() +
+        geom_bar(mapping = aes(x = fct_rev(type), 
+                               y = rate, 
+                               fill = ethnicity_level1), #factor(type, levels = rev(levels(type)))), 
+                 stat = 'identity') + 
+        facet_wrap(~ metrics_group) +
+        scale_fill_manual(values = colors_5102_2) +
+        scale_y_continuous(labels = percent) +
+        labs(title = default_pl_title_groups,
+             subtitle = default_pl_subtitle,
+             x = element_blank(),
+             y = 'Percent of Total', 
+             caption = default_pl_caption) +
+        coord_flip() + 
+        theme(legend.position = 'bottom', 
+              legend.title = element_blank()) +
+        guides(fill = guide_legend(reverse = TRUE)))
+
+# ggsave(filename = here('07_slides', '2021-05-14', 'images', 
+#                        '5102_dept_groups_level1_stack.png'), 
+#        plot = pl_5102_groups_l1_stack, 
+#        width = 10, 
+#        height = 6, 
+#        dpi = 125
+#        )
+```
+
+
+#### Level 2 Ethnicity
+
+```{r}
+### Level 2 ----
+fun_summary_5102_groups_l2 <- function(dataset) {
+    dataset %>% 
+        filter(metrics_group == 'Legal Occupations') %>%
+        fun_summary_5102_l2() %>% 
+        bind_rows(acs_data_level2) %>% 
+        mutate(metrics_group = 'Legal Occupations') %>%
+        bind_rows(dataset %>% 
+                      filter(metrics_group == 'Management Occupations') %>%
+                      fun_summary_5102_l2() %>% 
+                      bind_rows(acs_data_level2) %>% 
+                      mutate(metrics_group = 'Management Occupations')) %>%
+        bind_rows(dataset %>% 
+                      filter(metrics_group == 'Administrative Occupations') %>%
+                      fun_summary_5102_l2() %>% 
+                      bind_rows(acs_data_level2) %>% 
+                      mutate(metrics_group = 'Administrative Occupations')) %>%
+        bind_rows(dataset %>% 
+                      filter(metrics_group == 'Technical Occupations') %>%
+                      fun_summary_5102_l2() %>% 
+                      bind_rows(acs_data_level2) %>% 
+                      mutate(metrics_group = 'Technical Occupations')) %>%
+        mutate(type = factor(type)) %>% 
+        {.}
+}
+
+
+fun_plot_5102_groups_l2 <- function(dataset, 
+                                    plot_title = default_pl_title_groups, 
+                                    plot_subtitle = default_pl_subtitle, 
+                                    plot_caption = default_pl_caption) {
+    dataset %>% 
+        ggplot() +
+        geom_bar(mapping = aes(x = ethnicity_level2, 
+                               y = rate, 
+                               fill = factor(type, levels = rev(levels(type)))), 
+                 stat = 'identity', 
+                 position = 'dodge') + 
+        facet_wrap(~ metrics_group) +
+        scale_y_continuous(labels = percent) +
+        scale_fill_manual(values = colors_5102_state_dept) +
+        labs(title = plot_title,
+             subtitle = plot_subtitle,
+             x = 'Ethnicity Group',
+             y = 'Percent of Total', 
+             caption = plot_caption) +
+        coord_flip() + 
+        theme(legend.position = 'bottom', 
+              legend.title = element_blank()) +
+        guides(fill = guide_legend(reverse = TRUE))
+}
+
+
+sum_5102_groups_l2 <- df_5102_dept_1yr %>%
+    fun_summary_5102_groups_l2()
+
+facet_label_5102_groups_l2 <- sum_5102_groups_l2 %>% 
+    filter(type == 'Department Workforce') %>% 
+    count(metrics_group, wt = ethnicity_total) %>% 
+    mutate(facet_label = glue('{metrics_group} (Department n = {n})'))
+
+(pl_5102_groups_l2 <- df_5102_dept_1yr %>% 
+        fun_summary_5102_groups_l2() %>%
+        left_join(facet_label_5102_groups_l2, by = c('metrics_group')) %>% 
+        select(-metrics_group) %>% 
+        rename('metrics_group' = 'facet_label') %>% 
+        fun_plot_5102_groups_l2())
+
+# ggsave(filename = here('07_slides', '2021-05-14', 'images', 
+#                        '5102_dept_groups_level2.png'), 
+#        plot = pl_5102_groups_l2, 
+#        width = 10, 
+#        height = 6, 
+#        dpi = 125
+#        )
+
+        
+fun_plot_5102_groups_l2_stack <- function(dataset, 
+                                          plot_title = default_pl_title_groups, 
+                                          plot_subtitle = default_pl_subtitle, 
+                                          plot_caption = default_pl_caption) {
+    dataset %>% 
+        ggplot() +
+        geom_bar(mapping = aes(x = fct_rev(type), 
+                               y = rate, 
+                               fill = ethnicity_level2), 
+                 stat = 'identity') + 
+        facet_wrap(~ metrics_group) +
+        scale_y_continuous(labels = percent) +
+        scale_fill_manual(values = colors_5102_7) +
+        labs(title = plot_title,
+             subtitle = plot_subtitle,
+             x = element_blank(),
+             y = 'Percent of Total', 
+             caption = plot_caption) +
+        coord_flip() + 
+        theme(legend.position = 'bottom', 
+              legend.title = element_blank()) +
+        guides(fill = guide_legend(reverse = TRUE))
+}
+
+
+(pl_5102_groups_l2_stack <- df_5102_dept_1yr %>% 
+        fun_summary_5102_groups_l2() %>% 
+        left_join(facet_label_5102_groups_l2, by = c('metrics_group')) %>% 
+        select(-metrics_group) %>% 
+        rename('metrics_group' = 'facet_label') %>% 
+        fun_plot_5102_groups_l2_stack())
+
+# ggsave(filename = here('07_slides', '2021-05-14', 'images', 
+#                        '5102_dept_groups_level2_stack.png'), 
+#        plot = pl_5102_groups_l2_stack, 
+#        width = 10, 
+#        height = 6, 
+#        dpi = 125
+#        )
+```
+
+### Department/BDO Comparison
+
+To include different levels of your agency, use the code below to compare. You could also compare departments across the state system.
+
+#### Level 2 Ethnicity
+
+```{r}
+## 2.4 By BDO Plots ----
+### Level 2 ethnicity ----
+summary_5102_l2_bdo <- df_5102_dept_1yr %>%
+    add_count(dept,  wt = record_count,
+              name = 'dept_total') %>% 
+    add_count(ethnicity_level2, dept,
+              wt = record_count,
+              name = 'ethnicity_total') %>%
+    select(ethnicity_level2, ethnicity_total, dept, dept_total) %>%
+    distinct() %>%
+    mutate(rate = ethnicity_total / dept_total) %>%
+    mutate(type = 'Department Workforce') %>%
+    arrange(dept, ethnicity_level2) %>%
+    mutate(type = factor(type)) %>% 
+    bind_rows(acs_data_level2 %>% 
+                  rename(dept = type)) %>% 
+    {.}
+
+
+ordering_bdo <- summary_5102_l2_bdo %>% 
+    filter(ethnicity_level2 == 'White') %>% 
+    arrange(rate) %>% 
+    pull(dept)
+
+(pl_5102_l2_bdo_stack <- summary_5102_l2_bdo %>% 
+        # mutate(type = fct_rev(type)) %>%
+        ggplot() +
+        geom_bar(mapping = aes(x = fct_relevel(dept, ordering_bdo), #fct_rev(type), 
+                               y = rate, 
+                               fill = ethnicity_level2), # factor(type, levels = rev(levels(type)))), 
+                 stat = 'identity') +
+        scale_fill_manual(values = colors_5102_7) +
+        scale_y_continuous(labels = percent) +
+        labs(title = default_pl_title_bdo,
+             x = element_blank(),
+             y = 'Percent of Total', 
+             caption = default_pl_caption) +
+        coord_flip() + 
+        # facet_wrap(~ dept) +
+        theme(legend.position = 'bottom', 
+              legend.title = element_blank()) +
+        guides(fill = guide_legend(reverse = TRUE)) + 
+        geom_vline(xintercept = 1.5, size = 0.5, linetype = 'dashed'))#, color = 'grey50')
+
+# ggsave(filename = here('07_slides', '2021-05-14', 'images', 
+#                        '5102_dept_bdo_level2.png'), 
+#        plot = pl_5102_l2_bdo_stack, 
+#        width = 10, 
+#        height = 6, 
+#        dpi = 125
+#        )
+```
+
+
+```{r}
+### Level 2 ethincity - by BDO & Class Groupings ----
+
+##### Optional: enter dept name you'd like for the plot vs dept name listed 
+##### in 5102 dataset
+bdo_titles <- c("ARB" = 'Air Resources Board', 
+                "OEHHA" = 'Environmental Health Hazard Assessment, Office of',
+                "CalEPA (Agency)" = 'Environmental Protection Agency',
+                "DPR" = 'Pesticide Regulation, Department of',
+                "CalRecycle" = 'Resources Recycling and Recovery, Department of',
+                "DTSC" = 'Toxic Substances Control, Department of',
+                "SWRCB" = 'Water Resources Control Board')
+bdo_titles_filenames <- tolower(c('ARB', 'OEHHA', 'CalEPA_Agency', 
+                                  'DPR', 'CalRecycle', 'DTSC', 'SWRCB'))
+
+# To get facet labels
+pl_5102_groups_l2_bdo_all_facets <- map2_df(.x = names(bdo_titles), 
+                                            .y = unname(bdo_titles), 
+                                            .f = ~  df_5102_dept_1yr %>% 
+                                                filter(dept == .y) %>% 
+                                                fun_summary_5102_groups_l2() %>% 
+                                                filter(type == 'Department Workforce') %>% 
+                                                count(metrics_group, wt = ethnicity_total) %>% 
+                                                mutate(facet_label = glue('{metrics_group} ({.x} n = {n})')) %>% 
+                                                mutate(bdo = glue('{.x}'))
+)
+```
+
+
+
+```{r }
+#### To make plots
+pl_5102_groups_l2_bdo_all <- map2(.x = names(bdo_titles), 
+                                  .y = unname(bdo_titles), 
+                                  .f = ~ df_5102_dept_1yr %>% 
+                                      filter(dept == .y) %>% 
+                                      fun_summary_5102_groups_l2() %>%
+                                      mutate(type = case_when(as.character(type) == 'Department Workforce' ~
+                                                                  glue('{.x}'),
+                                                              TRUE ~ as.character(type))) %>%
+                                      mutate(type = factor(type, 
+                                                           levels = c(.x, 'State Population'))) %>%
+                                      mutate(bdo = glue('{.x}')) %>%
+                                      left_join(pl_5102_groups_l2_bdo_all_facets,
+                                                by = c('metrics_group', 'bdo')) %>%
+                                      select(-metrics_group) %>%
+                                      rename('metrics_group' = 'facet_label') %>%
+                                      distinct() %>%
+                                      fun_plot_5102_groups_l2_stack(plot_title = glue('{.x} Workforce by Occupation and Ethnicity Group vs. State Population (Year {report_year})')) %>%
+                                      {.}
+)
+
+# ## View one plot
+# pl_5102_groups_l2_bdo_all[[2]]
+
+## print all plots
+for (i in seq_along(pl_5102_groups_l2_bdo_all)) {
+    print(pl_5102_groups_l2_bdo_all[[i]] + 
+              theme(legend.position = 'bottom', 
+                    legend.title = element_blank(),
+                    plot.margin = margin(t = 30, r = 0, b = 30, l = 0, unit = 'pt') # adding a little bit of space between plots
+              )
+    ) 
+}
+
+```
+
+*To save these graphs as png image files, remove the comment symbols (#) from the* 
+    *code below.*
+        
+        ```{r}
+    # walk2(.x = pl_5102_groups_l2_bdo_all, 
+    #       # .y = tolower(str_replace_all(string = names(bdo_titles), 
+    #       #                              pattern = ' ', 
+    #       #                              replacement = '_') %>% 
+    #       #                  str_remove_all(pattern = '\\.|(|)')), 
+    #       .y = bdo_titles_filenames, # keep filenames consistent regardless of changes to plot labels/titles
+    #       .f = ~ ggsave(filename = here('07_slides', '2021-05-14', 'images', 
+    #                                     glue('5102_bdo_group_l2_{.y}.png')), 
+    #                     plot = .x,
+    #                     width = 10, 
+    #                     height = 6, 
+    #                     dpi = 125)
+    # )
+    ```
+
