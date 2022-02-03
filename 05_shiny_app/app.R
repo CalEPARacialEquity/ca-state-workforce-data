@@ -16,6 +16,7 @@ library(scales)
 library(tidycensus)
 library(sf)
 library(shinyWidgets)
+library(plotly)
 
 
 # Write Necessary Functions -----------------------------------------------
@@ -245,15 +246,15 @@ or career outcomes are not predicted by one's race. This vision is informed by m
                 inputId = "sum_graph_title",
                 label = "Graph title:",
                 placeholder = "CalEPA Workforce Demographics"
-            )
-            
+            ),
+            width = 3
         ),
         
         # Main panel with plot (output)
         mainPanel(column(
             12,
             align = 'center',
-            plotOutput('sum_plot',
+            plotlyOutput('sum_plot',
                        height = 500)
         )))
     ),
@@ -385,8 +386,8 @@ server <- function(input, output, session) {
     # output$sum_graph_title <- renderText({input$sum_graph_title})
     # --------------- Render plot ---------------
     # Plot class title
-    output$sum_plot <- renderPlot({
-        pl_dept_sum <- df_5102_report %>%
+    output$sum_plot <- renderPlotly({
+        pl_dept_sum <- ggplotly(df_5102_report %>%
             filter(
                 dept %in% input$sum_department,
                 report_year == input$sum_rpt_year
@@ -406,7 +407,7 @@ server <- function(input, output, session) {
                                    fill = factor(type, levels = rev(levels(type)))),
                      stat = 'identity',
                      position = 'dodge') +
-            ggtitle(input$sum_graph_title) +
+            # ggtitle(input$sum_graph_title) +
             scale_fill_manual(values = colors_5102_state_dept) +
             scale_y_continuous(labels = label_percent(accuracy = 1L)) +
             labs(x = 'Ethnicity Group',
@@ -416,6 +417,13 @@ server <- function(input, output, session) {
             theme(legend.position = 'bottom',
                   legend.title = element_blank()) +
             guides(fill = guide_legend(reverse = TRUE))
+        ) %>% 
+            layout(title = input$sum_graph_title,
+                   legend = list(
+                                 title = '',
+                                 xanchor = 'right', 
+                                 yanchor =  'bottom')
+                   )
             
         
         # output the plot
