@@ -87,6 +87,33 @@ acs_data_raw <- map_dfr(
     .id = "year"
 )
 
+# Pull Dicennial census data for 2020
+# dcensus_data_raw <- get_decennial(
+#         geography = 'state',
+#         variables = c(
+#             # total_state_pop = 'B02001_001',
+#             'Hispanic or Latino' = 'B03002_012',
+#             # Total Hispanic or Latino
+#             'White' = 'B03002_003',
+#             # White (Not Hispanic or Latino)
+#             'Black or African American' = 'B03002_004',
+#             # Black or African American (Not Hispanic or Latino)
+#             'Native American or Alaska Native' = 'B03002_005',
+#             # American Indian and Alaska Native (Not Hispanic or Latino)
+#             'Asian' = 'B03002_006',
+#             # Asian (Not Hispanic or Latino)
+#             'Pacific Islander' = 'B03002_007',
+#             # Native Hawaiian and Other Pacific Islander (Not Hispanic or Latino)
+#             'Other' = 'B03002_008',
+#             # Some other race (Not Hispanic or Latino)
+#             'Multiple' = 'B03002_009'# Two or more races (Not Hispanic or Latino)
+#         ),
+#         summary_var = c(total_state_pop = 'B02001_001'),
+#         state = 'CA',
+#         geometry = FALSE,
+#         # set to TRUE to get as geospatial data
+#         year = 2020
+#     )
 
 # Clean/Transform Data ---------------
 ## 5102 Report ----
@@ -382,6 +409,12 @@ server <- function(input, output, session) {
                          selected = input$sum_department
                      )
                  })
+    # Reactive update to filter for ACS year
+    
+    acs_data_level2_updated <- reactive({
+        acs_data_level2 %>% filter(year == input$sum_rpt_year)
+        })
+    
     # --------------- Render text ---------------
     # output$sum_graph_title <- renderText({input$sum_graph_title})
     # --------------- Render plot ---------------
@@ -400,7 +433,7 @@ server <- function(input, output, session) {
             mutate(rate = ethnicity_total / sum(ethnicity_total)) %>%
             mutate(type = factor('Department Workforce')) %>%
             arrange(ethnicity_level2) %>%
-            bind_rows(acs_data_level2) %>% 
+            bind_rows(acs_data_level2_updated()) %>% 
             ggplot() + # code below this line actually creates the plot
             geom_bar(mapping = aes(x = ethnicity_level2,
                                    y = rate,
