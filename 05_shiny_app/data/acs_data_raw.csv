@@ -1,0 +1,73 @@
+"","year","GEOID","NAME","variable","estimate","moe","summary_est","summary_moe"
+"1","1","06","California","White",14917153,7949,37691912,NA
+"2","1","06","California","Black or African American",2148618,12971,37691912,NA
+"3","1","06","California","Native American or Alaska Native",155431,6544,37691912,NA
+"4","1","06","California","Asian",4905646,17200,37691912,NA
+"5","1","06","California","Pacific Islander",136245,4759,37691912,NA
+"6","1","06","California","Other",73698,10347,37691912,NA
+"7","1","06","California","Multiple",995621,22771,37691912,NA
+"8","1","06","California","Hispanic or Latino",14359500,NA,37691912,NA
+"9","2","06","California","White",14904055,7593,38041430,NA
+"10","2","06","California","Black or African American",2150453,14326,38041430,NA
+"11","2","06","California","Native American or Alaska Native",145112,6213,38041430,NA
+"12","2","06","California","Asian",5047744,16238,38041430,NA
+"13","2","06","California","Pacific Islander",137403,4057,38041430,NA
+"14","2","06","California","Other",83285,9189,38041430,NA
+"15","2","06","California","Multiple",1035717,22200,38041430,NA
+"16","2","06","California","Hispanic or Latino",14537661,NA,38041430,NA
+"17","3","06","California","White",14884539,6586,38332521,NA
+"18","3","06","California","Black or African American",2167357,10863,38332521,NA
+"19","3","06","California","Native American or Alaska Native",139821,6668,38332521,NA
+"20","3","06","California","Asian",5147620,16723,38332521,NA
+"21","3","06","California","Pacific Islander",132957,4487,38332521,NA
+"22","3","06","California","Other",81088,8781,38332521,NA
+"23","3","06","California","Multiple",1059812,21759,38332521,NA
+"24","3","06","California","Hispanic or Latino",14719327,NA,38332521,NA
+"25","4","06","California","White",14849129,7495,38802500,NA
+"26","4","06","California","Black or African American",2155733,13276,38802500,NA
+"27","4","06","California","Native American or Alaska Native",135245,6218,38802500,NA
+"28","4","06","California","Asian",5329431,16978,38802500,NA
+"29","4","06","California","Pacific Islander",137838,4310,38802500,NA
+"30","4","06","California","Other",96073,8641,38802500,NA
+"31","4","06","California","Multiple",1110281,23359,38802500,NA
+"32","4","06","California","Hispanic or Latino",14988770,NA,38802500,NA
+"33","5","06","California","White",14815122,7888,39144818,NA
+"34","5","06","California","Black or African American",2192844,12770,39144818,NA
+"35","5","06","California","Native American or Alaska Native",135866,6180,39144818,NA
+"36","5","06","California","Asian",5476958,18924,39144818,NA
+"37","5","06","California","Pacific Islander",143408,4915,39144818,NA
+"38","5","06","California","Other",87813,9185,39144818,NA
+"39","5","06","California","Multiple",1108262,25932,39144818,NA
+"40","5","06","California","Hispanic or Latino",15184545,NA,39144818,NA
+"41","6","06","California","White",14725729,8629,39250017,NA
+"42","6","06","California","Black or African American",2160958,12799,39250017,NA
+"43","6","06","California","Native American or Alaska Native",132153,5781,39250017,NA
+"44","6","06","California","Asian",5518226,16185,39250017,NA
+"45","6","06","California","Pacific Islander",137019,4940,39250017,NA
+"46","6","06","California","Other",105389,10984,39250017,NA
+"47","6","06","California","Multiple",1189767,20877,39250017,NA
+"48","6","06","California","Hispanic or Latino",15280776,NA,39250017,NA
+"49","7","06","California","White",14616636,7788,39536653,NA
+"50","7","06","California","Black or African American",2164239,16842,39536653,NA
+"51","7","06","California","Native American or Alaska Native",147880,6486,39536653,NA
+"52","7","06","California","Asian",5679986,18800,39536653,NA
+"53","7","06","California","Pacific Islander",137520,4791,39536653,NA
+"54","7","06","California","Other",107223,9425,39536653,NA
+"55","7","06","California","Multiple",1205863,27793,39536653,NA
+"56","7","06","California","Hispanic or Latino",15477306,NA,39536653,NA
+"57","8","06","California","White",14495479,6952,39557045,NA
+"58","8","06","California","Black or African American",2179078,12343,39557045,NA
+"59","8","06","California","Native American or Alaska Native",139116,6225,39557045,NA
+"60","8","06","California","Asian",5741886,20288,39557045,NA
+"61","8","06","California","Pacific Islander",143302,5343,39557045,NA
+"62","8","06","California","Other",100696,8288,39557045,NA
+"63","8","06","California","Multiple",1217346,23565,39557045,NA
+"64","8","06","California","Hispanic or Latino",15540142,NA,39557045,NA
+"65","9","06","California","White",14356081,6353,39512223,NA
+"66","9","06","California","Black or African American",2171989,16630,39512223,NA
+"67","9","06","California","Native American or Alaska Native",149063,5527,39512223,NA
+"68","9","06","California","Asian",5786711,19627,39512223,NA
+"69","9","06","California","Pacific Islander",141846,4748,39512223,NA
+"70","9","06","California","Other",107538,10686,39512223,NA
+"71","9","06","California","Multiple",1224113,26997,39512223,NA
+"72","9","06","California","Hispanic or Latino",15574882,NA,39512223,NA

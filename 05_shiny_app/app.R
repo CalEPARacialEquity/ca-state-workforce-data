@@ -34,12 +34,12 @@ colors_5102_state_dept <-c('gold', 'darkgreen')
 
 # Import Data ---------------
 ## 5102 Report ----
-url_data_all_yrs <-
-    'https://data.ca.gov/dataset/e620a64f-6b86-4ce0-ab4b-03d06674287b/resource/aba87ad9-f6b0-4a7e-a45e-d1452417eb7f/download/calhr_5102_statewide_2011-2020.csv'
+# url_data_all_yrs <-
+#     'https://data.ca.gov/dataset/e620a64f-6b86-4ce0-ab4b-03d06674287b/resource/aba87ad9-f6b0-4a7e-a45e-d1452417eb7f/download/calhr_5102_statewide_2011-2020.csv'
 
 df_5102_report <-
     read_csv(
-        url_data_all_yrs,
+        "data/calhr_5102_statewide_2011-2020.csv.gz",
         col_types = cols(.default = col_character())
     ) %>%
     type_convert() %>%
@@ -50,70 +50,10 @@ df_5102_report <-
     }
 
 ## Census Data (ACS 1 yr) ----
-# Define years
-years <- c(2011:2019)
+### Load ACS Data
+acs_data <- 
+    read_csv("data/acs_data_raw.csv")
 
-### Pull ACS Data
-acs_data_raw <- map_dfr(
-    years,
-    ~ get_acs(
-        geography = 'state',
-        variables = c(
-            # total_state_pop = 'B02001_001',
-            'Hispanic or Latino' = 'B03002_012',
-            # Total Hispanic or Latino
-            'White' = 'B03002_003',
-            # White (Not Hispanic or Latino)
-            'Black or African American' = 'B03002_004',
-            # Black or African American (Not Hispanic or Latino)
-            'Native American or Alaska Native' = 'B03002_005',
-            # American Indian and Alaska Native (Not Hispanic or Latino)
-            'Asian' = 'B03002_006',
-            # Asian (Not Hispanic or Latino)
-            'Pacific Islander' = 'B03002_007',
-            # Native Hawaiian and Other Pacific Islander (Not Hispanic or Latino)
-            'Other' = 'B03002_008',
-            # Some other race (Not Hispanic or Latino)
-            'Multiple' = 'B03002_009'# Two or more races (Not Hispanic or Latino)
-        ),
-        summary_var = c(total_state_pop = 'B02001_001'),
-        survey = 'acs1',
-        # use 'acs1' or 'acs5' to get 1 or 5 year acs
-        state = 'CA',
-        geometry = FALSE,
-        # set to TRUE to get as geospatial data
-        year = .x
-    ),
-    .id = "year"
-)
-
-# Pull Dicennial census data for 2020
-# dcensus_data_raw <- get_decennial(
-#         geography = 'state',
-#         variables = c(
-#             # total_state_pop = 'B02001_001',
-#             'Hispanic or Latino' = 'B03002_012',
-#             # Total Hispanic or Latino
-#             'White' = 'B03002_003',
-#             # White (Not Hispanic or Latino)
-#             'Black or African American' = 'B03002_004',
-#             # Black or African American (Not Hispanic or Latino)
-#             'Native American or Alaska Native' = 'B03002_005',
-#             # American Indian and Alaska Native (Not Hispanic or Latino)
-#             'Asian' = 'B03002_006',
-#             # Asian (Not Hispanic or Latino)
-#             'Pacific Islander' = 'B03002_007',
-#             # Native Hawaiian and Other Pacific Islander (Not Hispanic or Latino)
-#             'Other' = 'B03002_008',
-#             # Some other race (Not Hispanic or Latino)
-#             'Multiple' = 'B03002_009'# Two or more races (Not Hispanic or Latino)
-#         ),
-#         summary_var = c(total_state_pop = 'B02001_001'),
-#         state = 'CA',
-#         geometry = FALSE,
-#         # set to TRUE to get as geospatial data
-#         year = 2020
-#     )
 
 # Clean/Transform Data ---------------
 ## 5102 Report ----
@@ -137,10 +77,10 @@ df_5102_report <- df_5102_report %>%
 
 ## Census Data (ACS) ----
 # Clean / reformat the ACS data (the data will be formatted to be consistent with the "level 2" ethnicity groupings in the workforce data that are created above)
-acs_data_raw <-
-    acs_data_raw %>% mutate(year = (as.numeric(year) + 2010))
+acs_data <-
+    acs_data %>% mutate(year = (as.numeric(year) + 2010))
 
-acs_data_level2 <- acs_data_raw %>%
+acs_data_level2 <- acs_data %>%
     clean_names() %>%
     rename(
         total_state_pop = summary_est,
