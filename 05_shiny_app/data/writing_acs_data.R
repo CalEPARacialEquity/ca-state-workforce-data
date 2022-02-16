@@ -37,7 +37,7 @@ acs_data_raw <- map_dfr(
 )
 
 setwd("05_shiny_app/data")
-write.csv(acs_data_raw, file = "acs_data_raw.csv")
+# write.csv(acs_data_raw, file = "acs_data_raw.csv")
 
 # Pull Dicennial census data for 2020
 # dcensus_data_raw <- get_decennial(

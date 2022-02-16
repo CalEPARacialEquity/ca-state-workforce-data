@@ -270,7 +270,7 @@ or career outcomes are not predicted by one's race. This vision is informed by m
             mainPanel(column(
                 12,
                 align = 'center',
-                plotOutput('exp_plot',
+                plotlyOutput('exp_plot',
                            height = 500),
                 radioButtons(
                     inputId = 'bar_type',
@@ -380,7 +380,6 @@ server <- function(input, output, session) {
                                    fill = factor(type, levels = rev(levels(type)))),
                      stat = 'identity',
                      position = 'dodge') +
-            # ggtitle(input$sum_graph_title) +
             scale_fill_manual(values = colors_5102_state_dept) +
             scale_y_continuous(labels = label_percent(accuracy = 1L)) +
             labs(x = 'Ethnicity Group',
@@ -498,8 +497,8 @@ server <- function(input, output, session) {
     
     # --------------- Render plot ---------------
     # Plot class title
-    output$exp_plot <- renderPlot({
-        pl_class_title <- df_5102_report %>%
+    output$exp_plot <- renderPlotly({
+        pl_class_title <- ggplotly(df_5102_report %>%
             filter(
                 dept %in% exp_filter_dpt(),
                 class_title %in% toupper(exp_filter_title()),
@@ -517,6 +516,7 @@ server <- function(input, output, session) {
                 stat = 'identity',
                 position = ifelse(input$bar_type == 'stacked', 'stack', 'dodge')
             ) + # position = 'dodge'
+            scale_fill_manual(values = colors_5102_state_dept) +
             scale_y_continuous(labels = comma_format(accuracy = 1),
                                breaks = integer_breaks()) +
             coord_flip() +
@@ -534,7 +534,7 @@ server <- function(input, output, session) {
                 ),
                 caption = "Note: data from 5102 Inline Report",
                 fill = 'Gender'
-            )
+            ))
         
         # output the plot
         pl_class_title
