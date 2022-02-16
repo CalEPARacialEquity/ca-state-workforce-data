@@ -114,7 +114,7 @@ acs_data_level2 <- acs_data_level2 %>%
 # sum(acs_data_level2$estimate) == acs_data_level2$total_state_pop[1]
 
 ## create a dataset grouped at level 1 - all BIPOC together (resulting groups are BIPOC and white)
-acs_data_level1 <- acs_data_raw %>%
+acs_data_level1 <- acs_data %>%
     clean_names() %>%
     rename(
         total_state_pop = summary_est,
@@ -230,7 +230,7 @@ or career outcomes are not predicted by one's race. This vision is informed by m
         # Sidebar with filters (inputs)
         sidebarLayout(
             sidebarPanel(
-                selectInput(
+                selectizeInput(
                     inputId = "exp_rpt_year",
                     label = "Reporting Year:",
                     choices = #rev(
@@ -240,7 +240,7 @@ or career outcomes are not predicted by one's race. This vision is informed by m
                         pull(report_year)
                     #)
                 ),
-                selectInput(
+                selectizeInput(
                     inputId = "exp_department",
                     label = "Department:",
                     choices = c(
@@ -430,7 +430,7 @@ server <- function(input, output, session) {
     })
     observeEvent(exp_observer_year(),
                  {
-                     updateSelectInput(
+                     updateSelectizeInput(
                          session = session,
                          inputId = 'exp_rpt_year',
                          choices = c(
@@ -454,7 +454,7 @@ server <- function(input, output, session) {
     })
     observeEvent(exp_observer_department(),
                  {
-                     updateSelectInput(
+                     updateSelectizeInput(
                          session = session,
                          inputId = 'exp_department',
                          choices = c(
@@ -478,7 +478,7 @@ server <- function(input, output, session) {
     })
     observeEvent(exp_observer_class_title(),
                  {
-                     updateSelectInput(
+                     updateSelectizeInput(
                          session = session,
                          inputId = 'exp_class_selected',
                          choices = c(
