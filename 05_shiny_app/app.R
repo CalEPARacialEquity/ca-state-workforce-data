@@ -222,7 +222,13 @@ or career outcomes are not predicted by one's race. This vision is informed by m
             12,
             align = 'center',
             plotlyOutput('sum_plot',
-                       height = 500)
+                       height = 500),
+            radioButtons(
+                inputId = 'sum_level_type',
+                label = 'Ethnicity level:',
+                choices = c('Level 1', 'Level 2'),
+                selected = 'Level 2'
+            )
         )))
     ),
     tabPanel(
@@ -354,6 +360,10 @@ server <- function(input, output, session) {
     acs_data_level2_updated <- reactive({
         acs_data_level2 %>% filter(year == input$sum_rpt_year)
         })
+    
+    acs_data_level1_updated <- reactive({
+        acs_data_level1 %>% filter(year == input$sum_rpt_year)
+    })
     
     # --------------- Render text ---------------
     # output$sum_graph_title <- renderText({input$sum_graph_title})
