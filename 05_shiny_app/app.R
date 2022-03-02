@@ -40,14 +40,13 @@ colors_5102_state_dept <-c('gold', 'darkgreen')
 df_5102_report <-
     read_csv(
         "data/calhr_5102_statewide_2011-2020.csv.gz",
-        col_types = cols(.default = col_character())
-    ) %>%
-    type_convert() %>%
-    clean_names() %>%
+        col_types = cols(.default = col_character()))
+    
     # mutate(record_count = as.integer(record_count)) %>%
-    {
-        .
-    }
+    # {
+    #     .
+    # }
+
 
 ## Census Data (ACS 1 yr) ----
 ### Load ACS Data
@@ -59,14 +58,14 @@ acs_data <-
 ## 5102 Report ----
 # create a new column with just the year
 df_5102_report <- df_5102_report %>%
-    mutate(report_year = year(as_of_date))
-
-df_5102_report <- df_5102_report %>%
+    type_convert() %>%
+    clean_names() %>%
+    mutate(report_year = year(as_of_date)) %>%
     mutate(
-        ethnicity_level1 = case_when(
+        `Level 1` = case_when(
             identity_variable == 'White' ~ 'White',
             TRUE ~ 'BIPOC'),
-        ethnicity_level2 = case_when(
+        `Level 2` = case_when(
             str_detect(identity_variable, 'Pacific Islander') ~ 'Pacific Islander',
             # groups (all start with "Pacific Islander - "): Guamanian, Hawaiian, Other or Multiple, and Samoan
             str_detect(identity_variable, 'Asian') ~ 'Asian',
@@ -77,62 +76,50 @@ df_5102_report <- df_5102_report %>%
 
 ## Census Data (ACS) ----
 # Clean / reformat the ACS data (the data will be formatted to be consistent with the "level 2" ethnicity groupings in the workforce data that are created above)
-acs_data <-
-    acs_data %>% mutate(year = (as.numeric(year) + 2010))
-
-acs_data_level2 <- acs_data %>%
+acs_data <- acs_data %>% 
+    mutate(year = (as.numeric(year) + 2010)) %>%
     clean_names() %>%
     rename(
         total_state_pop = summary_est,
         total_state_pop_moe = summary_moe,
         location_name = name,
-        ethnicity_level2 = variable
-    )
-
-# Check (should be TRUE) - make sure sum of populations by group == total state population
-# sum(acs_data_level2$estimate) == acs_data_level2$total_state_pop[1]
+        `Level 2` = variable
+        )
 
 # Group the 'Other' and 'Multiple' rows into one 'Other or Multiple Race' row
-acs_data_level2 <- acs_data_level2 %>%
+acs_data_level2 <- acs_data %>%
     mutate(
-        ethnicity_level2 =
-            case_when(
-                ethnicity_level2 == 'Other' | ethnicity_level2 == 'Multiple' ~ 'Other or Multiple Race',
-                TRUE ~ ethnicity_level2
+        `Level 2` = case_when(
+            `Level 2` == 'Other' | `Level 2` == 'Multiple' ~ 'Other or Multiple Race',
+            TRUE ~ `Level 2`
             )
     ) %>%
-    group_by(year, geoid, location_name, ethnicity_level2, total_state_pop) %>%
+    group_by(year, geoid, location_name, `Level 2`, total_state_pop) %>%
     summarize(ethnicity_total = sum(estimate)) %>%
     ungroup() %>%
     # Add a column with each ethnicity's % of total state population
     mutate(rate = ethnicity_total / total_state_pop) %>% 
     mutate(type = factor('State Population')) %>%
     {.}
-
-
 ## check (should be TRUE) - make sure sum of populations by group == total state population
 # sum(acs_data_level2$estimate) == acs_data_level2$total_state_pop[1]
 
 ## create a dataset grouped at level 1 - all BIPOC together (resulting groups are BIPOC and white)
 acs_data_level1 <- acs_data %>%
-    clean_names() %>%
-    rename(
-        total_state_pop = summary_est,
-        total_state_pop_moe = summary_moe,
-        location_name = name,
-        ethnicity_level2 = variable
-    ) %>% 
     mutate(
-        ethnicity_level1 = case_when(
-            ethnicity_level2 == 'White' ~ 'White',
+        `Level 1` = case_when(
+        `Level 2` == 'White' ~ 'White',
             TRUE ~ 'BIPOC')
     ) %>%
-    group_by(year, geoid, location_name, ethnicity_level1, total_state_pop) %>%
+    group_by(year, geoid, location_name, `Level 1`, total_state_pop) %>%
     summarize(ethnicity_total = sum(estimate)) %>%
     ungroup() %>%
     mutate(rate = ethnicity_total / total_state_pop) %>% # update the rate to reflect level 1 numbers
     mutate(type = factor('State Population')) %>% 
     {.}
+
+acs_data_both_levels <- acs_data_level1 %>% 
+    full_join(acs_data_level2)
 
 ## check (should be TRUE)
 # sum(acs_data_level1$estimate) == acs_data_level1$total_state_pop[1]
@@ -357,12 +344,30 @@ server <- function(input, output, session) {
                  })
     # Reactive update to filter for ACS year
     
-    acs_data_level2_updated <- reactive({
-        acs_data_level2 %>% filter(year == input$sum_rpt_year)
+    acs_data_updated <- reactive({
+        acs_data_both_levels %>% 
+            select(year, geoid, location_name, input$sum_level_type, total_state_pop, ethnicity_total, rate, type) %>% 
+            rename(Level = input$sum_level_type) %>% 
+            filter(year == input$sum_rpt_year)
         })
     
-    acs_data_level1_updated <- reactive({
-        acs_data_level1 %>% filter(year == input$sum_rpt_year)
+    df_5102_report_updated <- reactive({
+        df_5102_report %>%
+        filter(
+            dept %in% input$sum_department,
+            report_year == input$sum_rpt_year
+        ) %>% 
+        select(as_of_date, dept, employee_category, sub_category, soc_code, scheme_code, class_code, class_title, identity_variable, gender, record_count, report_year, input$sum_level_type) %>% 
+        add_count(input$sum_level_type,
+                  wt = record_count,
+                  name = 'ethnicity_total') %>%
+        select(input$sum_level_type, ethnicity_total) %>%
+        distinct() %>%
+        mutate(rate = ethnicity_total / sum(ethnicity_total)) %>%
+        mutate(type = factor('Department Workforce')) %>%
+        arrange(input$sum_level_type) %>%
+        rename(Level = input$sum_level_type) %>% 
+        bind_rows(acs_data_updated())
     })
     
     # --------------- Render text ---------------
@@ -370,24 +375,11 @@ server <- function(input, output, session) {
     # --------------- Render plot ---------------
     # Plot class title
     output$sum_plot <- renderPlotly({
-        pl_dept_sum <- ggplotly(df_5102_report %>%
-            filter(
-                dept %in% input$sum_department,
-                report_year == input$sum_rpt_year
-            ) %>% 
-            add_count(ethnicity_level2,
-                      wt = record_count,
-                      name = 'ethnicity_total') %>%
-            select(ethnicity_level2, ethnicity_total) %>%
-            distinct() %>%
-            mutate(rate = ethnicity_total / sum(ethnicity_total)) %>%
-            mutate(type = factor('Department Workforce')) %>%
-            arrange(ethnicity_level2) %>%
-            bind_rows(acs_data_level2_updated()) %>% 
+        pl_dept_sum <- ggplotly(df_5102_report_updated() %>% 
             ggplot() + # code below this line actually creates the plot
-            geom_bar(mapping = aes(x = ethnicity_level2,
-                                   y = rate,
-                                   fill = factor(type, levels = rev(levels(type)))),
+            geom_bar(mapping = aes(x = Level,
+                                   y = rate),
+                                   # fill = factor(type, levels = rev(levels(type)))),
                      stat = 'identity',
                      position = 'dodge') +
             scale_fill_manual(values = colors_5102_state_dept) +
