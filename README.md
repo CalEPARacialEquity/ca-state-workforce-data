@@ -28,5 +28,5 @@ To create graphs visualizing your department's workforce demographics, use the s
    
 - [5102 Data Analysis by Agency / Department](https://caleparacialequity.github.io/ca-state-workforce-data/06_reports/workforce_metrics_5102.html)
 - PowerBI prototypes and older data viz tools:
-   - CalHR statewide data tools (includes up to 2020 for 5102 and one panel using 2020 5112 data - this is panel 7 and includes "advancements" related filters). https://bit.ly/calHR2020_5112
+   - CalHR statewide data tools (includes up to 2020 for 5102 data. https://bit.ly/ca_workforce_2020
    - CalEPA interactive tool for 2011 to 2020 CalHR 5102 data: https://bit.ly/CalEPA_workforcedemo_PeterH
