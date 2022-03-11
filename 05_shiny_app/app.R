@@ -358,16 +358,19 @@ server <- function(input, output, session) {
             report_year == input$sum_rpt_year
         ) %>% 
         select(as_of_date, dept, employee_category, sub_category, soc_code, scheme_code, class_code, class_title, identity_variable, gender, record_count, report_year, input$sum_level_type) %>% 
+        rename(year = report_year) %>% 
         add_count(input$sum_level_type,
                   wt = record_count,
                   name = 'ethnicity_total') %>%
         select(input$sum_level_type, ethnicity_total) %>%
         distinct() %>%
+        # filter(!is.na(input$sum_level_type)) %>% 
         mutate(rate = ethnicity_total / sum(ethnicity_total)) %>%
         mutate(type = factor('Department Workforce')) %>%
         arrange(input$sum_level_type) %>%
         rename(Level = input$sum_level_type) %>% 
-        bind_rows(acs_data_updated())
+        bind_rows(acs_data_updated()) %>% 
+        filter(!is.na(Level))
     })
     
     # --------------- Render text ---------------
@@ -379,7 +382,7 @@ server <- function(input, output, session) {
             ggplot() + # code below this line actually creates the plot
             geom_bar(mapping = aes(x = Level,
                                    y = rate),
-                                   # fill = factor(type, levels = rev(levels(type)))),
+                     # fill = factor(type, levels = rev(levels(type))),
                      stat = 'identity',
                      position = 'dodge') +
             scale_fill_manual(values = colors_5102_state_dept) +
@@ -390,7 +393,7 @@ server <- function(input, output, session) {
             coord_flip() +
             theme(legend.position = 'bottom',
                   legend.title = element_blank()) +
-            guides(fill = guide_legend(reverse = TRUE))
+            guides(fill = guide_legend(reverse = TRUE)) 
         ) %>% 
             layout(title = input$sum_graph_title,
                    legend = list(
@@ -398,7 +401,6 @@ server <- function(input, output, session) {
                                  xanchor = 'right', 
                                  yanchor =  'bottom')
                    )
-            
         
         # output the plot
         pl_dept_sum
