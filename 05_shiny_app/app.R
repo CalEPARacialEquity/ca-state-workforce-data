@@ -33,96 +33,11 @@ integer_breaks <- function(n = 5, ...) {
 colors_5102_state_dept <-c('gold', 'darkgreen')
 
 # Import Data ---------------
-## 5102 Report ----
-# url_data_all_yrs <-
-#     'https://data.ca.gov/dataset/e620a64f-6b86-4ce0-ab4b-03d06674287b/resource/aba87ad9-f6b0-4a7e-a45e-d1452417eb7f/download/calhr_5102_statewide_2011-2020.csv'
+census_data <- 
+    read_csv("data/census_data.csv")
 
-df_5102_report <-
-    read_csv(
-        "data/calhr_5102_statewide_2011-2020.csv.gz",
-        col_types = cols(.default = col_character()))
-    
-    # mutate(record_count = as.integer(record_count)) %>%
-    # {
-    #     .
-    # }
-
-
-## Census Data (ACS 1 yr) ----
-### Load ACS Data
-acs_data <- 
-    read_csv("data/acs_data_raw.csv")
-
-
-# Clean/Transform Data ---------------
-## 5102 Report ----
-# create a new column with just the year
-df_5102_report <- df_5102_report %>%
-    type_convert() %>%
-    clean_names() %>%
-    mutate(report_year = year(as_of_date)) %>%
-    mutate(
-        `Level 1` = case_when(
-            identity_variable == 'White' ~ 'White',
-            TRUE ~ 'BIPOC'),
-        `Level 2` = case_when(
-            str_detect(identity_variable, 'Pacific Islander') ~ 'Pacific Islander',
-            # groups (all start with "Pacific Islander - "): Guamanian, Hawaiian, Other or Multiple, and Samoan
-            str_detect(identity_variable, 'Asian') ~ 'Asian',
-            # groups (all start with "Asian - "): Cambodian, Chinese, Filipino, Indian, Japanese, Korean, Laotian, Other or Multiple, Vietnamese
-            TRUE ~ identity_variable
-        )
-    )
-
-## Census Data (ACS) ----
-# Clean / reformat the ACS data (the data will be formatted to be consistent with the "level 2" ethnicity groupings in the workforce data that are created above)
-acs_data <- acs_data %>% 
-    mutate(year = (as.numeric(year) + 2010)) %>%
-    clean_names() %>%
-    rename(
-        total_state_pop = summary_est,
-        total_state_pop_moe = summary_moe,
-        location_name = name,
-        `Level 2` = variable
-        )
-
-# Group the 'Other' and 'Multiple' rows into one 'Other or Multiple Race' row
-acs_data_level2 <- acs_data %>%
-    mutate(
-        `Level 2` = case_when(
-            `Level 2` == 'Other' | `Level 2` == 'Multiple' ~ 'Other or Multiple Race',
-            TRUE ~ `Level 2`
-            )
-    ) %>%
-    group_by(year, geoid, location_name, `Level 2`, total_state_pop) %>%
-    summarize(ethnicity_total = sum(estimate)) %>%
-    ungroup() %>%
-    # Add a column with each ethnicity's % of total state population
-    mutate(rate = ethnicity_total / total_state_pop) %>% 
-    mutate(type = factor('State Population')) %>%
-    {.}
-## check (should be TRUE) - make sure sum of populations by group == total state population
-# sum(acs_data_level2$estimate) == acs_data_level2$total_state_pop[1]
-
-## create a dataset grouped at level 1 - all BIPOC together (resulting groups are BIPOC and white)
-acs_data_level1 <- acs_data %>%
-    mutate(
-        `Level 1` = case_when(
-        `Level 2` == 'White' ~ 'White',
-            TRUE ~ 'BIPOC')
-    ) %>%
-    group_by(year, geoid, location_name, `Level 1`, total_state_pop) %>%
-    summarize(ethnicity_total = sum(estimate)) %>%
-    ungroup() %>%
-    mutate(rate = ethnicity_total / total_state_pop) %>% # update the rate to reflect level 1 numbers
-    mutate(type = factor('State Population')) %>% 
-    {.}
-
-acs_data_both_levels <- acs_data_level1 %>% 
-    full_join(acs_data_level2)
-
-## check (should be TRUE)
-# sum(acs_data_level1$estimate) == acs_data_level1$total_state_pop[1]
+workforce_data <- 
+    read_csv("data/workforce_data.csv")
 
 
 # Define UI for application -----------------------------------------------
@@ -174,7 +89,7 @@ or career outcomes are not predicted by one's race. This vision is informed by m
             selectInput(
                 inputId = "sum_rpt_year",
                 label = "Reporting Year:",
-                choices = df_5102_report %>%
+                choices = workforce_data %>%
                     distinct(report_year) %>%
                     arrange(desc(report_year)) %>%
                     pull(report_year)
@@ -183,7 +98,7 @@ or career outcomes are not predicted by one's race. This vision is informed by m
                 inputId = "sum_department",
                 label = "Department:",
                 choices = c(
-                    df_5102_report %>%
+                    workforce_data %>%
                         distinct(dept) %>%
                         arrange(dept) %>%
                         pull(dept)
@@ -227,7 +142,7 @@ or career outcomes are not predicted by one's race. This vision is informed by m
                     inputId = "exp_rpt_year",
                     label = "Reporting Year:",
                     choices = #rev(
-                        df_5102_report %>%
+                        workforce_data %>%
                         distinct(report_year) %>%
                         arrange(desc(report_year)) %>%
                         pull(report_year)
@@ -238,7 +153,7 @@ or career outcomes are not predicted by one's race. This vision is informed by m
                     label = "Department:",
                     choices = c(
                         'All',
-                        df_5102_report %>%
+                        workforce_data %>%
                             distinct(dept) %>%
                             arrange(dept) %>%
                             pull(dept)
@@ -250,7 +165,7 @@ or career outcomes are not predicted by one's race. This vision is informed by m
                     choices = c(
                         'All',
                         str_to_title(
-                            df_5102_report %>%
+                            workforce_data %>%
                                 distinct(class_title) %>%
                                 arrange(class_title) %>%
                                 pull(class_title)
@@ -286,7 +201,7 @@ server <- function(input, output, session) {
     # Filter department
     # sum_filter_dpt <- reactive({
     #     if(input$sum_department == 'All'){
-    #         list(unique(df_5102_report$dept))
+    #         list(unique(workforce_data$dept))
     #     } else{if(input$sum_department != 'All'){
     #         input$sum_department
     #     } else{TRUE}}
@@ -294,9 +209,9 @@ server <- function(input, output, session) {
     # 
     # output$sum_secondary_select <- renderUI({
     #     if ('All' %in% input$sum_department) {
-    #         sum_filter_dpt <- unique(df_5102_report$dept)
+    #         sum_filter_dpt <- unique(workforce_data$dept)
     #     } else {
-    #         df <- df_5102_report %>% filter(dept == input$sum_department)
+    #         df <- workforce_data %>% filter(dept == input$sum_department)
     #         sum_filter_dpt <- unique(df$dept)
     #     }
     #     selectizeInput('test', 'Test', choices = c('All', sum_filter_dpt))
@@ -311,7 +226,7 @@ server <- function(input, output, session) {
                          inputId = 'sum_rpt_year',
                          choices = c(
                              # 'All',
-                             df_5102_report %>%
+                             workforce_data %>%
                                  filter(
                                      dept %in% input$sum_department
                                  ) %>%
@@ -331,7 +246,7 @@ server <- function(input, output, session) {
                          inputId = 'sum_department',
                          choices = c(
                              # 'All',
-                             df_5102_report %>%
+                             workforce_data %>%
                                  filter(
                                      report_year == input$sum_rpt_year
                                  ) %>%
@@ -344,33 +259,37 @@ server <- function(input, output, session) {
                  })
     # Reactive update to filter for ACS year
     
-    acs_data_updated <- reactive({
-        acs_data_both_levels %>% 
-            select(year, geoid, location_name, input$sum_level_type, total_state_pop, ethnicity_total, rate, type) %>% 
-            rename(Level = input$sum_level_type) %>% 
+    census_data_updated <- reactive({
+        census_data %>% 
+            select(year, Level, Ethnicity, total_pop, ethnicity_total, rate, type) %>% 
+            filter(Level == input$sum_level_type) %>% 
+            # rename(Level = input$sum_level_type) %>% 
             filter(year == input$sum_rpt_year)
         })
     
-    df_5102_report_updated <- reactive({
-        df_5102_report %>%
+    workforce_data_updated <- reactive({
+        workforce_data %>%
         filter(
             dept %in% input$sum_department,
-            report_year == input$sum_rpt_year
+            report_year == input$sum_rpt_year,
+            Level == input$sum_level_type
         ) %>% 
-        select(as_of_date, dept, employee_category, sub_category, soc_code, scheme_code, class_code, class_title, identity_variable, gender, record_count, report_year, input$sum_level_type) %>% 
+        # select(as_of_date, dept, employee_category, sub_category, soc_code, scheme_code, class_code, class_title, identity_variable, gender, record_count, report_year, input$sum_level_type) %>% 
         rename(year = report_year) %>% 
-        add_count(input$sum_level_type,
-                  wt = record_count,
+        add_count(Ethnicity,
+                  wt = total_pop,
                   name = 'ethnicity_total') %>%
-        select(input$sum_level_type, ethnicity_total) %>%
-        distinct() %>%
+        # select(Ethnicity, ethnicity_total) %>%
+        distinct(Ethnicity, ethnicity_total, .keep_all = TRUE) %>%
         # filter(!is.na(input$sum_level_type)) %>% 
         mutate(rate = ethnicity_total / sum(ethnicity_total)) %>%
-        mutate(type = factor('Department Workforce')) %>%
-        arrange(input$sum_level_type) %>%
-        rename(Level = input$sum_level_type) %>% 
-        bind_rows(acs_data_updated()) %>% 
-        filter(!is.na(Level))
+        # mutate(type = factor('Department Workforce')) %>%
+        arrange(Ethnicity) %>%
+        select(year, Level, Ethnicity, total_pop, ethnicity_total, rate, type) %>% 
+        # rename(Level = input$sum_level_type) %>% 
+        bind_rows(census_data_updated()) 
+        # %>% 
+        # filter(!is.na(Level))
     })
     
     # --------------- Render text ---------------
@@ -378,10 +297,11 @@ server <- function(input, output, session) {
     # --------------- Render plot ---------------
     # Plot class title
     output$sum_plot <- renderPlotly({
-        pl_dept_sum <- ggplotly(df_5102_report_updated() %>% 
+        pl_dept_sum <- ggplotly(workforce_data_updated() %>% 
             ggplot() + # code below this line actually creates the plot
-            geom_bar(mapping = aes(x = Level,
+            geom_bar(mapping = aes(x = Ethnicity,
                                    y = rate),
+                     fill = type,
                      # fill = factor(type, levels = rev(levels(type))),
                      stat = 'identity',
                      position = 'dodge') +
@@ -412,7 +332,7 @@ server <- function(input, output, session) {
     # Filter department
     exp_filter_dpt <- reactive({
         if(input$exp_department == 'All')
-            return(unique(df_5102_report$dept))
+            return(unique(workforce_data$dept))
         else
             return(input$exp_department)
     })
@@ -420,7 +340,7 @@ server <- function(input, output, session) {
     # Filter class title
     exp_filter_title <- reactive({
         if(input$exp_class_selected == 'All')
-            return(unique(df_5102_report$class_title))
+            return(unique(workforce_data$class_title))
         else
             return(input$exp_class_selected)
     })
@@ -438,7 +358,7 @@ server <- function(input, output, session) {
                          inputId = 'exp_rpt_year',
                          choices = c(
                              #'All',
-                             df_5102_report %>%
+                             workforce_data %>%
                                  filter(
                                      dept %in% exp_filter_dpt(),
                                      class_title %in% toupper(exp_filter_title())
@@ -462,7 +382,7 @@ server <- function(input, output, session) {
                          inputId = 'exp_department',
                          choices = c(
                              'All',
-                             df_5102_report %>%
+                             workforce_data %>%
                                  filter(
                                      report_year == input$exp_rpt_year,
                                      class_title %in% toupper(exp_filter_title())
@@ -487,7 +407,7 @@ server <- function(input, output, session) {
                          choices = c(
                              'All',
                              str_to_title(
-                                 df_5102_report %>%
+                                 workforce_data %>%
                                      filter(report_year == input$exp_rpt_year,
                                             dept %in% exp_filter_dpt()) %>%
                                      distinct(class_title) %>%
@@ -502,7 +422,7 @@ server <- function(input, output, session) {
     # --------------- Render plot ---------------
     # Plot class title
     output$exp_plot <- renderPlotly({
-        pl_class_title <- ggplotly(df_5102_report %>%
+        pl_class_title <- ggplotly(workforce_data %>%
             filter(
                 dept %in% exp_filter_dpt(),
                 class_title %in% toupper(exp_filter_title()),
@@ -547,7 +467,7 @@ server <- function(input, output, session) {
     
     # --------------- Create plot by agency ---------------
     # output$plot_agency <- renderPlot({
-    #     pl_agency <- ggplot(data = df_5102_report %>%
+    #     pl_agency <- ggplot(data = workforce_data %>%
     #                             filter(dept == input$exp_department,
     #                                    report_year == input$exp_rpt_year)) +
     #         aes(x = identity_variable,

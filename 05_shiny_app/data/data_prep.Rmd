@@ -1,0 +1,251 @@
+---
+title: "Data Prep"
+author: "CalEPA Racial Equity Team"
+date: '2022-03-18'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(readxl)
+library(readr)
+library(dplyr)
+library(janitor)
+library(purrr)
+library(glue)
+library(lubridate)
+library(stringr)
+library(forcats)
+library(scales)
+library(tidycensus)
+library(sf)
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Census Data (ACS 1 yr)
+Define years
+```{r}
+years <- c(2011:2019)
+```
+
+API key
+To download the census data, you need to first request a key here: <https://api.census.gov/data/key_signup.html/>
+Then, enter census_api_key("*your_key*", install = TRUE) in your console.
+```{r}
+api_key <- "3e6e49b4c5dcaf87f3683870589946fa111e6852"
+```
+
+
+```{r}
+acs_data_raw <- map_dfr(
+    years,
+    ~ get_acs(
+        geography = 'state',
+        variables = c(
+            # total_state_pop = 'B02001_001',
+            'Hispanic or Latino' = 'B03002_012',
+            # Total Hispanic or Latino
+            'White' = 'B03002_003',
+            # White (Not Hispanic or Latino)
+            'Black or African American' = 'B03002_004',
+            # Black or African American (Not Hispanic or Latino)
+            'Native American or Alaska Native' = 'B03002_005',
+            # American Indian and Alaska Native (Not Hispanic or Latino)
+            'Asian' = 'B03002_006',
+            # Asian (Not Hispanic or Latino)
+            'Pacific Islander' = 'B03002_007',
+            # Native Hawaiian and Other Pacific Islander (Not Hispanic or Latino)
+            'Other' = 'B03002_008',
+            # Some other race (Not Hispanic or Latino)
+            'Multiple' = 'B03002_009'# Two or more races (Not Hispanic or Latino)
+        ),
+        summary_var = c(total_state_pop = 'B02001_001'),
+        survey = 'acs1',
+        # use 'acs1' or 'acs5' to get 1 or 5 year acs
+        state = 'CA',
+        geometry = FALSE,
+        # set to TRUE to get as geospatial data
+        year = .x
+    ),
+    .id = "year"
+)
+```
+
+
+```{r}
+# Clean / reformat the ACS data (the data will be formatted to be consistent with the "level 2" ethnicity groupings in the workforce data that are created above)
+acs_data <- acs_data_raw %>% 
+    mutate(year = (as.numeric(year) + 2010)) %>%
+    clean_names() %>%
+    rename(
+        total_pop = summary_est,
+        total_state_pop_moe = summary_moe,
+        location_name = name,
+        `Ethnicity` = variable
+    )
+
+# Group the 'Other' and 'Multiple' rows into one 'Other or Multiple Race' row
+acs_data_level2 <- acs_data %>%
+    mutate(
+        Ethnicity = case_when(
+            Ethnicity == 'Other' | Ethnicity == 'Multiple' ~ 'Other or Multiple Race',
+            TRUE ~ Ethnicity
+        )
+    ) %>%
+    group_by(year, geoid, location_name, Ethnicity, total_pop) %>%
+    summarize(ethnicity_total = sum(estimate)) %>%
+    ungroup() %>%
+    # Add a column with each ethnicity's % of total state population
+    mutate(rate = ethnicity_total / total_pop) %>% 
+    mutate(type = factor('State Population'),
+           Level = "Level 2") %>%
+    {.}
+
+## check (should be TRUE) - make sure sum of populations by group == total state population
+# sum(acs_data_level2$estimate) == acs_data_level2$total_state_pop[1]
+
+## create a dataset grouped at level 1 - all BIPOC together (resulting groups are BIPOC and white)
+acs_data_level1 <- acs_data %>%
+    mutate(
+        Ethnicity = case_when(
+            Ethnicity == 'White' ~ 'White',
+            TRUE ~ 'BIPOC')
+    ) %>%
+    group_by(year, geoid, location_name, Ethnicity, total_pop) %>%
+    summarize(ethnicity_total = sum(estimate)) %>%
+    ungroup() %>%
+    mutate(rate = ethnicity_total / total_pop) %>% # update the rate to reflect level 1 numbers
+    mutate(type = factor('State Population'),
+           Level = "Level 1") %>% 
+    {.}
+
+acs_data_both_levels <- acs_data_level1 %>% 
+    bind_rows(acs_data_level2)
+
+## check (should be TRUE)
+# sum(acs_data_level1$estimate) == acs_data_level1$total_state_pop[1]
+```
+
+
+New census data
+```{r}
+# Pull Dicennial census data for 2020
+# dcensus_data_raw <- get_decennial(
+#         geography = 'state',
+#         variables = c(
+#             # total_state_pop = 'B02001_001',
+#             'Hispanic or Latino' = 'B03002_012',
+#             # Total Hispanic or Latino
+#             'White' = 'B03002_003',
+#             # White (Not Hispanic or Latino)
+#             'Black or African American' = 'B03002_004',
+#             # Black or African American (Not Hispanic or Latino)
+#             'Native American or Alaska Native' = 'B03002_005',
+#             # American Indian and Alaska Native (Not Hispanic or Latino)
+#             'Asian' = 'B03002_006',
+#             # Asian (Not Hispanic or Latino)
+#             'Pacific Islander' = 'B03002_007',
+#             # Native Hawaiian and Other Pacific Islander (Not Hispanic or Latino)
+#             'Other' = 'B03002_008',
+#             # Some other race (Not Hispanic or Latino)
+#             'Multiple' = 'B03002_009'# Two or more races (Not Hispanic or Latino)
+#         ),
+#         summary_var = c(total_state_pop = 'B02001_001'),
+#         state = 'CA',
+#         geometry = FALSE,
+#         # set to TRUE to get as geospatial data
+#         year = 2020
+#     )
+```
+
+
+## Export
+```{r}
+# setwd("05_shiny_app/data")
+write.csv(acs_data_both_levels, file = "census_data.csv")
+```
+
+
+
+# 5102 Data
+```{r}
+# url_data_all_yrs <-
+#     'https://data.ca.gov/dataset/e620a64f-6b86-4ce0-ab4b-03d06674287b/resource/aba87ad9-f6b0-4a7e-a45e-d1452417eb7f/download/calhr_5102_statewide_2011-2020.csv'
+
+df_5102_report <-
+    read_csv(
+        "calhr_5102_statewide_2011-2020.csv.gz",
+        col_types = cols(.default = col_character()))
+
+# mutate(record_count = as.integer(record_count)) %>%
+# {
+#     .
+# }
+
+# create a new column with just the year
+df_5102_report_clean <- df_5102_report %>%
+    type_convert() %>%
+    clean_names() %>%
+    mutate(report_year = year(as_of_date))
+
+
+df_5012_level2 <- df_5102_report_clean %>%
+    mutate(Ethnicity = case_when(
+            str_detect(identity_variable, 'Pacific Islander') ~ 'Pacific Islander',
+            # groups (all start with "Pacific Islander - "): Guamanian, Hawaiian, Other or Multiple, and Samoan
+            str_detect(identity_variable, 'Asian') ~ 'Asian',
+            # groups (all start with "Asian - "): Cambodian, Chinese, Filipino, Indian, Japanese, Korean, Laotian, Other or Multiple, Vietnamese
+            TRUE ~ identity_variable
+        )
+    ) %>% 
+    mutate(Level = "Level 2",
+           type = factor('Department Workforce'))
+
+
+df_5102_level1 <- df_5012_level2 %>% 
+    mutate(Ethnicity = case_when(
+            Ethnicity == 'White' ~ 'White',
+            TRUE ~ 'BIPOC')) %>% 
+    mutate(Level = "Level 1",
+           type = factor('Department Workforce'))
+
+workforce_data <- df_5102_level1 %>% 
+    bind_rows(df_5012_level2) %>% 
+    rename(total_pop = record_count)
+```
+
+
+TEST
+```{r}
+workforce_data_updated <- workforce_data %>%
+        filter(
+            dept == "Administrative Law, Office of",
+            report_year == 2019,
+            Level == "Level 1"
+        ) %>% 
+        # select(as_of_date, dept, employee_category, sub_category, soc_code, scheme_code, class_code, class_title, identity_variable, gender, record_count, report_year, input$sum_level_type) %>% 
+        rename(year = report_year) %>% 
+        add_count(Ethnicity,
+                  wt = total_pop,
+                  name = 'ethnicity_total') %>%
+        # select(Ethnicity, ethnicity_total) %>%
+        distinct(Ethnicity, ethnicity_total, .keep_all = TRUE) %>%
+        # filter(!is.na(input$sum_level_type)) %>% 
+        mutate(rate = ethnicity_total / sum(ethnicity_total)) %>%
+        # mutate(type = factor('Department Workforce')) %>%
+        arrange(Ethnicity) %>%
+        # rename(Level = input$sum_level_type) %>%
+        bind_rows(acs_data_both_levels) 
+        # %>% 
+        # filter(!is.na(Level))
+```
+
+
+
+## Export
+```{r}
+# setwd("05_shiny_app/data")
+write.csv(workforce_data, file = "workforce_data.csv")
+```
+
