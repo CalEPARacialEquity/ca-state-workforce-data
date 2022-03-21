@@ -34,10 +34,14 @@ colors_5102_state_dept <-c('gold', 'darkgreen')
 
 # Import Data ---------------
 census_data <- 
-    read_csv("data/census_data.csv")
+    read_csv("data/census_data.csv") 
+# %>% 
+    # mutate(type = as.character(type))
 
 workforce_data <- 
-    read_csv("data/workforce_data.csv")
+    read_csv("data/workforce_data.csv.gz") 
+# %>% 
+    # mutate(type = as.character(type))
 
 
 # Define UI for application -----------------------------------------------
@@ -274,7 +278,7 @@ server <- function(input, output, session) {
             report_year == input$sum_rpt_year,
             Level == input$sum_level_type
         ) %>% 
-        # select(as_of_date, dept, employee_category, sub_category, soc_code, scheme_code, class_code, class_title, identity_variable, gender, record_count, report_year, input$sum_level_type) %>% 
+        # select(as_of_date, dept, employee_category, sub_category, soc_code, scheme_code, class_code, class_title, identity_variable, gender, total_pop, report_year, input$sum_level_type) %>% 
         rename(year = report_year) %>% 
         add_count(Ethnicity,
                   wt = total_pop,
@@ -301,8 +305,8 @@ server <- function(input, output, session) {
             ggplot() + # code below this line actually creates the plot
             geom_bar(mapping = aes(x = Ethnicity,
                                    y = rate),
-                     fill = type,
-                     # fill = factor(type, levels = rev(levels(type))),
+                     # fill = type,
+                     fill = factor(~type, levels = rev(levels(~type))),
                      stat = 'identity',
                      position = 'dodge') +
             scale_fill_manual(values = colors_5102_state_dept) +
@@ -429,7 +433,7 @@ server <- function(input, output, session) {
                 report_year == input$exp_rpt_year
             ) %>%
             group_by(identity_variable, gender) %>%
-            summarize(total_n = sum(record_count)) %>%
+            summarize(total_n = sum(total_pop)) %>%
             ungroup() %>%
             mutate(identity_variable = fct_reorder(identity_variable, total_n)) %>%
             ggplot() + # code below this line actually creates the plot
@@ -471,7 +475,7 @@ server <- function(input, output, session) {
     #                             filter(dept == input$exp_department,
     #                                    report_year == input$exp_rpt_year)) +
     #         aes(x = identity_variable,
-    #             y = record_count) +
+    #             y = total_pop) +
     #         geom_bar()
     # })
 }

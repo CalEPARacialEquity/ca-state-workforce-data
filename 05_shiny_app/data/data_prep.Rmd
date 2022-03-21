@@ -246,6 +246,8 @@ workforce_data_updated <- workforce_data %>%
 ## Export
 ```{r}
 # setwd("05_shiny_app/data")
-write.csv(workforce_data, file = "workforce_data.csv")
+# write.csv(workforce_data, file = "workforce_data.csv")
+write_csv(x = workforce_data, 
+          file = "workforce_data.csv.gz")
 ```
 
