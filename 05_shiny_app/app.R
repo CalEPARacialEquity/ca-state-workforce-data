@@ -30,7 +30,8 @@ integer_breaks <- function(n = 5, ...) {
     return(fxn)
 }
 
-colors_5102_state_dept <-c('gold', 'darkgreen')
+colors_5102_state_dept <-c('darkgreen','gold')
+
 
 # Import Data ---------------
 census_data <- 
@@ -43,6 +44,10 @@ workforce_data <-
 # %>% 
     # mutate(type = as.character(type))
 
+deptchoices <- c(workforce_data %>%
+                     distinct(dept) %>%
+                     arrange(dept) %>%
+                     pull(dept))
 
 # Define UI for application -----------------------------------------------
 ui <- navbarPage(
@@ -96,29 +101,28 @@ or career outcomes are not predicted by one's race. This vision is informed by m
                 choices = workforce_data %>%
                     distinct(report_year) %>%
                     arrange(desc(report_year)) %>%
-                    pull(report_year)
+                    pull(report_year),
+                selected = 2019 # delete once we get 2020 census data
             ),
             pickerInput(
                 inputId = "sum_department",
                 label = "Department:",
-                choices = c(
-                    workforce_data %>%
-                        distinct(dept) %>%
-                        arrange(dept) %>%
-                        pull(dept)
-                ),
+                choices = deptchoices,
+                selected = workforce_data$dept,
                 options = pickerOptions(`actions-box` = TRUE,
                                `liveSearch` = TRUE,
                                `virtual-scroll` = 10,
                                `multiple-separator` = "\n",
+                               `selected-text-format` = paste0("count > ", length(deptchoices) -1),
+                               `count-selected-text` = "All Departments",
                                size = 10),
                 multiple = TRUE
             ),
-            tags$h6(em("Note: Hover over the department input bar to see a list of the currently selected department(s).")),
+            tags$h6(em("Hover over the above input bar for a list of the selected department(s).")),
             textInput(
                 inputId = "sum_graph_title",
                 label = "Graph title:",
-                placeholder = "CalEPA Workforce Demographics"
+                placeholder = "All Workforce Demographics"
             ),
             width = 3
         ),
@@ -304,11 +308,11 @@ server <- function(input, output, session) {
         pl_dept_sum <- ggplotly(workforce_data_updated() %>% 
             ggplot() + # code below this line actually creates the plot
             geom_bar(mapping = aes(x = Ethnicity,
-                                   y = rate),
-                     # fill = type,
-                     fill = factor(~type, levels = rev(levels(~type))),
+                                   y = rate,
+                                   fill = type),
                      stat = 'identity',
                      position = 'dodge') +
+                    # fill = factor(~type, levels = rev(levels(~type))), 
             scale_fill_manual(values = colors_5102_state_dept) +
             scale_y_continuous(labels = label_percent(accuracy = 1L)) +
             labs(x = 'Ethnicity Group',
