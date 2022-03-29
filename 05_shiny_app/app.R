@@ -72,8 +72,7 @@ or numeric targets. If you have any questions about this code, please email Leah
         br(),
         tags$h2("CRET Workforce Equity Subteam"),
         tags$p(
-            "The vision of CRET Workforce Equity Subteam's work is to create a workforce in which  one's work and /
-or career outcomes are not predicted by one's race. This vision is informed by more detailed goals and objectives related to work/career satisfaction, promotion and retention, compensation, inclusion, mental and other health safety, and more.  CRET's model of change - normalize, organize and operationalize – is  aligned with over 200 government organizations part of a nationwide network to  transform governments to deliver more racial equity. We anticipate that these demographic metrics and resulting performance measures will evolve over time and  will be informed by future data and analyses of surveys, workforce demographics,  and research."
+            "The vision of CRET Workforce Equity Subteam's work is to create a workforce in which  one's work and / or career outcomes are not predicted by one's race. This vision is informed by more detailed goals and objectives related to work/career satisfaction, promotion and retention, compensation, inclusion, mental and other health safety, and more.  CRET's model of change - normalize, organize and operationalize – is  aligned with over 200 government organizations part of a nationwide network to  transform governments to deliver more racial equity. We anticipate that these demographic metrics and resulting performance measures will evolve over time and  will be informed by future data and analyses of surveys, workforce demographics,  and research."
         ),
         br(),
         tags$h2("Why Diversity and Inclusion in Representation Matters"),
