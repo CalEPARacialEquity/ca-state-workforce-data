@@ -163,7 +163,7 @@ New census data
 ## Export
 ```{r}
 # setwd("05_shiny_app/data")
-write.csv(acs_data_both_levels, file = "census_data.csv")
+# write.csv(acs_data_both_levels, file = "census_data.csv")
 ```
 
 
@@ -219,26 +219,24 @@ workforce_data <- df_5102_level1 %>%
 TEST
 ```{r}
 workforce_data_updated <- workforce_data %>%
-        filter(
-            dept == "Administrative Law, Office of",
-            report_year == 2019,
-            Level == "Level 1"
-        ) %>% 
-        # select(as_of_date, dept, employee_category, sub_category, soc_code, scheme_code, class_code, class_title, identity_variable, gender, record_count, report_year, input$sum_level_type) %>% 
-        rename(year = report_year) %>% 
-        add_count(Ethnicity,
-                  wt = total_pop,
-                  name = 'ethnicity_total') %>%
-        # select(Ethnicity, ethnicity_total) %>%
-        distinct(Ethnicity, ethnicity_total, .keep_all = TRUE) %>%
-        # filter(!is.na(input$sum_level_type)) %>% 
-        mutate(rate = ethnicity_total / sum(ethnicity_total)) %>%
-        # mutate(type = factor('Department Workforce')) %>%
-        arrange(Ethnicity) %>%
-        # rename(Level = input$sum_level_type) %>%
-        bind_rows(acs_data_both_levels) 
-        # %>% 
-        # filter(!is.na(Level))
+    filter(dept == "Administrative Law, Office of",
+           Level == "Level 1") %>%
+    rename(year = report_year) %>%
+    group_by(year) %>%
+    add_count(Ethnicity,
+              wt = total_pop,
+              name = 'ethnicity_total') %>%
+    group_by(year, Ethnicity) %>% 
+    mutate(rate = ethnicity_total / sum(ethnicity_total)) %>%
+    distinct(Ethnicity, year, .keep_all = TRUE) %>%
+    arrange(Ethnicity) %>%
+    select(year,
+           Level,
+           Ethnicity,
+           total_pop,
+           ethnicity_total,
+           rate,
+           type)
 ```
 
 
@@ -246,5 +244,5 @@ workforce_data_updated <- workforce_data %>%
 ## Export
 ```{r}
 # setwd("05_shiny_app/data")
-write_csv(x = workforce_data, file = "workforce_data.csv.gz")
+# write_csv(x = workforce_data, file = "workforce_data.csv.gz")
 ```
