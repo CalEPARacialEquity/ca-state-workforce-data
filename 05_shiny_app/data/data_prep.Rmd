@@ -211,12 +211,11 @@ df_5102_level1 <- df_5012_level2 %>%
            type = 'Department Workforce')
 
 workforce_data <- df_5102_level1 %>% 
-    bind_rows(df_5012_level2) %>% 
-    rename(total_pop = record_count)
+    bind_rows(df_5012_level2)
 ```
 
 
-TEST
+TEST PAGE 3
 ```{r}
 workforce_data_updated <- workforce_data %>%
     filter(dept == "Administrative Law, Office of",
@@ -224,10 +223,13 @@ workforce_data_updated <- workforce_data %>%
     rename(year = report_year) %>%
     group_by(year) %>%
     add_count(Ethnicity,
-              wt = total_pop,
+              wt = record_count,
               name = 'ethnicity_total') %>%
-    group_by(year, Ethnicity) %>% 
-    mutate(rate = ethnicity_total / sum(ethnicity_total)) %>%
+    add_count(year,
+              wt = record_count,
+              name = 'total_pop') %>% 
+    ungroup() %>% 
+    mutate(rate = ethnicity_total / total_pop) %>%
     distinct(Ethnicity, year, .keep_all = TRUE) %>%
     arrange(Ethnicity) %>%
     select(year,
@@ -239,6 +241,28 @@ workforce_data_updated <- workforce_data %>%
            type)
 ```
 
+
+TEST PAGE 2
+```{r}
+ workforce_data_updated2 <- workforce_data %>%
+    filter(dept == "Administrative Law, Office of",
+           Level == "Level 1",
+           report_year == 2017) %>%
+    rename(year = report_year) %>%
+    add_count(Ethnicity,
+              wt = record_count,
+              name = 'ethnicity_total') %>%
+    distinct(Ethnicity, ethnicity_total, .keep_all = TRUE) %>%
+    mutate(rate = ethnicity_total / sum(ethnicity_total)) %>%
+    arrange(Ethnicity) %>%
+    select(year,
+           Level,
+           Ethnicity,
+           record_count,
+           ethnicity_total,
+           rate,
+           type)
+```
 
 
 ## Export

@@ -215,12 +215,10 @@ or numeric targets. If you have any questions about this code, please email Leah
                 selectizeInput(
                     inputId = "exp_rpt_year",
                     label = "Reporting Year:",
-                    choices = #rev(
-                        workforce_data %>%
+                    choices = workforce_data %>%
                         distinct(report_year) %>%
                         arrange(desc(report_year)) %>%
                         pull(report_year)
-                    #)
                 ),
                 selectizeInput(
                     inputId = "exp_department",
@@ -275,7 +273,6 @@ server <- function(input, output, session) {
                          session = session,
                          inputId = 'sum_rpt_year',
                          choices = c(
-                             # 'All',
                              workforce_data %>%
                                  filter(dept %in% input$sum_department) %>%
                                  distinct(report_year) %>%
@@ -293,7 +290,6 @@ server <- function(input, output, session) {
                          session = session,
                          inputId = 'sum_department',
                          choices = c(
-                             # 'All',
                              workforce_data %>%
                                  filter(report_year == input$sum_rpt_year) %>%
                                  distinct(dept) %>%
@@ -315,7 +311,6 @@ server <- function(input, output, session) {
                    rate,
                    type) %>%
             filter(Level == input$sum_level_type) %>%
-            # rename(Level = input$sum_level_type) %>%
             filter(year == input$sum_rpt_year)
     })
     
@@ -326,16 +321,13 @@ server <- function(input, output, session) {
                 report_year == input$sum_rpt_year,
                 Level == input$sum_level_type
             ) %>%
-            # select(as_of_date, dept, employee_category, sub_category, soc_code, scheme_code, class_code, class_title, identity_variable, gender, total_pop, report_year, input$sum_level_type) %>%
-            rename(year = report_year) %>%
+            rename(year = report_year,
+                   total_pop = record_count) %>%
             add_count(Ethnicity,
                       wt = total_pop,
                       name = 'ethnicity_total') %>%
-            # select(Ethnicity, ethnicity_total) %>%
             distinct(Ethnicity, ethnicity_total, .keep_all = TRUE) %>%
-            # filter(!is.na(input$sum_level_type)) %>%
             mutate(rate = ethnicity_total / sum(ethnicity_total)) %>%
-            # mutate(type = factor('Department Workforce')) %>%
             arrange(Ethnicity) %>%
             select(year,
                    Level,
@@ -344,10 +336,7 @@ server <- function(input, output, session) {
                    ethnicity_total,
                    rate,
                    type) %>%
-            # rename(Level = input$sum_level_type) %>%
             bind_rows(census_data_updated())
-        # %>%
-        # filter(!is.na(Level))
     })
     
     ### Render plot -------------------------------------------------------------
@@ -399,11 +388,16 @@ server <- function(input, output, session) {
                 Level == input$time_level_type
             ) %>%
             rename(year = report_year) %>%
+            group_by(year) %>%
             add_count(Ethnicity,
-                      wt = total_pop,
+                      wt = record_count,
                       name = 'ethnicity_total') %>%
+            add_count(year,
+                      wt = record_count,
+                      name = 'total_pop') %>% 
+            ungroup() %>% 
+            mutate(rate = ethnicity_total / total_pop) %>%
             distinct(Ethnicity, year, .keep_all = TRUE) %>%
-            mutate(rate = ethnicity_total / sum(ethnicity_total)) %>%
             arrange(Ethnicity) %>%
             select(year,
                    Level,
@@ -414,13 +408,19 @@ server <- function(input, output, session) {
                    type)
     })
     
+    group_number <- reactive({
+        nrow(time_workforce_data_updated() %>% 
+                  distinct(Ethnicity))
+    })
+    
     ### Render plot -------------------------------------------------------------
     output$time_plot <- renderPlotly({
         pl_dept_time <- ggplotly(
             time_workforce_data_updated() %>%
                 ggplot() + # code below this line actually creates the plot
-                geom_point(
+                geom_line(
                     mapping = aes(
+                        group = group_number(),
                         x = factor(year),
                         y = rate,
                         color = Ethnicity
@@ -560,6 +560,7 @@ server <- function(input, output, session) {
                     class_title %in% toupper(exp_filter_title()),
                     report_year == input$exp_rpt_year
                 ) %>%
+                rename(total_pop = record_count) %>% 
                 group_by(identity_variable, gender) %>%
                 summarize(total_n = sum(total_pop)) %>%
                 ungroup() %>%
