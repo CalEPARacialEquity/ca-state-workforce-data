@@ -206,6 +206,68 @@ or numeric targets. If you have any questions about this code, please email Leah
             ))
         )
     ),
+    
+    ## Page 4 ------------------------------------------------------------------
+    tabPanel(
+        "Department by Class",
+        # Sidebar with filters (inputs)
+        # Broken down by department(s), class, and reporting year
+        sidebarLayout(
+            sidebarPanel(
+                selectInput(
+                    inputId = "class_rpt_year",
+                    label = "Reporting Year:",
+                    choices = workforce_data %>%
+                        distinct(report_year) %>%
+                        arrange(desc(report_year)) %>%
+                        pull(report_year),
+                    selected = 2019 # delete once we get 2020 census data
+                ),
+                pickerInput(
+                    inputId = "class_department",
+                    label = "Department:",
+                    choices = deptchoices,
+                    selected = workforce_data$dept,
+                    options = pickerOptions(
+                        `actions-box` = TRUE,
+                        `liveSearch` = TRUE,
+                        `virtual-scroll` = 10,
+                        `multiple-separator` = "\n",
+                        `selected-text-format` = paste0("count > ", length(deptchoices) -
+                                                            1),
+                        `count-selected-text` = "All Departments",
+                        size = 10
+                    ),
+                    multiple = TRUE
+                ),
+                tags$h6(
+                    em(
+                        "Hover over the above input bar for a list of the selected department(s)."
+                    )
+                ),
+                textInput(
+                    inputId = "class_graph_title",
+                    label = "Graph title:",
+                    placeholder = "All Workforce Demographics"
+                ),
+                width = 3
+            ),
+            
+            # Main panel with plot (output)
+            mainPanel(column(
+                12,
+                align = 'center',
+                plotlyOutput('class_plot',
+                             height = 500),
+                radioButtons(
+                    inputId = 'class_level_type',
+                    label = 'Ethnicity level:',
+                    choices = c('Level 1', 'Level 2'),
+                    selected = 'Level 2'
+                )
+            ))
+        )
+    ),
     ## Page 5 ------------------------------------------------------------------
     tabPanel(
         "Exploratory Tool: Department Ethnicity and Gender",
@@ -427,13 +489,12 @@ server <- function(input, output, session) {
                     )
                 ) +
                 # scale_fill_manual(values = colors_5102_state_dept) +
-                # scale_y_continuous(labels = label_percent(accuracy = 1L)) +
+                scale_y_continuous(limits = c(0,1), labels = label_percent(accuracy = 1L)) +
                 labs(
                     x = 'Year',
                     y = 'Percent of Total',
                     caption = "Data sources: state population data from 1 yr American Community Survey  |  workforce data from CalHR 5102 Report"
                 ) +
-                # coord_flip() +
                 theme(
                     legend.position = 'bottom',
                     legend.title = element_blank()
@@ -447,6 +508,8 @@ server <- function(input, output, session) {
                     xanchor = 'right',
                     yanchor =  'bottom'
                 )
+                # yaxis = list(tickformat = "%",
+                #              range = c(0, 1))
             )
         # output the plot
         pl_dept_time

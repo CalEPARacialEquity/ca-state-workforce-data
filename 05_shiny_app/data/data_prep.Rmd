@@ -265,6 +265,47 @@ TEST PAGE 2
 ```
 
 
+TEST PAGE 4
+```{r}
+categories <- workforce_data %>% 
+    filter(Level == "Level 1",
+           report_year == 2017) %>% 
+    count(employee_category)
+
+sub_categories <- workforce_data %>% 
+    filter(Level == "Level 1",
+           report_year == 2017) %>% 
+    count(sub_category)
+
+classes <- workforce_data %>% 
+    filter(Level == "Level 1",
+           report_year == 2017) %>% 
+    count(class_title)
+
+
+
+workforce_data_updated4 <- workforce_data %>%
+    filter(#dept == "Administrative Law, Office of",
+           Level == "Level 1",
+           report_year == 2017) %>%
+    rename(year = report_year) %>%
+    add_count(Ethnicity,
+              wt = record_count,
+              name = 'ethnicity_total') %>%
+    distinct(Ethnicity, ethnicity_total, .keep_all = TRUE) %>%
+    mutate(rate = ethnicity_total / sum(ethnicity_total)) %>%
+    arrange(Ethnicity) %>%
+    select(year,
+           Level,
+           Ethnicity,
+           record_count,
+           ethnicity_total,
+           rate,
+           type)
+```
+
+
+
 ## Export
 ```{r}
 # setwd("05_shiny_app/data")
