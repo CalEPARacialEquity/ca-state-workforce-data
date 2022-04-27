@@ -17,6 +17,7 @@ library(tidycensus)
 library(sf)
 library(shinyWidgets)
 library(plotly)
+library(RColorBrewer) 
 
 
 # Write Necessary Functions -----------------------------------------------
@@ -48,6 +49,16 @@ deptchoices <- c(workforce_data %>%
                      distinct(dept) %>%
                      arrange(dept) %>%
                      pull(dept))
+
+categorychoices <- c(workforce_data %>%
+                         distinct(employee_category) %>%
+                         arrange(employee_category) %>%
+                         pull(employee_category))
+
+subcategorychoices <- c(workforce_data %>%
+                            distinct(sub_category) %>%
+                            arrange(sub_category) %>%
+                            pull(sub_category))
 
 # Define UI for app -----------------------------------------------
 
@@ -121,6 +132,40 @@ or numeric targets. If you have any questions about this code, please email Leah
                         `selected-text-format` = paste0("count > ", length(deptchoices) -
                                                             1),
                         `count-selected-text` = "All Departments",
+                        size = 10
+                    ),
+                    multiple = TRUE
+                    ),
+                pickerInput(
+                    inputId = "sum_category",
+                    label = "Employee Category:",
+                    choices = categorychoices,
+                    selected = workforce_data$employee_category,
+                    options = pickerOptions(
+                        `actions-box` = TRUE,
+                        `liveSearch` = TRUE,
+                        `virtual-scroll` = 10,
+                        `multiple-separator` = "\n",
+                        `selected-text-format` = paste0("count > ", length(categorychoices) -
+                                                            1),
+                        `count-selected-text` = "All Categories",
+                        size = 10
+                    ),
+                    multiple = TRUE
+                    ),
+                pickerInput(
+                    inputId = "sum_sub_category",
+                    label = "Employee Sub-Category:",
+                    choices = subcategorychoices,
+                    selected = workforce_data$sub_category,
+                    options = pickerOptions(
+                        `actions-box` = TRUE,
+                        `liveSearch` = TRUE,
+                        `virtual-scroll` = 10,
+                        `multiple-separator` = "\n",
+                        `selected-text-format` = paste0("count > ", length(subcategorychoices) -
+                                                            1),
+                        `count-selected-text` = "All Sub-Categories",
                         size = 10
                     ),
                     multiple = TRUE
@@ -209,67 +254,6 @@ or numeric targets. If you have any questions about this code, please email Leah
     
     ## Page 4 ------------------------------------------------------------------
     tabPanel(
-        "Department by Class",
-        # Sidebar with filters (inputs)
-        # Broken down by department(s), class, and reporting year
-        sidebarLayout(
-            sidebarPanel(
-                selectInput(
-                    inputId = "class_rpt_year",
-                    label = "Reporting Year:",
-                    choices = workforce_data %>%
-                        distinct(report_year) %>%
-                        arrange(desc(report_year)) %>%
-                        pull(report_year),
-                    selected = 2019 # delete once we get 2020 census data
-                ),
-                pickerInput(
-                    inputId = "class_department",
-                    label = "Department:",
-                    choices = deptchoices,
-                    selected = workforce_data$dept,
-                    options = pickerOptions(
-                        `actions-box` = TRUE,
-                        `liveSearch` = TRUE,
-                        `virtual-scroll` = 10,
-                        `multiple-separator` = "\n",
-                        `selected-text-format` = paste0("count > ", length(deptchoices) -
-                                                            1),
-                        `count-selected-text` = "All Departments",
-                        size = 10
-                    ),
-                    multiple = TRUE
-                ),
-                tags$h6(
-                    em(
-                        "Hover over the above input bar for a list of the selected department(s)."
-                    )
-                ),
-                textInput(
-                    inputId = "class_graph_title",
-                    label = "Graph title:",
-                    placeholder = "All Workforce Demographics"
-                ),
-                width = 3
-            ),
-            
-            # Main panel with plot (output)
-            mainPanel(column(
-                12,
-                align = 'center',
-                plotlyOutput('class_plot',
-                             height = 500),
-                radioButtons(
-                    inputId = 'class_level_type',
-                    label = 'Ethnicity level:',
-                    choices = c('Level 1', 'Level 2'),
-                    selected = 'Level 2'
-                )
-            ))
-        )
-    ),
-    ## Page 5 ------------------------------------------------------------------
-    tabPanel(
         "Exploratory Tool: Department Ethnicity and Gender",
         # Sidebar with filters (inputs)
         sidebarLayout(
@@ -305,7 +289,7 @@ or numeric targets. If you have any questions about this code, please email Leah
                                 pull(class_title)
                         )
                     )
-                ),
+                )
             ),
             
             # Main panel with plot (output)
@@ -329,38 +313,140 @@ or numeric targets. If you have any questions about this code, please email Leah
 server <- function(input, output, session) {
     # Page 2 ------------------------------------------------------------------
     # Reactive update to available selections in dropdown for report year
-    observeEvent(input$sum_department,
-                 {
-                     updateSelectInput(
-                         session = session,
-                         inputId = 'sum_rpt_year',
-                         choices = c(
-                             workforce_data %>%
-                                 filter(dept %in% input$sum_department) %>%
-                                 distinct(report_year) %>%
-                                 arrange(desc(report_year)) %>%
-                                 pull(report_year)
-                         ),
-                         selected = input$sum_rpt_year
-                     )
-                 })
     
-    # Reactive update to available selections in dropdown for department
-    observeEvent(input$sum_rpt_year,
+    # update category options based on sub-category selection
+    sub_category_updated <- reactive({
+        workforce_data %>%
+            filter(
+                sub_category %in% input$sum_sub_category
+                # ,Level == input$time_level_type
+            ) %>%
+            distinct(employee_category, .keep_all = TRUE) %>%
+            arrange(employee_category) %>%
+            pull(employee_category)
+    })
+    
+    # update sub-category options based on category selection
+    category_updated <- reactive({
+        workforce_data %>%
+            filter(
+                employee_category %in% input$sum_category
+                # ,Level == input$time_level_type
+            ) %>%
+            distinct(sub_category, .keep_all = TRUE) %>%
+            arrange(sub_category) %>%
+            pull(sub_category)
+    })
+    
+    
+    sum_observer_department <- reactive({
+        list(input$sum_rpt_year, input$sum_category, input$sum_sub_category)
+    })
+    observeEvent(sum_observer_department(),
                  {
                      updateSelectInput(
                          session = session,
                          inputId = 'sum_department',
                          choices = c(
                              workforce_data %>%
-                                 filter(report_year == input$sum_rpt_year) %>%
+                                 filter(report_year == input$sum_rpt_year,
+                                        employee_category %in% input$sum_category,
+                                        sub_category %in% input$sum_sub_category
+                                        ) %>%
                                  distinct(dept) %>%
-                                 arrange(dept) %>%
+                                 arrange(desc(dept)) %>%
                                  pull(dept)
                          ),
                          selected = input$sum_department
                      )
                  })
+    
+    # Reactive update for year
+    sum_observer_year <- reactive({
+        list(input$sum_department, input$sum_category, input$sum_sub_category)
+    })
+    observeEvent(sum_observer_year(),
+                 {
+                     updateSelectInput(
+                         session = session,
+                         inputId = 'sum_rpt_year',
+                         choices = c(
+                             workforce_data %>%
+                                 filter(dept %in% input$sum_department,
+                                        employee_category %in% input$sum_category,
+                                        sub_category %in% input$sum_sub_category
+                                 ) %>%
+                                 distinct(report_year) %>%
+                                 arrange(desc(report_year)) %>%
+                                 pull(report_year)
+                         ),
+                         selected = input$sum_rpt_year
+                     )
+    })
+    
+    # Reactive update for category
+    sum_observer_category <- reactive({
+        list(input$sum_rpt_year, input$sum_department, category_updated())
+    })
+    observeEvent(sum_observer_category(),
+                 {
+                     updateSelectInput(
+                         session = session,
+                         inputId = 'sum_category',
+                         choices = c(
+                             workforce_data %>%
+                                 filter(report_year == input$sum_rpt_year,
+                                        dept %in% input$sum_department,
+                                        sub_category %in% category_updated()
+                                 ) %>%
+                                 distinct(employee_category) %>%
+                                 arrange(desc(employee_category)) %>%
+                                 pull(employee_category)
+                         ),
+                         selected = input$sum_category
+                     )
+    })
+    
+    # Reactive update for sub-category
+    sum_observer_sub_category <- reactive({
+        #does the reactive value need to go here (below) too?
+        list(input$sum_rpt_year, sub_category_updated(), input$sum_department)
+    })
+    observeEvent(sum_observer_sub_category(),
+                 {
+                     updateSelectInput(
+                         session = session,
+                         inputId = 'sum_sub_category',
+                         choices = c(
+                             workforce_data %>%
+                                 filter(report_year == input$sum_rpt_year,
+                                        employee_category %in% sub_category_updated(),
+                                        dept %in% input$sum_department
+                                 ) %>%
+                                 distinct(sub_category) %>%
+                                 arrange(desc(sub_category)) %>%
+                                 pull(sub_category)
+                         ),
+                         selected = input$sum_sub_category
+                     )
+    })
+    
+    # Reactive update to available selections in dropdown for department
+    # observeEvent(input$sum_rpt_year,
+    #              {
+    #                  updateSelectInput(
+    #                      session = session,
+    #                      inputId = 'sum_department',
+    #                      choices = c(
+    #                          workforce_data %>%
+    #                              filter(report_year == input$sum_rpt_year) %>%
+    #                              distinct(dept) %>%
+    #                              arrange(dept) %>%
+    #                              pull(dept)
+    #                      ),
+    #                      selected = input$sum_department
+    #                  )
+    #              })
     # Reactive update to filter for ACS year
     
     census_data_updated <- reactive({
@@ -381,6 +467,8 @@ server <- function(input, output, session) {
             filter(
                 dept %in% input$sum_department,
                 report_year == input$sum_rpt_year,
+                employee_category %in% input$sum_category,
+                sub_category %in% input$sum_sub_category,
                 Level == input$sum_level_type
             ) %>%
             rename(year = report_year,
@@ -397,6 +485,8 @@ server <- function(input, output, session) {
                    total_pop,
                    ethnicity_total,
                    rate,
+                   employee_category,
+                   sub_category,
                    type) %>%
             bind_rows(census_data_updated())
     })
@@ -480,16 +570,18 @@ server <- function(input, output, session) {
         pl_dept_time <- ggplotly(
             time_workforce_data_updated() %>%
                 ggplot() + # code below this line actually creates the plot
-                geom_line(
+                geom_col(
                     mapping = aes(
                         group = group_number(),
                         x = factor(year),
                         y = rate,
-                        color = Ethnicity
+                        fill = Ethnicity
                     )
                 ) +
                 # scale_fill_manual(values = colors_5102_state_dept) +
                 scale_y_continuous(limits = c(0,1), labels = label_percent(accuracy = 1L)) +
+                scale_colour_brewer(palette = "RdYlBu",
+                                    aesthetics = "fill") +
                 labs(
                     x = 'Year',
                     y = 'Percent of Total',
@@ -516,7 +608,7 @@ server <- function(input, output, session) {
     })
 
     
-    # Page 5 ------------------------------------------------------------------
+    # Page 4 ------------------------------------------------------------------
     
     ## Reactive values ---------------------------------------------------------
     # Filter department
