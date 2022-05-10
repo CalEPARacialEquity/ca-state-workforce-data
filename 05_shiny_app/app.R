@@ -314,37 +314,37 @@ server <- function(input, output, session) {
     # Page 2 ------------------------------------------------------------------
     # Reactive update to available selections in dropdown for report year
     
-    # update category options based on sub-category selection
-    sub_category_updated <- reactive({
-        workforce_data %>%
-            filter(
-                sub_category %in% input$sum_sub_category
-                # ,Level == input$time_level_type
-            ) %>%
-            distinct(employee_category, .keep_all = TRUE) %>%
-            arrange(employee_category) %>%
-            pull(employee_category)
-    })
-    
-    # update sub-category options based on category selection
-    category_updated <- reactive({
-        workforce_data %>%
-            filter(
-                employee_category %in% input$sum_category
-                # ,Level == input$time_level_type
-            ) %>%
-            distinct(sub_category, .keep_all = TRUE) %>%
-            arrange(sub_category) %>%
-            pull(sub_category)
-    })
-    
+    # # update category options based on sub-category selection
+    # sub_category_updated <- reactive({
+    #     workforce_data %>%
+    #         filter(
+    #             sub_category %in% input$sum_sub_category
+    #             # ,Level == input$time_level_type
+    #         ) %>%
+    #         distinct(employee_category, .keep_all = TRUE) %>%
+    #         arrange(employee_category) %>%
+    #         pull(employee_category)
+    # })
+    # 
+    # # update sub-category options based on category selection
+    # category_updated <- reactive({
+    #     workforce_data %>%
+    #         filter(
+    #             employee_category %in% input$sum_category
+    #             # ,Level == input$time_level_type
+    #         ) %>%
+    #         distinct(sub_category, .keep_all = TRUE) %>%
+    #         arrange(sub_category) %>%
+    #         pull(sub_category)
+    # })
+    # 
     
     sum_observer_department <- reactive({
         list(input$sum_rpt_year, input$sum_category, input$sum_sub_category)
     })
     observeEvent(sum_observer_department(),
                  {
-                     updateSelectInput(
+                     updatePickerInput(
                          session = session,
                          inputId = 'sum_department',
                          choices = c(
@@ -386,18 +386,18 @@ server <- function(input, output, session) {
     
     # Reactive update for category
     sum_observer_category <- reactive({
-        list(input$sum_rpt_year, input$sum_department, category_updated())
+        list(input$sum_rpt_year, input$sum_department, input$sum_sub_category)
     })
     observeEvent(sum_observer_category(),
                  {
-                     updateSelectInput(
+                     updatePickerInput(
                          session = session,
                          inputId = 'sum_category',
                          choices = c(
                              workforce_data %>%
                                  filter(report_year == input$sum_rpt_year,
                                         dept %in% input$sum_department,
-                                        sub_category %in% category_updated()
+                                        sub_category %in% input$sum_sub_category
                                  ) %>%
                                  distinct(employee_category) %>%
                                  arrange(desc(employee_category)) %>%
@@ -410,17 +410,17 @@ server <- function(input, output, session) {
     # Reactive update for sub-category
     sum_observer_sub_category <- reactive({
         #does the reactive value need to go here (below) too?
-        list(input$sum_rpt_year, sub_category_updated(), input$sum_department)
+        list(input$sum_rpt_year, input$sum_category, input$sum_department)
     })
     observeEvent(sum_observer_sub_category(),
                  {
-                     updateSelectInput(
+                     updatePickerInput(
                          session = session,
                          inputId = 'sum_sub_category',
                          choices = c(
                              workforce_data %>%
                                  filter(report_year == input$sum_rpt_year,
-                                        employee_category %in% sub_category_updated(),
+                                        employee_category %in% input$sum_category,
                                         dept %in% input$sum_department
                                  ) %>%
                                  distinct(sub_category) %>%
@@ -465,10 +465,10 @@ server <- function(input, output, session) {
     workforce_data_updated <- reactive({
         workforce_data %>%
             filter(
-                dept %in% input$sum_department,
+                dept %in% sum_observer_department(),
                 report_year == input$sum_rpt_year,
-                employee_category %in% input$sum_category,
-                sub_category %in% input$sum_sub_category,
+                employee_category %in% sum_observer_category(),
+                sub_category %in% sum_observer_sub_category(),
                 Level == input$sum_level_type
             ) %>%
             rename(year = report_year,
