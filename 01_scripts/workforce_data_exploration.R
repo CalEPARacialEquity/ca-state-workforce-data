@@ -17,7 +17,8 @@ library(stringr)    # working with character strings
 
 # if your data is in excel format, use:
 df_workforce_data_2020 <- read_excel(path = here('02_data_raw', 
-                                                 '5102 Inline Report_12.31.30.xlsx'))
+                                                 '5102',
+                                                 'calhr-5102-statewide-2020.xlsx'))
 
     # NOTE: the here() part is a good practice, but not strictly necessary -- this works too (remove the comment symbol to run):
     # df_workforce_data_2020 <- read_excel('02_data_raw/5102 Inline Report_12.31.30.xlsx')
