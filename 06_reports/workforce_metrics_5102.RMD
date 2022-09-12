@@ -122,13 +122,18 @@ CalHR's biannual 5102 report "captures the race/ethnicity, gender, disability, a
 Data source: [CalHR's Statewide 5102 report](https://www.calhr.ca.gov/pages/statewide-reports.aspx). 
 A cleaned and compiled version of that data is available on the California Open Data Portal at: <https://data.ca.gov/dataset/calhr-civil-rights-data-for-gare-capital-cohort-2019>
 
+#### Enter Parameters
+
+Enter the year of the most recently published 5102 report and if needed edit the URL for the 5102 data set on the California Open Data Portal. Edit default plot
+titles and captions as needed (CalEPA and its 6 Boards, Departments, and Offices [BDOs] are the examples used here).
+
 #### Ethnicity Groupings
 
 The ethnicity groupings were thought of in two levels. Level one is "white" versus "BIPOC", where BIPOC stands for black, indigenous, and people of color, and includes  all ethnicity values other than white. Level two ethnicity groups some sub-groupings, in this case all Asian identities. We recognize that all ethnicities, including sub-groups of Asian ethnicities, experience discrimination differently. However, for the purposes of creating useful visualizations with a relatively small dataset,  we chose to group the identity variables in this way. Feel free to explore the data and re-group for your purposes as you see fit.
 
 ```{r}
 # 1 - load / transform data ---------------------------------------------------------------
-url_data_all_yrs <- 'https://data.ca.gov/dataset/e620a64f-6b86-4ce0-ab4b-03d06674287b/resource/aba87ad9-f6b0-4a7e-a45e-d1452417eb7f/download/calhr_5102_statewide_2011-2020.csv'
+url_data_all_yrs <- 'https://data.ca.gov/dataset/e620a64f-6b86-4ce0-ab4b-03d06674287b/resource/aba87ad9-f6b0-4a7e-a45e-d1452417eb7f/download/calhr_5102_statewide_2011-2021.csv'
 
 ## 5102 ----
 df_5102 <- read_csv(url_data_all_yrs) %>%
@@ -152,6 +157,60 @@ df_5102 <- df_5102 %>%
 # add a year column
 df_5102 <- df_5102 %>% 
     mutate(reporting_year = year(as_of_date))
+```
+
+
+#### Filter for Selected Agency
+
+Search for the name of your selected agency from the box below, then copy and paste into the subsequent code chunk.
+
+List of agency names in the 5102 data set:
+
+```{r}
+ui <- fluidPage(
+    selectInput(
+        inputId = 'deptNames',
+        label = 'Department Name',
+        choices = unique(df_5102$dept),
+        multiple = TRUE),
+    verbatimTextOutput(outputId = "department")
+)
+
+server <- function(input, output, session) {
+    output$department <- observeEvent({
+        df_5102_dept <- reactive(
+            df_5102 %>% filter(
+                dept == input$department))
+    })
+}
+
+shinyApp(ui = ui, server = server)
+```
+
+
+Enter departments to be included in the analysis, and modify the variable names as you see fit:
+
+```{r}
+# enter parameters (for current reporting year) -----------------------------
+# filter for data from the report year (selected above)
+report_year <- 2020
+
+df_5102_dept_1yr <- df_5102_dept %>%
+    filter(reporting_year == report_year)
+
+print(df_5102_dept_1yr)
+```
+
+
+
+```{r}
+agency_name <- "Agency"
+default_pl_title <- glue('{agency_name} Workforce Compared to State Population (Year {report_year})')
+default_pl_title_groups <- glue('{agency_name} Workforce by Occupation and Ethnicity Group Compared to State Population (Year {report_year})')
+default_pl_title_bdo <- glue('{agency_name} Workforce by BDO Compared to State Population (Year {report_year})')
+
+default_pl_subtitle <- element_blank()
+default_pl_caption <- glue('Data sources: state population data from {acs_data_year} 1 yr American Community Survey  |  workforce data from {report_year} CalHR 5102 Report')
 ```
 
 
@@ -192,11 +251,12 @@ For more information about the tidycensus R package or the various types of data
 
 To download the census data, you need to first request a key here: <https://api.census.gov/data/key_signup.html/>
 Then, enter census_api_key("*your_key*", install = TRUE) in your console.
+Enter the year of the most recently published ACS data.
 
 
 ```{r}
 ## census data (ACS 1 yr) ----
-acs_data_year <- 2019
+acs_data_year <- 2021
 
 ### get ACS data
 acs_data_raw <- get_acs(geography = 'state', 
@@ -266,103 +326,6 @@ acs_data_level1 <- acs_data_level2 %>%
     # sum(acs_data_level1$estimate) == acs_data_level1$total_state_pop[1]
 ```
 
-
-## Enter Parameters
-
-Enter the year of the most recently published 5102 report and the most
-recently published ACS data, and if needed edit the URL for the 5102
-data set on the California Open Data Portal. Also, edit default plot
-titles and captions as needed (CalEPA and its 6 Boards, Departments, 
-and Offices [BDOs] are the examples used here).
-
-#### Filter for Selected Agency
-
-Search for the name of your selected agency from the box below, then copy and paste into the subsequent code chunk.
-
-List of agency names in the 5102 data set:
-
-```{r}
-ui <- fluidPage(
-    selectInput(
-        inputId = 'deptNames',
-        label = 'Department Name',
-        choices = unique(df_5102$dept),
-        multiple = TRUE),
-    verbatimTextOutput(outputId = "department")
-)
-
-server <- function(input, output, session) {
-    output$department <- observeEvent({
-        df_5102_dept <- reactive(
-            df_5102 %>% filter(
-                dept == input$department))
-    })
-}
-
-shinyApp(ui = ui, server = server)
-```
-
-# ```{r}
-# ui <- bootstrapPage(
-#     selectInput(
-#         inputId = 'deptNames', 
-#         label = 'Choose Department Names', 
-#         choices = unique(df_5102$dept),
-#         multiple = TRUE),
-#     uiOutput('department')
-#     )
-# 
-# server <- function(input, output){
-#     output$department = renderUI({
-#       mydata = get(input$deptNames)
-#       selectInput('columns2', 'Columns', names(mydata))
-#     })
-#   }
-# 
-# shinyApp(ui = ui, server = server)
-# ```
-
-
-Enter departments to be included in the analysis, and modify the variable names as you see fit:
-
-```{r}
-# Creating the title for your agency
-# ui <- fluidPage(
-#     textInput(
-#         'title',
-#         'Title')
-# )
-#
-# server <- function(input) {
-#     agency_name <- input
-# }
-#
-# shinyApp(ui = ui, server = server)
-```
-
-
-```{r}
-# enter parameters (for current reporting year) -----------------------------
-# filter for data from the report year (selected above)
-report_year <- 2020
-
-df_5102_dept_1yr <- df_5102_dept %>%
-    filter(reporting_year == report_year)
-
-print(df_5102_dept_1yr)
-```
-
-
-
-```{r}
-agency_name <- "Agency"
-default_pl_title <- glue('{agency_name} Workforce Compared to State Population (Year {report_year})')
-default_pl_title_groups <- glue('{agency_name} Workforce by Occupation and Ethnicity Group Compared to State Population (Year {report_year})')
-default_pl_title_bdo <- glue('{agency_name} Workforce by BDO Compared to State Population (Year {report_year})')
-
-default_pl_subtitle <- element_blank()
-default_pl_caption <- glue('Data sources: state population data from {acs_data_year} 1 yr American Community Survey  |  workforce data from {report_year} CalHR 5102 Report')
-```
 
 ## Plots
 
