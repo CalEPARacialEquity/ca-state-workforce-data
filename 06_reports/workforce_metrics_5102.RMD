@@ -167,24 +167,24 @@ Search for the name of your selected agency from the box below, then copy and pa
 List of agency names in the 5102 data set:
 
 ```{r}
-ui <- fluidPage(
-    selectInput(
-        inputId = 'deptNames',
-        label = 'Department Name',
-        choices = unique(df_5102$dept),
-        multiple = TRUE),
-    verbatimTextOutput(outputId = "department")
-)
-
-server <- function(input, output, session) {
-    output$department <- observeEvent({
-        df_5102_dept <- reactive(
-            df_5102 %>% filter(
-                dept == input$department))
-    })
-}
-
-shinyApp(ui = ui, server = server)
+# ui <- fluidPage(
+#     selectInput(
+#         inputId = 'deptNames',
+#         label = 'Department Name',
+#         choices = unique(df_5102$dept),
+#         multiple = TRUE),
+#     verbatimTextOutput(outputId = "department")
+# )
+# 
+# server <- function(input, output, session) {
+#     output$department <- observeEvent({
+#         df_5102_dept <- reactive(
+#             df_5102 %>% filter(
+#                 dept == input$department))
+#     })
+# }
+# 
+# shinyApp(ui = ui, server = server)
 ```
 
 
@@ -193,24 +193,16 @@ Enter departments to be included in the analysis, and modify the variable names 
 ```{r}
 # enter parameters (for current reporting year) -----------------------------
 # filter for data from the report year (selected above)
-report_year <- 2020
+report_year <- 2021
+
+department <- "Environmental Protection Agency"
+
+df_5102_dept <- df_5102 %>% filter(dept == department)
 
 df_5102_dept_1yr <- df_5102_dept %>%
     filter(reporting_year == report_year)
 
 print(df_5102_dept_1yr)
-```
-
-
-
-```{r}
-agency_name <- "Agency"
-default_pl_title <- glue('{agency_name} Workforce Compared to State Population (Year {report_year})')
-default_pl_title_groups <- glue('{agency_name} Workforce by Occupation and Ethnicity Group Compared to State Population (Year {report_year})')
-default_pl_title_bdo <- glue('{agency_name} Workforce by BDO Compared to State Population (Year {report_year})')
-
-default_pl_subtitle <- element_blank()
-default_pl_caption <- glue('Data sources: state population data from {acs_data_year} 1 yr American Community Survey  |  workforce data from {report_year} CalHR 5102 Report')
 ```
 
 
@@ -221,6 +213,10 @@ For this report, we use data from the U.S. Census Bureau's 1-year American Commu
 The ACS dataset provides information about a wide variety of topics, with different data types provided in separate tables, and fields within those tables defined by codes. We used ACS table B03002 to obtain estimates of statewide population by racial/ethnic group, because that table includes information about hispanic/latino origin (note that the primary ACS table for race/ethnicity information is table B02001, but that table does not contain information about hispanic/latino origin, as hispanic/latino orginin considered to be a characteristic that is tracked independent of race). 
 
 The ethnicity groupings provided in ACS table B03002 are roughly analogous to the "level 2" ethnicity groupings described above for the state workforce data. To make the census data consistent with the level 2 groupings state workforce data, the only transformation applied to the census data is grouping the "Other" and "Multiple" category into one 'Other or Multiple Race' category. We also create an ACS dataset consistent with the level 1 ethnicity groupings described above by combining all of the racial/ethnic categories except "White" into one "BIOPOC" category.
+
+In 2020, the United States Census Bureau conducted the Decennial Census, the primary purposes of which are congressional apportionment and state redistricting. The Decennial Census uses different survey methods than the ACS, so demographic data may not be directly comparable between the two. The ACS is primarily for demographics, which is the purpose of this report. Both have their own error associated with the data so it is not necessarily true that the Decennial Census would be a significantly more accurate representation of actual demographics than the ACS. For these reasons, we used the ACS to represent California’s demographics in 2020. ([Reference](https://www.census.gov/content/dam/Census/library/publications/2020/acs/acs_general_handbook_2020_ch09.pdf https://www.census.gov/programs-surveys/acs/about/acs-and-census.html))
+
+The ACS was affected by the pandemic. As suggested by [this flow chart by the Census Bureau](https://www.census.gov/programs-surveys/acs/library/flyers/flow-chart.html), we are still using the ACS experimental estimates. 
 
 For more information about the tidycensus R package or the various types of data available from the U.S. Census Bureau, see the resources listed below.
 
@@ -249,9 +245,11 @@ For more information about the tidycensus R package or the various types of data
 
 #### Download Census Data
 
-To download the census data, you need to first request a key here: <https://api.census.gov/data/key_signup.html/>
+To download the census data, you need to first request a key here: <https://api.census.gov/data/key_signup.html>
 Then, enter census_api_key("*your_key*", install = TRUE) in your console.
 Enter the year of the most recently published ACS data.
+
+Your API key will be stored in your .Renviron and can be accessed by Sys.getenv("CENSUS_API_KEY"). To use now, restart R or run *readRenviron("~/.Renviron")*
 
 
 ```{r}
@@ -328,6 +326,18 @@ acs_data_level1 <- acs_data_level2 %>%
 
 
 ## Plots
+
+### Enter Plot Titles and Captions
+
+```{r}
+agency_name <- "Agency"
+default_pl_title <- glue('{agency_name} Workforce Compared to State Population (Year {report_year})')
+default_pl_title_groups <- glue('{agency_name} Workforce by Occupation and Ethnicity Group Compared to State Population (Year {report_year})')
+default_pl_title_bdo <- glue('{agency_name} Workforce by BDO Compared to State Population (Year {report_year})')
+
+default_pl_subtitle <- element_blank()
+default_pl_caption <- glue('Data sources: state population data from 2021 1 yr American Community Survey  |  workforce data from {report_year} CalHR 5102 Report')
+```
 
 ### Enter Plotting Parameters
 
