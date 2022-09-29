@@ -13,7 +13,6 @@ output:
     toc_depth: 5
     html_preview: TRUE
     keep_html: TRUE
-runtime: shiny
 always_allow_html: true
 ---
 
@@ -46,15 +45,15 @@ h4 {
 ### This Report
 Understanding the composition of a workforce is useful for anticipating future hiring needs and associated budgets (such as succession planning), program and/or policy implementation, and contextually understanding workforce survey results. The purpose of this workforce demographics report is to provide initial data to assess whether California government workforce resemble the state's population demographics. Annual updates of workforce demographics will provide a baseline for understanding whether future racial equity initiatives foster a diverse workforce within and across agencies. Alternatively, it can serve as a guide to reflect whether we adequately represent the populations in the communities we serve.
 
-This code can be modified and applied to any department(s) in the California state system listed in California Department of Human Resource's (CalHR) 5102 data  set. This code was written by California Environmental Protection Agency's (CalEPA)  Racial Equity Team (CRET) Data Subteam in Spring 2021 to provide helpful  racial demographics visualizations for the workforce of the Agency and its Boards,  Departments, and Office (BDOs). The effort came out of a desire to supplement the Agency's Race Forward survey results with workforce demographic data. The Data Subteam intends on maintaining and building off this and other resources and datasets. Future developments include adding RShiny components, analyzing entry-level vs promotional classification demographics, and incorporating data on gender identity, veteran status, and ability. 
+This code can be modified and applied to any department(s) in the California state system listed in California Department of Human Resource's (CalHR) 5102 data  set. This code was written by California Environmental Protection Agency's (CalEPA)  Racial Equity Team (CRET) Data Team in Spring 2021 to provide helpful  racial demographics visualizations for the workforce of the Agency and its Boards,  Departments, and Office (BDOs). The effort came out of a desire to supplement the Agency's Race Forward survey results with workforce demographic data. The Data Team intends on maintaining and building off this and other resources and datasets. Future developments include adding RShiny components, analyzing entry-level vs promotional classification demographics, and incorporating data on gender identity, veteran status, and ability. 
 
-The Data Subteam acknowledges that racial equity work is complex and  cannot be pared down to simple numbers in bins. In addition, diversity is intersectional and includes identities such as gender identity, race/ethnicity, sexual orientation, veteran status, and ability. This code and resulting  visualizations seeks to be the first step in critically examining an agency's  racial demographics, and may be more helpful in developing the right questions  that need to be asked, rather than immediate answers and/or numeric targets.
+The Data Team acknowledges that racial equity work is complex and  cannot be pared down to simple numbers in bins. In addition, diversity is intersectional and includes identities such as gender identity, race/ethnicity, sexual orientation, veteran status, and ability. This code and resulting  visualizations seeks to be the first step in critically examining an agency's  racial demographics, and may be more helpful in developing the right questions  that need to be asked, rather than immediate answers and/or numeric targets.
 
 To edit the code, if you haven't already you will want to download R (the coding language) and RStudio (the software used to develop this tool). To download R, click here: <https://www.r-project.org/>. To download RStudio, click here: <https://www.rstudio.com/products/rstudio/>. If you have any questions about this code, please email Leah Jones at <leah.jones@waterboards.ca.gov>.
 
 
-### CRET Workforce Equity Subteam
-The vision of CRET Workforce Equity Subteam's work is to create a workforce in which  one's work and/or career outcomes are not predicted by one's race. This vision is informed by more detailed goals and objectives related to work/career satisfaction, promotion and retention, compensation, inclusion, mental and other health safety, and more.  CRET's model of change - normalize, organize and operationalize – is  aligned with over 200 government organizations part of a nationwide network to  transform governments to deliver more racial equity. We anticipate that these demographic metrics and resulting performance measures will evolve over time and  will be informed by future data and analyses of surveys, workforce demographics,  and research.
+### CRET Workforce Equity Team
+The vision of CRET Workforce Equity Team's work is to create a workforce in which  one's work and/or career outcomes are not predicted by one's race. This vision is informed by more detailed goals and objectives related to work/career satisfaction, promotion and retention, compensation, inclusion, mental and other health safety, and more.  CRET's model of change - normalize, organize and operationalize – is  aligned with over 200 government organizations part of a nationwide network to  transform governments to deliver more racial equity. We anticipate that these demographic metrics and resulting performance measures will evolve over time and  will be informed by future data and analyses of surveys, workforce demographics,  and research.
 
 
 ### Why Diversity and Inclusion in Representation Matters
@@ -96,8 +95,6 @@ knitr::opts_chunk$set(echo=TRUE, warning=FALSE, message=FALSE) # set "echo = FAL
 # install.packages("DT")
 
 # load packages ----
-library(shiny)
-library(shinyWidgets)
 library(readxl)
 library(tidyverse)
 library(janitor)
@@ -160,31 +157,23 @@ df_5102 <- df_5102 %>%
 ```
 
 
-#### Filter for Selected Agency
+#### Search for Name of Selected Agency
 
 Search for the name of your selected agency from the box below, then copy and paste into the subsequent code chunk.
 
 List of agency names in the 5102 data set:
 
 ```{r}
-# ui <- fluidPage(
-#     selectInput(
-#         inputId = 'deptNames',
-#         label = 'Department Name',
-#         choices = unique(df_5102$dept),
-#         multiple = TRUE),
-#     verbatimTextOutput(outputId = "department")
-# )
-# 
-# server <- function(input, output, session) {
-#     output$department <- observeEvent({
-#         df_5102_dept <- reactive(
-#             df_5102 %>% filter(
-#                 dept == input$department))
-#     })
-# }
-# 
-# shinyApp(ui = ui, server = server)
+departments_list <- df_5102 %>%
+  distinct(dept) %>%
+  arrange(dept) %>%
+  rename('Department' = dept)
+
+departments_list %>%
+    kbl() %>%
+    kable_paper() %>%
+    scroll_box(width = "500px", height = "200px") %>%
+    {.}
 ```
 
 
@@ -202,7 +191,7 @@ df_5102_dept <- df_5102 %>% filter(dept == department)
 df_5102_dept_1yr <- df_5102_dept %>%
     filter(reporting_year == report_year)
 
-print(df_5102_dept_1yr)
+# print(df_5102_dept_1yr)
 ```
 
 
@@ -329,6 +318,8 @@ acs_data_level1 <- acs_data_level2 %>%
 
 ### Enter Plot Titles and Captions
 
+Here you can modify the plot titles and captions.
+
 ```{r}
 agency_name <- "Agency"
 default_pl_title <- glue('{agency_name} Workforce Compared to State Population (Year {report_year})')
@@ -341,11 +332,9 @@ default_pl_caption <- glue('Data sources: state population data from 2021 1 yr A
 
 ### Enter Plotting Parameters
 
-Here you can modify the plot color palette and other parameters:
+Here you can modify the plot color palette and other parameters.
 
 ```{r}
-# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # 2 - 5102 summaries (vs CA pop) -----------------------------------------------
 ## define color palette for plots
 ### state pop vs dept workforce plots
@@ -359,7 +348,7 @@ colors_5102_7 <- brewer_colors # detailed ethnic groups: Asian ... White
 
 ### Format Data & Create Plotting Functions
 
-No changes necessary here, unless you would like to update variable and/or title names:
+No changes necessary here, unless you would like to update variable and/or title names.
 
 ```{r}
 
