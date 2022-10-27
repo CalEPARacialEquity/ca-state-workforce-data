@@ -31,20 +31,22 @@ integer_breaks <- function(n = 5, ...) {
     return(fxn)
 }
 
+
+# Define aesthetics ---------------
 colors_5102_state_dept <- c('darkgreen', 'gold')
 
 
 # Import Data ---------------
+## American Community Survey ----
 census_data <-
     read_csv("data/census_data.csv")
-# %>%
-# mutate(type = as.character(type))
 
+## Workforce (5102) ----
 workforce_data <-
     read_csv("data/workforce_data.csv.gz")
-# %>%
-# mutate(type = as.character(type))
 
+
+# Select distinct choices for user filtering --------------- 
 deptchoices <- c(workforce_data %>%
                      distinct(dept) %>%
                      arrange(dept) %>%
@@ -59,6 +61,7 @@ subcategorychoices <- c(workforce_data %>%
                             distinct(sub_category) %>%
                             arrange(sub_category) %>%
                             pull(sub_category))
+
 
 # Define UI for app -----------------------------------------------
 
