@@ -177,12 +177,12 @@ departments_list %>%
 ```
 
 
-Enter departments to be included in the analysis, and modify the variable names as you see fit:
+Enter departments and year to be included in the visualizations:
 
 ```{r}
 # enter parameters (for current reporting year) -----------------------------
 # filter for data from the report year (selected above)
-report_year <- 2021
+report_year <- 2020
 
 department <- "Environmental Protection Agency"
 
@@ -190,8 +190,6 @@ df_5102_dept <- df_5102 %>% filter(dept == department)
 
 df_5102_dept_1yr <- df_5102_dept %>%
     filter(reporting_year == report_year)
-
-# print(df_5102_dept_1yr)
 ```
 
 
@@ -203,10 +201,10 @@ The ACS dataset provides information about a wide variety of topics, with differ
 
 The ethnicity groupings provided in ACS table B03002 are roughly analogous to the "level 2" ethnicity groupings described above for the state workforce data. To make the census data consistent with the level 2 groupings state workforce data, the only transformation applied to the census data is grouping the "Other" and "Multiple" category into one 'Other or Multiple Race' category. We also create an ACS dataset consistent with the level 1 ethnicity groupings described above by combining all of the racial/ethnic categories except "White" into one "BIOPOC" category.
 
-In 2020, the United States Census Bureau conducted the Decennial Census, the primary purpose of which is congressional apportionment and state redistricting. The ACS is primarily for measuring demographics, which is the purpose of this report. Due to low response rates to the ACS in 2020, the Census Bureau instead released a set of experimental estimates for that year. However, the US Census Bureau urges data users to not compare the 2020 experimental ACS data with other years of ACS data. For this reason, we used the Decennial Census as the official population count for 2020. The Decennial Census uses different survey methods than the ACS, so we still caution direct comparison of demographic data between the two.
-([Reference 1](https://www.census.gov/content/dam/Census/library/publications/2020/acs/acs_general_handbook_2020_ch09.pdf) [Reference 2](https://www.census.gov/programs-surveys/acs/about/acs-and-census.html) [Reference 3](https://www.census.gov/programs-surveys/acs/data/experimental-data/1-year.html))
+In 2020, the United States Census Bureau conducted the Decennial Census, the primary purpose of which is congressional apportionment and state redistricting. The ACS is primarily for measuring demographics, which is the purpose of this report. Due to low response rates to the ACS in 2020, the Census Bureau instead released a set of experimental estimates for that year. The Decennial Census uses different survey methods than the ACS, so direct comparison of demographic data between the two is not recommended. Based on [this flow chart by the Census Bureau](https://www.census.gov/programs-surveys/acs/library/flyers/flow-chart.html), we decided to use the 2019 ACS data to represent 2020 demographics.
 
-The ACS was affected by the pandemic. As suggested by [this flow chart by the Census Bureau](https://www.census.gov/programs-surveys/acs/library/flyers/flow-chart.html), we are still using the ACS experimental estimates. 
+([Reference 1](https://www.census.gov/content/dam/Census/library/publications/2020/acs/acs_general_handbook_2020_ch09.pdf) [Reference 2](https://www.census.gov/programs-surveys/acs/about/acs-and-census.html) [Reference 3](https://www.census.gov/programs-surveys/acs/data/experimental-data/1-year.html))
+ 
 
 For more information about the tidycensus R package or the various types of data available from the U.S. Census Bureau, see the resources listed below.
 
@@ -244,7 +242,10 @@ Your API key will be stored in your .Renviron and can be accessed by Sys.getenv(
 
 ```{r}
 ## census data (ACS 1 yr) ----
-acs_data_year <- 2021
+acs_data_year <- report_year
+
+acs_data_year <- case_when(acs_data_year == 2020 ~ 2019,
+                           TRUE ~ acs_data_year)
 
 ### get ACS data
 acs_data_raw <- get_acs(geography = 'state', 
@@ -328,7 +329,11 @@ default_pl_title_groups <- glue('{agency_name} Workforce by Occupation and Ethni
 default_pl_title_bdo <- glue('{agency_name} Workforce by BDO Compared to State Population (Year {report_year})')
 
 default_pl_subtitle <- element_blank()
-default_pl_caption <- glue('Data sources: state population data from 2021 1 yr American Community Survey  |  workforce data from {report_year} CalHR 5102 Report')
+basic_caption <- glue('Data sources: state population data from {acs_data_year} 1 yr American Community Survey  |  workforce data from {report_year} CalHR 5102 Report')
+if_2020_caption <- glue('Data sources: state population data from {acs_data_year} 1 yr American Community Survey*  |  workforce data from {report_year} CalHR 5102 Report
+                        *2020 ACS not available, US Census Bureau recommends using 2019 ACS instead')
+default_pl_caption <- case_when(acs_data_year == 2020 ~ if_2020_caption,
+                                TRUE ~ basic_caption)
 ```
 
 ### Enter Plotting Parameters
