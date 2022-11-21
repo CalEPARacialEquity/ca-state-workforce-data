@@ -42,6 +42,16 @@ h4 {
 # 5102 Data Analysis by Agency / Department
 
 ## Introduction
+### CRET Workforce Equity Team
+The vision of CRET Workforce Equity Team's work is to create a workforce in which  one's work and/or career outcomes are not predicted by one's race. This vision is informed by more detailed goals and objectives related to work/career satisfaction, promotion and retention, compensation, inclusion, mental and other health safety, and more.  CRET's model of change - normalize, organize and operationalize – is  aligned with over 200 government organizations part of a nationwide network to  transform governments to deliver more racial equity. We anticipate that these demographic metrics and resulting performance measures will evolve over time and  will be informed by future data and analyses of surveys, workforce demographics,  and research.
+
+### Why Diversity and Inclusion in Representation Matters
+The workforce composition of state agencies matters and conversations based on data help drive meaningful change. Inadequate diversity has been proven to lead to less innovation (Hofstra et al., 2020). Workforce diversity enhances our ability to protect public health and the environment by helping the state to understand exposures to pollutants, set priorities, and improve communication.
+
+It is well-known that people relate to people like themselves. In order to fully engage in conversations regarding policies that affect all communities in California, we must improve our conversations with the communities we serve. One of the first steps to engaging in meaningful conversations is to build trust within the communities. Looking to our own workforce’s experiences by listening to and empowering those who grew up, live, and work in our communities may help us engage and build that trust. In addition, nearly half of Californians speak a language other than English at home. Communicating our messages in locally spoken languages enhances the effectiveness of our programs and protects people in emergencies.
+
+Specific to CalEPA's concerns, CalEnviroscreen data have shown us that communities of color experience the highest levels of environmental burdens and the greatest effects of climate change (Figure 1). COVID-19 has also been shown to exacerbate existing social, health, educational, criminal justice, and housing inequities that were already disproportionately affecting these communities. CalEPA’s environmental regulations and policies have real effects on California residents. Finding ways to better engage with communities to effectively address these disparate impacts can help us better serve those who are the most burdened by these inequities.
+
 ### This Report
 Understanding the composition of a workforce is useful for anticipating future hiring needs and associated budgets (such as succession planning), program and/or policy implementation, and contextually understanding workforce survey results. The purpose of this workforce demographics report is to provide initial data to assess whether California government workforce resemble the state's population demographics. Annual updates of workforce demographics will provide a baseline for understanding whether future racial equity initiatives foster a diverse workforce within and across agencies. Alternatively, it can serve as a guide to reflect whether we adequately represent the populations in the communities we serve.
 
@@ -51,32 +61,14 @@ The Data Team acknowledges that racial equity work is complex and  cannot be par
 
 To edit the code, if you haven't already you will want to download R (the coding language) and RStudio (the software used to develop this tool). To download R, click here: <https://www.r-project.org/>. To download RStudio, click here: <https://www.rstudio.com/products/rstudio/>. If you have any questions about this code, please email Leah Jones at <leah.jones@waterboards.ca.gov>.
 
-
-### CRET Workforce Equity Team
-The vision of CRET Workforce Equity Team's work is to create a workforce in which  one's work and/or career outcomes are not predicted by one's race. This vision is informed by more detailed goals and objectives related to work/career satisfaction, promotion and retention, compensation, inclusion, mental and other health safety, and more.  CRET's model of change - normalize, organize and operationalize – is  aligned with over 200 government organizations part of a nationwide network to  transform governments to deliver more racial equity. We anticipate that these demographic metrics and resulting performance measures will evolve over time and  will be informed by future data and analyses of surveys, workforce demographics,  and research.
-
-
-### Why Diversity and Inclusion in Representation Matters
-The workforce composition of state agencies matters and conversations based on data help drive meaningful change. Inadequate diversity has been proven to lead to less innovation (Hofstra et al., 2020). Workforce diversity enhances our ability to protect public health and the environment by helping the state to understand exposures to pollutants, set priorities, and improve communication.
-
-It is well-known that people relate to people like themselves. In order to fully engage in conversations regarding policies that affect all communities in California, we must improve our conversations with the communities we serve. One of the first steps to engaging in meaningful conversations is to build trust within the communities. Looking to our own workforce’s experiences by listening to and empowering those who grew up, live, and work in our communities may help us engage and build that trust. In addition, nearly half of Californians speak a language other than English at home. Communicating our messages in locally spoken languages enhances the effectiveness of our programs and protects people in emergencies.
-
-Specific to CalEPA's concerns, CalEnviroscreen data have shown us that communities of color experience the highest levels of environmental burdens and the greatest effects of climate change (Figure 1). COVID-19 has also been shown to exacerbate existing social, health, educational, criminal justice, and housing inequities that were already disproportionately affecting these communities. CalEPA’s environmental regulations and policies have real effects on California residents. Finding ways to better engage with communities to effectively address these disparate impacts can help us better serve those who are the most burdened by these inequities.
+#### Ethnicity Groupings
+The ethnicity groupings in this report were thought of in two levels. Level one is "white" versus "BIPOC", where BIPOC stands for black, indigenous, and people of color, and includes  all ethnicity values other than white. Level two ethnicity groups some sub-groupings, in this case all Asian identities. We recognize that all ethnicities, including sub-groups of Asian ethnicities, experience discrimination differently. However, for the purposes of creating useful visualizations with a relatively small dataset,  we chose to group the identity variables in this way. Feel free to explore the data and re-group for your purposes as you see fit.
 
 
-## CA Workforce Data Resources
-
--   CalHR data page:
-    <https://www.calhr.ca.gov/pages/statewide-reports.aspx>
-
--   Workforce data on CA open data portal:
-    <https://data.ca.gov/dataset/calhr-civil-rights-data-for-gare-capital-cohort-2019>
-
-
+## Setup and Loading Packages
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo=TRUE, warning=FALSE, message=FALSE) # set "echo = FALSE" to prevent all code from displaying in the output
 ```
-
 
 ```{r Libraries, include=TRUE, message=FALSE}
 # If you need to install the packages first, use the following code:
@@ -90,6 +82,7 @@ knitr::opts_chunk$set(echo=TRUE, warning=FALSE, message=FALSE) # set "echo = FAL
 # install.packages("tidycensus")
 # install.packages("sf")
 # install.packages("patchwork")
+# install.packages("stringr")
 # install.packages("knitr")
 # install.packages("kableExtra")
 # install.packages("DT")
@@ -105,9 +98,50 @@ library(scales)
 library(tidycensus)
 library(sf)
 library(patchwork)
+library(stringr)
 library(knitr)      # generate html tables for this report
 library(kableExtra) # better formatting of tables
 library(DT)         # creates sortable tables
+```
+
+
+## Enter Parameters
+
+Enter the year of the most recently published 5102 report. Edit default plot
+titles and captions as needed (CalEPA and its 6 Boards, Departments, and Offices [BDOs] are the examples used here).
+
+### Search for Name of Selected Agency
+
+Search for the name of your selected agency from the box below, then copy and paste into the subsequent code chunk.
+
+List of agency names in the 5102 data set:
+
+```{r}
+departments_list <- df_5102 %>%
+  distinct(dept) %>%
+  arrange(dept) %>%
+  rename('Department' = dept)
+
+departments_list %>%
+    kbl() %>%
+    kable_paper() %>%
+    scroll_box(width = "500px", height = "200px") %>%
+    {.}
+```
+
+
+Enter departments and year to be included in the visualizations:
+
+```{r}
+# enter parameters (reporting year and department(s)) -----------------------------
+report_year <- 2020
+
+department <- "Environmental Protection Agency"
+
+df_5102_dept <- df_5102 %>% filter(dept == department)
+
+df_5102_dept_1yr <- df_5102_dept %>%
+    filter(reporting_year == report_year)
 ```
 
 
@@ -118,15 +152,6 @@ library(DT)         # creates sortable tables
 CalHR's biannual 5102 report "captures the race/ethnicity, gender, disability, and veteran status by occupational group and classification for all state employees."
 Data source: [CalHR's Statewide 5102 report](https://www.calhr.ca.gov/pages/statewide-reports.aspx). 
 A cleaned and compiled version of that data is available on the California Open Data Portal at: <https://data.ca.gov/dataset/calhr-civil-rights-data-for-gare-capital-cohort-2019>
-
-#### Enter Parameters
-
-Enter the year of the most recently published 5102 report and if needed edit the URL for the 5102 data set on the California Open Data Portal. Edit default plot
-titles and captions as needed (CalEPA and its 6 Boards, Departments, and Offices [BDOs] are the examples used here).
-
-#### Ethnicity Groupings
-
-The ethnicity groupings were thought of in two levels. Level one is "white" versus "BIPOC", where BIPOC stands for black, indigenous, and people of color, and includes  all ethnicity values other than white. Level two ethnicity groups some sub-groupings, in this case all Asian identities. We recognize that all ethnicities, including sub-groups of Asian ethnicities, experience discrimination differently. However, for the purposes of creating useful visualizations with a relatively small dataset,  we chose to group the identity variables in this way. Feel free to explore the data and re-group for your purposes as you see fit.
 
 ```{r}
 # 1 - load / transform data ---------------------------------------------------------------
@@ -156,43 +181,6 @@ df_5102 <- df_5102 %>%
     mutate(reporting_year = year(as_of_date))
 ```
 
-
-#### Search for Name of Selected Agency
-
-Search for the name of your selected agency from the box below, then copy and paste into the subsequent code chunk.
-
-List of agency names in the 5102 data set:
-
-```{r}
-departments_list <- df_5102 %>%
-  distinct(dept) %>%
-  arrange(dept) %>%
-  rename('Department' = dept)
-
-departments_list %>%
-    kbl() %>%
-    kable_paper() %>%
-    scroll_box(width = "500px", height = "200px") %>%
-    {.}
-```
-
-
-Enter departments and year to be included in the visualizations:
-
-```{r}
-# enter parameters (for current reporting year) -----------------------------
-# filter for data from the report year (selected above)
-report_year <- 2020
-
-department <- "Environmental Protection Agency"
-
-df_5102_dept <- df_5102 %>% filter(dept == department)
-
-df_5102_dept_1yr <- df_5102_dept %>%
-    filter(reporting_year == report_year)
-```
-
-
 ### Census Data
 
 For this report, we use data from the U.S. Census Bureau's 1-year American Community Survey (ACS) dataset, which provides a statewide estimate of population and demographic data for a given year. The selected year (entered above) should match the year of the workforce data being analyzed, or if the ACS data for the desired year is not yet available the previous year's 1-year ACS dataset can be used. To access the ACS data we use the tidycensus R package, which provides a user friendly interface to to the Census Bureau's API via R. 
@@ -208,28 +196,6 @@ In 2020, the United States Census Bureau conducted the Decennial Census, the pri
 
 For more information about the tidycensus R package or the various types of data available from the U.S. Census Bureau, see the resources listed below.
 
-#### Census Data Resources
-
--   tidycensus R package:
-    <https://walker-data.com/tidycensus/articles/basic-usage.html>
-
--   general census workshop w/ R:
-    <https://jennhuck.github.io/workshops/tidycensus.html>
-
--   ACS Table B02001 data (race w/o hispanic/latino data):
-    <https://censusreporter.org/data/table/?table=B02001&geo_ids=04000US06>
-
--   ACS Table B03002 data (race with hispanic/latino data):
-    <https://censusreporter.org/data/table/?table=B03002&geo_ids=04000US06>
-
--   info about race in census data:
-    <https://censusreporter.org/topics/race-hispanic/>
-
--   other general info about concepts and tables in census data:
-    <https://censusreporter.org/topics/>
-
--   check/validation of the numbers for CA:
-    <https://www.ppic.org/publication/californias-population/>
 
 #### Download Census Data
 
@@ -330,8 +296,7 @@ default_pl_title_bdo <- glue('{agency_name} Workforce by BDO Compared to State P
 
 default_pl_subtitle <- element_blank()
 basic_caption <- glue('Data sources: state population data from {acs_data_year} 1 yr American Community Survey  |  workforce data from {report_year} CalHR 5102 Report')
-if_2020_caption <- glue('Data sources: state population data from {acs_data_year} 1 yr American Community Survey*  |  workforce data from {report_year} CalHR 5102 Report
-                        *2020 ACS not available, US Census Bureau recommends using 2019 ACS instead')
+if_2020_caption <- glue('Data sources: state population data from {acs_data_year} 1 yr American Community Survey*  |  workforce data from {report_year} CalHR 5102 Report \n*2020 ACS not available, US Census Bureau recommends using 2019 ACS instead')
 default_pl_caption <- case_when(acs_data_year == 2020 ~ if_2020_caption,
                                 TRUE ~ basic_caption)
 ```
@@ -354,7 +319,7 @@ colors_5102_7 <- brewer_colors # detailed ethnic groups: Asian ... White
 
 ### Format Data & Create Plotting Functions
 
-No changes necessary here, unless you would like to update variable and/or title names.
+No changes necessary here.
 
 ```{r}
 
@@ -1020,7 +985,7 @@ for (i in seq_along(pl_5102_groups_l2_bdo_all)) {
 ```
 
 
-## Resources
+## Workforce Resources
 Below is a compilation of resources that may be helpful to human resources professionals in addressing some classification issues, such as the one mentioned earlier in this report regarding administrative classifications.
 
 -   CalHR’s Civil Rights Office page:
@@ -1031,3 +996,23 @@ Below is a compilation of resources that may be helpful to human resources profe
     <https://www.calhr.ca.gov/state-hr-professionals/Pages/Upward-Mobility.aspx>
 -   CalHR manual page about Upward Mobility:
     <https://hrmanual.calhr.ca.gov/Home/ManualItem/1/1005>
+-   CalHR data page:
+    <https://www.calhr.ca.gov/pages/statewide-reports.aspx>
+-   Workforce data on CA open data portal:
+    <https://data.ca.gov/dataset/calhr-civil-rights-data-for-gare-capital-cohort-2019>
+    
+## Census Data Resources
+-   tidycensus R package:
+    <https://walker-data.com/tidycensus/articles/basic-usage.html>
+-   general census workshop w/ R:
+    <https://jennhuck.github.io/workshops/tidycensus.html>
+-   ACS Table B02001 data (race w/o hispanic/latino data):
+    <https://censusreporter.org/data/table/?table=B02001&geo_ids=04000US06>
+-   ACS Table B03002 data (race with hispanic/latino data):
+    <https://censusreporter.org/data/table/?table=B03002&geo_ids=04000US06>
+-   info about race in census data:
+    <https://censusreporter.org/topics/race-hispanic/>
+-   other general info about concepts and tables in census data:
+    <https://censusreporter.org/topics/>
+-   check/validation of the numbers for CA:
+    <https://www.ppic.org/publication/californias-population/>
