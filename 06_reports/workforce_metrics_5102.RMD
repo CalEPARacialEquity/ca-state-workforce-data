@@ -86,6 +86,7 @@ knitr::opts_chunk$set(echo=TRUE, warning=FALSE, message=FALSE) # set "echo = FAL
 # install.packages("knitr")
 # install.packages("kableExtra")
 # install.packages("DT")
+# install.packages("RColorBrewer")
 
 # load packages ----
 library(readxl)
@@ -102,46 +103,7 @@ library(stringr)
 library(knitr)      # generate html tables for this report
 library(kableExtra) # better formatting of tables
 library(DT)         # creates sortable tables
-```
-
-
-## Enter Parameters
-
-Enter the year of the most recently published 5102 report. Edit default plot
-titles and captions as needed (CalEPA and its 6 Boards, Departments, and Offices [BDOs] are the examples used here).
-
-### Search for Name of Selected Agency
-
-Search for the name of your selected agency from the box below, then copy and paste into the subsequent code chunk.
-
-List of agency names in the 5102 data set:
-
-```{r}
-departments_list <- df_5102 %>%
-  distinct(dept) %>%
-  arrange(dept) %>%
-  rename('Department' = dept)
-
-departments_list %>%
-    kbl() %>%
-    kable_paper() %>%
-    scroll_box(width = "500px", height = "200px") %>%
-    {.}
-```
-
-
-Enter departments and year to be included in the visualizations:
-
-```{r}
-# enter parameters (reporting year and department(s)) -----------------------------
-report_year <- 2020
-
-department <- "Environmental Protection Agency"
-
-df_5102_dept <- df_5102 %>% filter(dept == department)
-
-df_5102_dept_1yr <- df_5102_dept %>%
-    filter(reporting_year == report_year)
+library(RColorBrewer)
 ```
 
 
@@ -180,6 +142,47 @@ df_5102 <- df_5102 %>%
 df_5102 <- df_5102 %>% 
     mutate(reporting_year = year(as_of_date))
 ```
+
+
+#### Enter Parameters
+
+Enter the year of the most recently published 5102 report. Edit default plot
+titles and captions as needed (CalEPA and its 6 Boards, Departments, and Offices [BDOs] are the examples used here).
+
+#### Search for Name of Selected Agency
+
+Search for the name of your selected agency from the box below, then copy and paste into the subsequent code chunk.
+
+List of agency names in the 5102 data set:
+
+```{r}
+# departments_list <- df_5102 %>%
+#   distinct(dept) %>%
+#   arrange(dept) %>%
+#   rename('Department' = dept)
+# 
+# departments_list %>%
+#     kbl() %>%
+#     kable_paper() %>%
+#     scroll_box(width = "500px", height = "200px") %>%
+#     {.}
+```
+
+
+Enter departments and year to be included in the visualizations:
+
+```{r}
+# enter parameters (reporting year and department(s)) -----------------------------
+report_year <- 2020
+
+department <- "Environmental Protection Agency"
+
+df_5102_dept <- df_5102 %>% filter(dept == department)
+
+df_5102_dept_1yr <- df_5102_dept %>%
+    filter(reporting_year == report_year)
+```
+
 
 ### Census Data
 
@@ -311,9 +314,9 @@ Here you can modify the plot color palette and other parameters.
 ### state pop vs dept workforce plots
 colors_5102_state_dept <-c('gold', 'darkgreen') # state pop / dept workforce
 ### colors for ethnicities (in stacked bar plots) - trying to keep 'white' the same for both levels of plots for consistency/comparison
-brewer_colors <- rev(RColorBrewer::brewer.pal(n = 7, name = 'Set2'))
-colors_5102_2 <- brewer_colors[6:7] # BIPOC / White
-colors_5102_7 <- brewer_colors # detailed ethnic groups: Asian ... White
+colors_5102_ethnicities <- rev(RColorBrewer::brewer.pal(n = 7, name = 'PuOr'))
+colors_5102_2 <- colors_5102_ethnicities[c(2,6)] # BIPOC / White
+colors_5102_7 <- colors_5102_ethnicities # detailed ethnic groups: Asian ... White
 ```
 
 
@@ -391,14 +394,15 @@ fun_plot_5102_l1_stack <- function(dataset, plot_title, plot_caption) {
     dataset %>%
         mutate(type = fct_rev(type)) %>%
         ggplot() +
-        geom_bar(mapping = aes(x = type, # ethnicity_level1,
+        geom_bar(mapping = aes(x = type,
                                y = rate,
                                fill = ethnicity_level1), # factor(type, levels = rev(levels(type)))),
                  stat = 'identity') +
+        # scale_fill_manual(values = colors_5102_state_dept) +
         scale_fill_manual(values = colors_5102_2) +
         scale_y_continuous(labels = label_percent(accuracy = 1L)) +
         labs(title = plot_title,
-             x = element_blank(),
+             x = 'Ethnicity Group',
              y = 'Percent of Total',
              caption = plot_caption) +
         coord_flip() +
@@ -436,6 +440,7 @@ fun_plot_5102_l2_stack <- function(dataset, plot_title, plot_caption) {
                                y = rate,
                                fill = ethnicity_level2), # factor(type, levels = rev(levels(type)))),
                  stat = 'identity') +
+        # scale_fill_manual(values = colors_5102_7) +
         scale_fill_manual(values = colors_5102_7) +
         scale_y_continuous(labels = label_percent(accuracy = 1L)) +
         labs(title = plot_title,
@@ -480,7 +485,8 @@ fun_plot_5102_l2_stack <- function(dataset, plot_title, plot_caption) {
 #        )
 
 # # patchwork (combine plots) - Level 1
-# pl_5512_patch_dept_l1 <- pl_5102_dept_l1_stack / pl_5102_dept_l1
+pl_5512_patch_dept_l1 <- pl_5102_dept_l1_stack / pl_5102_dept_l1
+pl_5512_patch_dept_l1
 ```
 
 #### Level 2 Ethnicity
@@ -552,6 +558,7 @@ pl_5102_patch_dept_l2 <- pl_5102_patch_dept_l2 +
     plot_annotation(
         title = default_pl_title,
         caption = default_pl_caption)
+pl_5102_patch_dept_l2
 # ggsave(filename = here('07_slides', '2021-05-14', 'images',
 #                        '5102_dept_level2_combined.png'),
 #        plot = pl_5102_patch_dept_l2,
