@@ -181,6 +181,10 @@ df_5102_dept <- df_5102 %>% filter(dept == department)
 
 df_5102_dept_1yr <- df_5102_dept %>%
     filter(reporting_year == report_year)
+
+today_date <- as.character(Sys.Date())
+
+# dir.create(here('07_slides', 'today_date'))
 ```
 
 
@@ -402,7 +406,7 @@ fun_plot_5102_l1_stack <- function(dataset, plot_title, plot_caption) {
         scale_fill_manual(values = colors_5102_2) +
         scale_y_continuous(labels = label_percent(accuracy = 1L)) +
         labs(title = plot_title,
-             x = 'Ethnicity Group',
+             x = element_blank(),
              y = 'Percent of Total',
              caption = plot_caption) +
         coord_flip() +
@@ -469,24 +473,30 @@ fun_plot_5102_l2_stack <- function(dataset, plot_title, plot_caption) {
      bind_rows(acs_data_level1) %>%
      fun_plot_5102_l1(plot_title = default_pl_title,
                       plot_caption = default_pl_caption))
+pl_5102_dept_l1
+
+# ggsave(filename = here('07_slides', 'today_date', 'images',
+#                        'pl_5102_dept_l1.png'),
+#        plot = pl_5102_dept_l1,
+#        width = 10,
+#        height = 6,
+#        dpi = 125
+#        )
 
 (pl_5102_dept_l1_stack <- df_5102_dept_1yr %>%
         fun_summary_5102_l1() %>%
         bind_rows(acs_data_level1) %>%
         fun_plot_5102_l1_stack(plot_title = default_pl_title,
                                plot_caption = default_pl_caption))
+pl_5102_dept_l1_stack
 
-# ggsave(filename = here('07_slides', '2021-05-14', 'images',
-#                        '5102_dept_level1_stack.png'),
+# ggsave(filename = here('07_slides', 'today_date', 'images',
+#                        'pl_5102_dept_l1_stack.png'),
 #        plot = pl_5102_dept_l1_stack,
 #        width = 10,
 #        height = 6,
 #        dpi = 125
 #        )
-
-# # patchwork (combine plots) - Level 1
-pl_5512_patch_dept_l1 <- pl_5102_dept_l1_stack / pl_5102_dept_l1
-pl_5512_patch_dept_l1
 ```
 
 #### Level 2 Ethnicity
@@ -498,8 +508,9 @@ pl_5512_patch_dept_l1
      bind_rows(acs_data_level2) %>%
      fun_plot_5102_l2(plot_title = default_pl_title,
                       plot_caption = default_pl_caption))
+pl_5102_dept_l2
 
-# ggsave(filename = here('07_slides', '2021-05-14', 'images',
+# ggsave(filename = here('07_slides', 'today_date', 'images',
 #                        '5102_dept_level2.png'),
 #        plot = pl_5102_dept_l2,
 #        width = 10,
@@ -512,39 +523,32 @@ pl_5512_patch_dept_l1
         bind_rows(acs_data_level2) %>%
         fun_plot_5102_l2_stack(plot_title = default_pl_title,
                                plot_caption = default_pl_caption))
+pl_5102_dept_l2_stack
 
-# ggsave(filename = here('07_slides', '2021-05-14', 'images',
+# ggsave(filename = here('07_slides', 'today_date', 'images',
 #                        '5102_dept_level2_stack.png'),
 #        plot = pl_5102_dept_l2_stack,
 #        width = 10,
 #        height = 6,
 #        dpi = 125
 #        )
+```
 
-# patchwork (combine plots) - Level 1 and Level 2 stacked plots
-pl_5102_patch_dept_stack_combined <- pl_5102_dept_l1_stack / pl_5102_dept_l2_stack
-pl_5102_patch_dept_stack_combined[[1]] <- pl_5102_patch_dept_stack_combined[[1]] +
-    labs(title = element_blank(),
-         subtitle = element_blank(),
-         caption = element_blank())
-pl_5102_patch_dept_stack_combined[[2]] <- pl_5102_patch_dept_stack_combined[[2]] +
-    labs(title = element_blank(),
-         subtitle = element_blank(),
-         caption = element_blank())
-pl_5102_patch_dept_stack_combined <- pl_5102_patch_dept_stack_combined +
-    plot_layout(heights = c(1.7, 2)) +
-    plot_annotation(
-        title = default_pl_title,
-        caption = default_pl_caption)
-# ggsave(filename = here('07_slides', '2021-05-14', 'images',
-#                        '5102_dept_level1_2_combined_stack.png'),
+#### Save patchwork (combined plots) graphs
+```{r}
+# # patchwork - Both Level 1
+(pl_5102_patch_dept_l1 <- pl_5102_dept_l1_stack / pl_5102_dept_l1)
+pl_5102_patch_dept_l1
+
+# ggsave(filename = here('07_slides', 'today_date', 'images',
+#                        '5102_dept_level1_combined.png'),
 #        plot = pl_5102_patch_dept_stack_combined,
 #        width = 10,
 #        height = 6,
 #        dpi = 125
 #        )
 
-# patchwork (combine plots) - both L2 plots
+# patchwork - both L2 plots
 pl_5102_patch_dept_l2 <- pl_5102_dept_l2_stack / pl_5102_dept_l2
 pl_5102_patch_dept_l2[[1]] <- pl_5102_patch_dept_l2[[1]] +
     labs(title = element_blank(),
@@ -554,19 +558,73 @@ pl_5102_patch_dept_l2[[2]] <- pl_5102_patch_dept_l2[[2]] +
     labs(title = element_blank(),
          subtitle = element_blank(),
          caption = element_blank())
-pl_5102_patch_dept_l2 <- pl_5102_patch_dept_l2 +
+(pl_5102_patch_dept_l2 <- pl_5102_patch_dept_l2 +
     plot_annotation(
         title = default_pl_title,
-        caption = default_pl_caption)
+        caption = default_pl_caption))
 pl_5102_patch_dept_l2
-# ggsave(filename = here('07_slides', '2021-05-14', 'images',
+
+# ggsave(filename = here('07_slides', 'today_date', 'images',
 #                        '5102_dept_level2_combined.png'),
 #        plot = pl_5102_patch_dept_l2,
 #        width = 10,
 #        height = 6,
 #        dpi = 125
 #        )
+
+
+# patchwork - Level 1 and Level 2 stacked plots
+pl_5102_patch_dept_stack_combined <- pl_5102_dept_l1_stack / pl_5102_dept_l2_stack
+pl_5102_patch_dept_stack_combined[[1]] <- pl_5102_patch_dept_stack_combined[[1]] +
+    labs(title = element_blank(),
+         subtitle = element_blank(),
+         caption = element_blank())
+pl_5102_patch_dept_stack_combined[[2]] <- pl_5102_patch_dept_stack_combined[[2]] +
+    labs(title = element_blank(),
+         subtitle = element_blank(),
+         caption = element_blank())
+(pl_5102_patch_dept_stack_combined <- pl_5102_patch_dept_stack_combined +
+    plot_layout(heights = c(1.7, 2)) +
+    plot_annotation(
+        title = default_pl_title,
+        caption = default_pl_caption))
+pl_5102_patch_dept_stack_combined
+
+# ggsave(filename = here('07_slides', 'today_date', 'images',
+#                        '5102_dept_level1_2_combined_stack.png'),
+#        plot = pl_5102_patch_dept_stack_combined,
+#        width = 10,
+#        height = 6,
+#        dpi = 125
+#        )
+
+
+# patchwork - Level 1 and Level 2 not stacked plots
+pl_5102_patch_dept_combined <- pl_5102_dept_l1 / pl_5102_dept_l2
+pl_5102_patch_dept_combined[[1]] <- pl_5102_patch_dept_combined[[1]] +
+    labs(title = element_blank(),
+         subtitle = element_blank(),
+         caption = element_blank())
+pl_5102_patch_dept_combined[[2]] <- pl_5102_patch_dept_combined[[2]] +
+    labs(title = element_blank(),
+         subtitle = element_blank(),
+         caption = element_blank())
+(pl_5102_patch_dept_combined <- pl_5102_patch_dept_combined +
+    plot_layout(heights = c(1.7, 2)) +
+    plot_annotation(
+        title = default_pl_title,
+        caption = default_pl_caption))
+pl_5102_patch_dept_combined
+
+# ggsave(filename = here('07_slides', 'today_date', 'images',
+#                        '5102_dept_level1_2_combined.png'),
+#        plot = pl_5102_patch_dept_combined,
+#        width = 10,
+#        height = 6,
+#        dpi = 125
+#        )
 ```
+
 
 ### Department by Employee Class
 
@@ -682,7 +740,7 @@ facet_label_5102_groups_l1 <- sum_5102_groups_l1 %>%
               legend.title = element_blank()) +
         guides(fill = guide_legend(reverse = TRUE)))
 
-# ggsave(filename = here('07_slides', '2021-05-14', 'images',
+# ggsave(filename = here('07_slides', 'today_date', 'images',
 #                        '5102_dept_groups_level1.png'),
 #        plot = pl_5102_groups_l1,
 #        width = 10,
@@ -713,7 +771,7 @@ facet_label_5102_groups_l1 <- sum_5102_groups_l1 %>%
               legend.title = element_blank()) +
         guides(fill = guide_legend(reverse = TRUE)))
 
-# ggsave(filename = here('07_slides', '2021-05-14', 'images',
+# ggsave(filename = here('07_slides', 'today_date', 'images',
 #                        '5102_dept_groups_level1_stack.png'),
 #        plot = pl_5102_groups_l1_stack,
 #        width = 10,
@@ -794,7 +852,7 @@ facet_label_5102_groups_l2 <- sum_5102_groups_l2 %>%
         rename('metrics_group' = 'facet_label') %>%
         fun_plot_5102_groups_l2())
 
-# ggsave(filename = here('07_slides', '2021-05-14', 'images',
+# ggsave(filename = here('07_slides', 'today_date', 'images',
 #                        '5102_dept_groups_level2.png'),
 #        plot = pl_5102_groups_l2,
 #        width = 10,
@@ -835,7 +893,7 @@ fun_plot_5102_groups_l2_stack <- function(dataset,
         rename('metrics_group' = 'facet_label') %>%
         fun_plot_5102_groups_l2_stack())
 
-# ggsave(filename = here('07_slides', '2021-05-14', 'images',
+# ggsave(filename = here('07_slides', 'today_date', 'images',
 #                        '5102_dept_groups_level2_stack.png'),
 #        plot = pl_5102_groups_l2_stack,
 #        width = 10,
@@ -895,7 +953,7 @@ ordering_bdo <- summary_5102_l2_bdo %>%
         guides(fill = guide_legend(reverse = TRUE)) +
         geom_vline(xintercept = 1.5, size = 0.5, linetype = 'dashed'))#, color = 'grey50')
 
-# ggsave(filename = here('07_slides', '2021-05-14', 'images',
+# ggsave(filename = here('07_slides', 'today_date', 'images',
 #                        '5102_dept_bdo_level2.png'),
 #        plot = pl_5102_l2_bdo_stack,
 #        width = 10,
@@ -982,7 +1040,7 @@ for (i in seq_along(pl_5102_groups_l2_bdo_all)) {
 #       #                              replacement = '_') %>%
 #       #                  str_remove_all(pattern = '\\.|(|)')),
 #       .y = bdo_titles_filenames, # keep filenames consistent regardless of changes to plot labels/titles
-#       .f = ~ ggsave(filename = here('07_slides', '2021-05-14', 'images',
+#       .f = ~ ggsave(filename = here('07_slides', 'today_date', 'images',
 #                                     glue('5102_bdo_group_l2_{.y}.png')),
 #                     plot = .x,
 #                     width = 10,
