@@ -172,7 +172,7 @@ List of agency names in the 5102 data set:
 Enter departments and year to be included in the visualizations:
 
 ```{r}
-# enter parameters (reporting year and department(s)) -----------------------------
+# enter parameters (reporting year and department) -----------------------------
 report_year <- 2020
 
 department <- "Environmental Protection Agency"
@@ -184,7 +184,7 @@ df_5102_dept_1yr <- df_5102_dept %>%
 
 today_date <- as.character(Sys.Date())
 
-# dir.create(here('07_slides', 'today_date'))
+dir.create(here('07_slides', today_date, 'images'))
 ```
 
 
@@ -315,8 +315,6 @@ Here you can modify the plot color palette and other parameters.
 ```{r}
 # 2 - 5102 summaries (vs CA pop) -----------------------------------------------
 ## define color palette for plots
-### state pop vs dept workforce plots
-colors_5102_state_dept <-c('gold', 'darkgreen') # state pop / dept workforce
 ### colors for ethnicities (in stacked bar plots) - trying to keep 'white' the same for both levels of plots for consistency/comparison
 colors_5102_ethnicities <- rev(RColorBrewer::brewer.pal(n = 7, name = 'PuOr'))
 colors_5102_2 <- colors_5102_ethnicities[c(2,6)] # BIPOC / White
@@ -382,7 +380,7 @@ fun_plot_5102_l1 <- function(dataset, plot_title, plot_caption) {
                                fill = factor(type, levels = rev(levels(type)))),
                  stat = 'identity',
                  position = 'dodge') +
-        scale_fill_manual(values = colors_5102_state_dept) +
+        scale_fill_manual(values = colors_5102_2) +
         scale_y_continuous(labels = label_percent(accuracy = 1L)) +
         labs(title = plot_title,
              x = 'Ethnicity Group',
@@ -402,7 +400,7 @@ fun_plot_5102_l1_stack <- function(dataset, plot_title, plot_caption) {
                                y = rate,
                                fill = ethnicity_level1), # factor(type, levels = rev(levels(type)))),
                  stat = 'identity') +
-        # scale_fill_manual(values = colors_5102_state_dept) +
+        # scale_fill_manual(values = colors_5102_2) +
         scale_fill_manual(values = colors_5102_2) +
         scale_y_continuous(labels = label_percent(accuracy = 1L)) +
         labs(title = plot_title,
@@ -424,7 +422,7 @@ fun_plot_5102_l2 <- function(dataset, plot_title, plot_caption) {
                                fill = factor(type, levels = rev(levels(type)))),
                  stat = 'identity',
                  position = 'dodge') +
-        scale_fill_manual(values = colors_5102_state_dept) +
+        scale_fill_manual(values = colors_5102_2) +
         scale_y_continuous(labels = label_percent(accuracy = 1L)) +
         labs(title = plot_title,
              x = 'Ethnicity Group',
@@ -475,7 +473,7 @@ fun_plot_5102_l2_stack <- function(dataset, plot_title, plot_caption) {
                       plot_caption = default_pl_caption))
 pl_5102_dept_l1
 
-# ggsave(filename = here('07_slides', 'today_date', 'images',
+# ggsave(filename = here('07_slides', today_date, 'images',
 #                        'pl_5102_dept_l1.png'),
 #        plot = pl_5102_dept_l1,
 #        width = 10,
@@ -490,7 +488,7 @@ pl_5102_dept_l1
                                plot_caption = default_pl_caption))
 pl_5102_dept_l1_stack
 
-# ggsave(filename = here('07_slides', 'today_date', 'images',
+# ggsave(filename = here('07_slides', today_date, 'images',
 #                        'pl_5102_dept_l1_stack.png'),
 #        plot = pl_5102_dept_l1_stack,
 #        width = 10,
@@ -510,7 +508,7 @@ pl_5102_dept_l1_stack
                       plot_caption = default_pl_caption))
 pl_5102_dept_l2
 
-# ggsave(filename = here('07_slides', 'today_date', 'images',
+# ggsave(filename = here('07_slides', today_date, 'images',
 #                        '5102_dept_level2.png'),
 #        plot = pl_5102_dept_l2,
 #        width = 10,
@@ -525,7 +523,7 @@ pl_5102_dept_l2
                                plot_caption = default_pl_caption))
 pl_5102_dept_l2_stack
 
-# ggsave(filename = here('07_slides', 'today_date', 'images',
+# ggsave(filename = here('07_slides', today_date, 'images',
 #                        '5102_dept_level2_stack.png'),
 #        plot = pl_5102_dept_l2_stack,
 #        width = 10,
@@ -540,7 +538,7 @@ pl_5102_dept_l2_stack
 (pl_5102_patch_dept_l1 <- pl_5102_dept_l1_stack / pl_5102_dept_l1)
 pl_5102_patch_dept_l1
 
-# ggsave(filename = here('07_slides', 'today_date', 'images',
+# ggsave(filename = here('07_slides', today_date, 'images',
 #                        '5102_dept_level1_combined.png'),
 #        plot = pl_5102_patch_dept_stack_combined,
 #        width = 10,
@@ -564,7 +562,7 @@ pl_5102_patch_dept_l2[[2]] <- pl_5102_patch_dept_l2[[2]] +
         caption = default_pl_caption))
 pl_5102_patch_dept_l2
 
-# ggsave(filename = here('07_slides', 'today_date', 'images',
+# ggsave(filename = here('07_slides', today_date, 'images',
 #                        '5102_dept_level2_combined.png'),
 #        plot = pl_5102_patch_dept_l2,
 #        width = 10,
@@ -590,7 +588,7 @@ pl_5102_patch_dept_stack_combined[[2]] <- pl_5102_patch_dept_stack_combined[[2]]
         caption = default_pl_caption))
 pl_5102_patch_dept_stack_combined
 
-# ggsave(filename = here('07_slides', 'today_date', 'images',
+# ggsave(filename = here('07_slides', today_date, 'images',
 #                        '5102_dept_level1_2_combined_stack.png'),
 #        plot = pl_5102_patch_dept_stack_combined,
 #        width = 10,
@@ -616,7 +614,7 @@ pl_5102_patch_dept_combined[[2]] <- pl_5102_patch_dept_combined[[2]] +
         caption = default_pl_caption))
 pl_5102_patch_dept_combined
 
-# ggsave(filename = here('07_slides', 'today_date', 'images',
+# ggsave(filename = here('07_slides', today_date, 'images',
 #                        '5102_dept_level1_2_combined.png'),
 #        plot = pl_5102_patch_dept_combined,
 #        width = 10,
@@ -655,12 +653,12 @@ categories_list %>%
 
 
 ```{r}
-## you can also use the code below to view your table in RStudio, to examine
+## you can also use the line of code below to view your table in RStudio, to examine
 ## what classes and are in your department:
 #View(df_5102_dept_1yr)
 
 ### create groupings ----
-df_5102_dept_1yr <- df_5102_dept_1yr %>%
+df_5102_dept_1yr_grouped <- df_5102_dept_1yr %>%
     mutate(metrics_group = case_when(
         # legal
         employee_category == 'Legal Occupations' ~
@@ -687,28 +685,33 @@ df_5102_dept_1yr <- df_5102_dept_1yr %>%
 
 ```{r}
 # Level 1 ethnicity
-sum_5102_groups_l1 <- df_5102_dept_1yr %>%
-    filter(metrics_group == 'Legal Occupations') %>%
-    fun_summary_5102_l1() %>%
-    bind_rows(acs_data_level1) %>%
-    mutate(metrics_group = 'Legal Occupations') %>%
-    bind_rows(df_5102_dept_1yr %>%
-                  filter(metrics_group == 'Management Occupations') %>%
-                  fun_summary_5102_l1() %>%
-                  bind_rows(acs_data_level1) %>%
-                  mutate(metrics_group = 'Management Occupations')) %>%
-    bind_rows(df_5102_dept_1yr %>%
-                  filter(metrics_group == 'Administrative Occupations') %>%
-                  fun_summary_5102_l1() %>%
-                  bind_rows(acs_data_level1) %>%
-                  mutate(metrics_group = 'Administrative Occupations')) %>%
-    bind_rows(df_5102_dept_1yr %>%
-                  filter(metrics_group == 'Technical Occupations') %>%
-                  fun_summary_5102_l1() %>%
-                  bind_rows(acs_data_level1) %>%
-                  mutate(metrics_group = 'Technical Occupations')) %>%
-    mutate(type = factor(type)) %>%
-    {.}
+fun_summary_5102_groups_l1 <- function(dataset) {
+    dataset %>%
+        filter(metrics_group == 'Legal Occupations') %>%
+        fun_summary_5102_l1() %>%
+        bind_rows(acs_data_level1) %>%
+        mutate(metrics_group = 'Legal Occupations') %>%
+        bind_rows(dataset %>%
+                      filter(metrics_group == 'Management Occupations') %>%
+                      fun_summary_5102_l1() %>%
+                      bind_rows(acs_data_level1) %>%
+                      mutate(metrics_group = 'Management Occupations')) %>%
+        bind_rows(dataset %>%
+                      filter(metrics_group == 'Administrative Occupations') %>%
+                      fun_summary_5102_l1() %>%
+                      bind_rows(acs_data_level1) %>%
+                      mutate(metrics_group = 'Administrative Occupations')) %>%
+        bind_rows(dataset %>%
+                      filter(metrics_group == 'Technical Occupations') %>%
+                      fun_summary_5102_l1() %>%
+                      bind_rows(acs_data_level1) %>%
+                      mutate(metrics_group = 'Technical Occupations')) %>%
+        mutate(type = factor(type)) %>%
+        {.}
+}
+
+sum_5102_groups_l1 <- fun_summary_5102_groups_l1(df_5102_dept_1yr_grouped)
+
 
 facet_label_5102_groups_l1 <- sum_5102_groups_l1 %>%
     filter(type == 'Department Workforce') %>%
@@ -728,7 +731,7 @@ facet_label_5102_groups_l1 <- sum_5102_groups_l1 %>%
                  stat = 'identity',
                  position = 'dodge') +
         facet_wrap(~ metrics_group) +
-        scale_fill_manual(values = colors_5102_state_dept) +
+        scale_fill_manual(values = colors_5102_2) +
         scale_y_continuous(labels = label_percent(accuracy = 1L)) +
         labs(title = default_pl_title_groups,
              subtitle = default_pl_subtitle,
@@ -740,7 +743,7 @@ facet_label_5102_groups_l1 <- sum_5102_groups_l1 %>%
               legend.title = element_blank()) +
         guides(fill = guide_legend(reverse = TRUE)))
 
-# ggsave(filename = here('07_slides', 'today_date', 'images',
+# ggsave(filename = here('07_slides', today_date, 'images',
 #                        '5102_dept_groups_level1.png'),
 #        plot = pl_5102_groups_l1,
 #        width = 10,
@@ -771,7 +774,7 @@ facet_label_5102_groups_l1 <- sum_5102_groups_l1 %>%
               legend.title = element_blank()) +
         guides(fill = guide_legend(reverse = TRUE)))
 
-# ggsave(filename = here('07_slides', 'today_date', 'images',
+# ggsave(filename = here('07_slides', today_date, 'images',
 #                        '5102_dept_groups_level1_stack.png'),
 #        plot = pl_5102_groups_l1_stack,
 #        width = 10,
@@ -824,7 +827,7 @@ fun_plot_5102_groups_l2 <- function(dataset,
                  position = 'dodge') +
         facet_wrap(~ metrics_group) +
         scale_y_continuous(labels = percent) +
-        scale_fill_manual(values = colors_5102_state_dept) +
+        scale_fill_manual(values = colors_5102_2) +
         labs(title = plot_title,
              subtitle = plot_subtitle,
              x = 'Ethnicity Group',
@@ -837,7 +840,7 @@ fun_plot_5102_groups_l2 <- function(dataset,
 }
 
 
-sum_5102_groups_l2 <- df_5102_dept_1yr %>%
+sum_5102_groups_l2 <- df_5102_dept_1yr_grouped %>%
     fun_summary_5102_groups_l2()
 
 facet_label_5102_groups_l2 <- sum_5102_groups_l2 %>%
@@ -845,14 +848,14 @@ facet_label_5102_groups_l2 <- sum_5102_groups_l2 %>%
     count(metrics_group, wt = ethnicity_total) %>%
     mutate(facet_label = glue('{metrics_group} (Department n = {n})'))
 
-(pl_5102_groups_l2 <- df_5102_dept_1yr %>%
+(pl_5102_groups_l2 <- df_5102_dept_1yr_grouped %>%
         fun_summary_5102_groups_l2() %>%
         left_join(facet_label_5102_groups_l2, by = c('metrics_group')) %>%
         select(-metrics_group) %>%
         rename('metrics_group' = 'facet_label') %>%
         fun_plot_5102_groups_l2())
 
-# ggsave(filename = here('07_slides', 'today_date', 'images',
+# ggsave(filename = here('07_slides', today_date, 'images',
 #                        '5102_dept_groups_level2.png'),
 #        plot = pl_5102_groups_l2,
 #        width = 10,
@@ -886,14 +889,14 @@ fun_plot_5102_groups_l2_stack <- function(dataset,
 }
 
 
-(pl_5102_groups_l2_stack <- df_5102_dept_1yr %>%
+(pl_5102_groups_l2_stack <- df_5102_dept_1yr_grouped %>%
         fun_summary_5102_groups_l2() %>%
         left_join(facet_label_5102_groups_l2, by = c('metrics_group')) %>%
         select(-metrics_group) %>%
         rename('metrics_group' = 'facet_label') %>%
         fun_plot_5102_groups_l2_stack())
 
-# ggsave(filename = here('07_slides', 'today_date', 'images',
+# ggsave(filename = here('07_slides', today_date, 'images',
 #                        '5102_dept_groups_level2_stack.png'),
 #        plot = pl_5102_groups_l2_stack,
 #        width = 10,
@@ -902,16 +905,190 @@ fun_plot_5102_groups_l2_stack <- function(dataset,
 #        )
 ```
 
-### Department/BDO Comparison
+### Multiple Department/BDO Comparison
 
 To include different levels of your agency, use the code below to compare. You could also compare departments across the state system.
 
-#### Level 2 Ethnicity
-
 ```{r}
-## 2.4 By BDO Plots ----
-### Level 2 ethnicity ----
-summary_5102_l2_bdo <- df_5102_dept_1yr %>%
+# enter parameters (reporting year and departments) -----------------------------
+departments <- c('Air Resources Board',
+                'Environmental Health Hazard Assessment, Office of',
+                'Environmental Protection Agency',
+                'Pesticide Regulation, Department of',
+                'Resources Recycling and Recovery, Department of',
+                'Toxic Substances Control, Department of',
+                'Water Resources Control Board')
+
+df_5102_depts <- df_5102 %>% 
+    filter(dept %in% departments) %>%
+    filter(reporting_year == report_year)
+
+### create groupings ----
+df_5102_depts_grouped <- df_5102_depts %>%
+    mutate(metrics_group = case_when(
+        # legal
+        employee_category == 'Legal Occupations' ~
+            'Legal Occupations',
+        # management
+        employee_category == 'Management Occupations' ~
+            'Management Occupations',
+        # admin
+        employee_category == 'Office and Administrative Support Occupations' |
+            (employee_category == 'Computer and Mathematical Occupations' &
+                 sub_category == 'Unmapped Classes') ~
+            'Administrative Occupations',
+        # technical
+        employee_category == 'Architecture and Engineering Occupations' |
+            employee_category == 'Life, Physical, and Social Science Occupations' |
+            (employee_category == 'Computer and Mathematical Occupations' &
+                 sub_category == 'Operations Research Analysts') ~
+            'Technical Occupations')
+    )
+```
+
+
+#### Level 1 Ethnicity
+##### By BDO
+```{r}
+summary_5102_l1_bdo <- df_5102_depts_grouped %>%
+    add_count(dept,  wt = record_count,
+              name = 'dept_total') %>%
+    add_count(ethnicity_level1, dept,
+              wt = record_count,
+              name = 'ethnicity_total') %>%
+    select(ethnicity_level1, ethnicity_total, dept, dept_total) %>%
+    distinct() %>%
+    mutate(rate = ethnicity_total / dept_total) %>%
+    mutate(type = 'Department Workforce') %>%
+    arrange(dept, ethnicity_level1) %>%
+    mutate(type = factor(type)) %>%
+    bind_rows(acs_data_level1 %>%
+                  rename(dept = type)) %>%
+    {.}
+
+
+ordering_bdo_l1 <- summary_5102_l1_bdo %>%
+    filter(ethnicity_level1 == 'White') %>%
+    arrange(rate) %>%
+    pull(dept)
+
+(pl_5102_l1_bdo_stack <- summary_5102_l1_bdo %>%
+        # mutate(type = fct_rev(type)) %>%
+        ggplot() +
+        geom_bar(mapping = aes(x = fct_relevel(dept, ordering_bdo), #fct_rev(type),
+                               y = rate,
+                               fill = ethnicity_level1), # factor(type, levels = rev(levels(type)))),
+                 stat = 'identity') +
+        scale_fill_manual(values = colors_5102_2) +
+        scale_y_continuous(labels = percent) +
+        labs(title = default_pl_title_bdo,
+             x = element_blank(),
+             y = 'Percent of Total',
+             caption = default_pl_caption) +
+        coord_flip() +
+        # facet_wrap(~ dept) +
+        theme(legend.position = 'bottom',
+              legend.title = element_blank()) +
+        guides(fill = guide_legend(reverse = TRUE)) +
+        geom_vline(xintercept = 1.5, size = 0.5, linetype = 'dashed'))#, color = 'grey50')
+
+# ggsave(filename = here('07_slides', today_date, 'images',
+#                        '5102_dept_bdo_level2.png'),
+#        plot = pl_5102_l2_bdo_stack,
+#        width = 10,
+#        height = 6,
+#        dpi = 125
+#        )
+```
+
+
+##### By Class Grouping
+```{r}
+##### Optional: enter dept name you'd like for the plot vs dept name listed
+##### in 5102 dataset
+bdo_titles <- c("ARB" = 'Air Resources Board',
+                "OEHHA" = 'Environmental Health Hazard Assessment, Office of',
+                "CalEPA (Agency)" = 'Environmental Protection Agency',
+                "DPR" = 'Pesticide Regulation, Department of',
+                "CalRecycle" = 'Resources Recycling and Recovery, Department of',
+                "DTSC" = 'Toxic Substances Control, Department of',
+                "SWRCB" = 'Water Resources Control Board')
+bdo_titles_filenames <- tolower(c('ARB', 'OEHHA', 'CalEPA_Agency',
+                                  'DPR', 'CalRecycle', 'DTSC', 'SWRCB'))
+
+# To get facet labels
+pl_5102_groups_l1_bdo_all_facets <- map2_df(.x = names(bdo_titles),
+                                            .y = unname(bdo_titles),
+                                            .f = ~  df_5102_depts_grouped %>%
+                                                filter(dept == .y) %>%
+                                                fun_summary_5102_groups_l1() %>%
+                                                filter(type == 'Department Workforce') %>%
+                                                count(metrics_group, wt = ethnicity_total) %>%
+                                                mutate(facet_label = glue('{metrics_group} ({.x} n = {n})')) %>%
+                                                mutate(bdo = glue('{.x}'))
+                                            )
+```
+
+
+
+```{r }
+#### To make plots
+pl_5102_groups_l1_bdo_all <- map2(.x = names(bdo_titles),
+                                  .y = unname(bdo_titles),
+                                  .f = ~ df_5102_depts_grouped %>%
+                                      filter(dept == .y) %>%
+                                      fun_summary_5102_groups_l1() %>%
+                                      mutate(type = case_when(as.character(type) == 'Department Workforce' ~
+                                                                  glue('{.x}'),
+                                                              TRUE ~ as.character(type))) %>%
+                                      mutate(type = factor(type,
+                                                           levels = c(.x, 'State Population'))) %>%
+                                      mutate(bdo = glue('{.x}')) %>%
+                                      left_join(pl_5102_groups_l1_bdo_all_facets,
+                                                by = c('metrics_group', 'bdo')) %>%
+                                      select(-metrics_group) %>%
+                                      rename('metrics_group' = 'facet_label') %>%
+                                      distinct() %>%
+                                      fun_plot_5102_groups_l2_stack(plot_title = glue('{.x} Workforce by Occupation and Ethnicity Group vs. State Population (Year {report_year})')) %>%
+                                      {.}
+)
+
+# ## View one plot
+# pl_5102_groups_l2_bdo_all[[2]]
+
+## print all plots
+for (i in seq_along(pl_5102_groups_l2_bdo_all)) {
+    print(pl_5102_groups_l2_bdo_all[[i]] +
+              theme(legend.position = 'bottom',
+                    legend.title = element_blank(),
+                    plot.margin = margin(t = 30, r = 0, b = 30, l = 0, unit = 'pt') # adding a little bit of space between plots
+                    )
+          )
+}
+
+
+# *To save these graphs as png image files, remove the comment symbols (#) from the code below.*
+
+# walk2(.x = pl_5102_groups_l2_bdo_all,
+#       # .y = tolower(str_replace_all(string = names(bdo_titles),
+#       #                              pattern = ' ',
+#       #                              replacement = '_') %>%
+#       #                  str_remove_all(pattern = '\\.|(|)')),
+#       .y = bdo_titles_filenames, # keep filenames consistent regardless of changes to plot labels/titles
+#       .f = ~ ggsave(filename = here('07_slides', today_date, 'images',
+#                                     glue('5102_bdo_group_l2_{.y}.png')),
+#                     plot = .x,
+#                     width = 10,
+#                     height = 6,
+#                     dpi = 125)
+# )
+```
+
+
+#### Level 2 Ethnicity
+##### By BDO
+```{r}
+summary_5102_l2_bdo <- df_5102_depts_grouped %>%
     add_count(dept,  wt = record_count,
               name = 'dept_total') %>%
     add_count(ethnicity_level2, dept,
@@ -953,7 +1130,7 @@ ordering_bdo <- summary_5102_l2_bdo %>%
         guides(fill = guide_legend(reverse = TRUE)) +
         geom_vline(xintercept = 1.5, size = 0.5, linetype = 'dashed'))#, color = 'grey50')
 
-# ggsave(filename = here('07_slides', 'today_date', 'images',
+# ggsave(filename = here('07_slides', today_date, 'images',
 #                        '5102_dept_bdo_level2.png'),
 #        plot = pl_5102_l2_bdo_stack,
 #        width = 10,
@@ -962,10 +1139,8 @@ ordering_bdo <- summary_5102_l2_bdo %>%
 #        )
 ```
 
-
+##### By Class Grouping
 ```{r}
-### Level 2 ethincity - by BDO & Class Groupings ----
-
 ##### Optional: enter dept name you'd like for the plot vs dept name listed
 ##### in 5102 dataset
 bdo_titles <- c("ARB" = 'Air Resources Board',
@@ -981,7 +1156,7 @@ bdo_titles_filenames <- tolower(c('ARB', 'OEHHA', 'CalEPA_Agency',
 # To get facet labels
 pl_5102_groups_l2_bdo_all_facets <- map2_df(.x = names(bdo_titles),
                                             .y = unname(bdo_titles),
-                                            .f = ~  df_5102_dept_1yr %>%
+                                            .f = ~  df_5102_depts_grouped %>%
                                                 filter(dept == .y) %>%
                                                 fun_summary_5102_groups_l2() %>%
                                                 filter(type == 'Department Workforce') %>%
@@ -997,7 +1172,7 @@ pl_5102_groups_l2_bdo_all_facets <- map2_df(.x = names(bdo_titles),
 #### To make plots
 pl_5102_groups_l2_bdo_all <- map2(.x = names(bdo_titles),
                                   .y = unname(bdo_titles),
-                                  .f = ~ df_5102_dept_1yr %>%
+                                  .f = ~ df_5102_depts_grouped %>%
                                       filter(dept == .y) %>%
                                       fun_summary_5102_groups_l2() %>%
                                       mutate(type = case_when(as.character(type) == 'Department Workforce' ~
@@ -1028,19 +1203,16 @@ for (i in seq_along(pl_5102_groups_l2_bdo_all)) {
           )
 }
 
-```
 
-*To save these graphs as png image files, remove the comment symbols (#) from the*
-*code below.*
+# *To save these graphs as png image files, remove the comment symbols (#) from the code below.*
 
-```{r}
 # walk2(.x = pl_5102_groups_l2_bdo_all,
 #       # .y = tolower(str_replace_all(string = names(bdo_titles),
 #       #                              pattern = ' ',
 #       #                              replacement = '_') %>%
 #       #                  str_remove_all(pattern = '\\.|(|)')),
 #       .y = bdo_titles_filenames, # keep filenames consistent regardless of changes to plot labels/titles
-#       .f = ~ ggsave(filename = here('07_slides', 'today_date', 'images',
+#       .f = ~ ggsave(filename = here('07_slides', today_date, 'images',
 #                                     glue('5102_bdo_group_l2_{.y}.png')),
 #                     plot = .x,
 #                     width = 10,
