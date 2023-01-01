@@ -59,7 +59,7 @@ This code can be modified and applied to any department(s) in the California sta
 
 The Data Team acknowledges that racial equity work is complex and  cannot be pared down to simple numbers in bins. In addition, diversity is intersectional and includes identities such as gender identity, race/ethnicity, sexual orientation, veteran status, and ability. This code and resulting  visualizations seeks to be the first step in critically examining an agency's  racial demographics, and may be more helpful in developing the right questions  that need to be asked, rather than immediate answers and/or numeric targets.
 
-To edit the code, if you haven't already you will want to download R (the coding language) and RStudio (the software used to develop this tool). To download R, click here: <https://www.r-project.org/>. To download RStudio, click here: <https://www.rstudio.com/products/rstudio/>. If you have any questions about this code, please email Leah Jones at <leah.jones@waterboards.ca.gov>.
+To edit the code, if you haven't already you will want to download R (the coding language) and RStudio (the software used to develop this tool). To download R, click here: <https://www.r-project.org/>. To download RStudio, click here: <https://www.rstudio.com/products/rstudio/>. If you have any questions about this code, please email Devan Burke at <devan.burke@waterboards.ca.gov>.
 
 #### Ethnicity Groupings
 The ethnicity groupings in this report were thought of in two levels. Level one is "white" versus "BIPOC", where BIPOC stands for black, indigenous, and people of color, and includes  all ethnicity values other than white. Level two ethnicity groups some sub-groupings, in this case all Asian identities. We recognize that all ethnicities, including sub-groups of Asian ethnicities, experience discrimination differently. However, for the purposes of creating useful visualizations with a relatively small dataset,  we chose to group the identity variables in this way. Feel free to explore the data and re-group for your purposes as you see fit.
@@ -1000,90 +1000,6 @@ ordering_bdo_l1 <- summary_5102_l1_bdo %>%
 #        dpi = 125
 #        )
 ```
-
-
-##### By Class Grouping
-```{r}
-##### Optional: enter dept name you'd like for the plot vs dept name listed
-##### in 5102 dataset
-bdo_titles <- c("ARB" = 'Air Resources Board',
-                "OEHHA" = 'Environmental Health Hazard Assessment, Office of',
-                "CalEPA (Agency)" = 'Environmental Protection Agency',
-                "DPR" = 'Pesticide Regulation, Department of',
-                "CalRecycle" = 'Resources Recycling and Recovery, Department of',
-                "DTSC" = 'Toxic Substances Control, Department of',
-                "SWRCB" = 'Water Resources Control Board')
-bdo_titles_filenames <- tolower(c('ARB', 'OEHHA', 'CalEPA_Agency',
-                                  'DPR', 'CalRecycle', 'DTSC', 'SWRCB'))
-
-# To get facet labels
-pl_5102_groups_l1_bdo_all_facets <- map2_df(.x = names(bdo_titles),
-                                            .y = unname(bdo_titles),
-                                            .f = ~  df_5102_depts_grouped %>%
-                                                filter(dept == .y) %>%
-                                                fun_summary_5102_groups_l1() %>%
-                                                filter(type == 'Department Workforce') %>%
-                                                count(metrics_group, wt = ethnicity_total) %>%
-                                                mutate(facet_label = glue('{metrics_group} ({.x} n = {n})')) %>%
-                                                mutate(bdo = glue('{.x}'))
-                                            )
-```
-
-
-
-```{r }
-#### To make plots
-pl_5102_groups_l1_bdo_all <- map2(.x = names(bdo_titles),
-                                  .y = unname(bdo_titles),
-                                  .f = ~ df_5102_depts_grouped %>%
-                                      filter(dept == .y) %>%
-                                      fun_summary_5102_groups_l1() %>%
-                                      mutate(type = case_when(as.character(type) == 'Department Workforce' ~
-                                                                  glue('{.x}'),
-                                                              TRUE ~ as.character(type))) %>%
-                                      mutate(type = factor(type,
-                                                           levels = c(.x, 'State Population'))) %>%
-                                      mutate(bdo = glue('{.x}')) %>%
-                                      left_join(pl_5102_groups_l1_bdo_all_facets,
-                                                by = c('metrics_group', 'bdo')) %>%
-                                      select(-metrics_group) %>%
-                                      rename('metrics_group' = 'facet_label') %>%
-                                      distinct() %>%
-                                      fun_plot_5102_groups_l2_stack(plot_title = glue('{.x} Workforce by Occupation and Ethnicity Group vs. State Population (Year {report_year})')) %>%
-                                      {.}
-)
-
-# ## View one plot
-# pl_5102_groups_l2_bdo_all[[2]]
-
-## print all plots
-for (i in seq_along(pl_5102_groups_l2_bdo_all)) {
-    print(pl_5102_groups_l2_bdo_all[[i]] +
-              theme(legend.position = 'bottom',
-                    legend.title = element_blank(),
-                    plot.margin = margin(t = 30, r = 0, b = 30, l = 0, unit = 'pt') # adding a little bit of space between plots
-                    )
-          )
-}
-
-
-# *To save these graphs as png image files, remove the comment symbols (#) from the code below.*
-
-# walk2(.x = pl_5102_groups_l2_bdo_all,
-#       # .y = tolower(str_replace_all(string = names(bdo_titles),
-#       #                              pattern = ' ',
-#       #                              replacement = '_') %>%
-#       #                  str_remove_all(pattern = '\\.|(|)')),
-#       .y = bdo_titles_filenames, # keep filenames consistent regardless of changes to plot labels/titles
-#       .f = ~ ggsave(filename = here('07_slides', today_date, 'images',
-#                                     glue('5102_bdo_group_l2_{.y}.png')),
-#                     plot = .x,
-#                     width = 10,
-#                     height = 6,
-#                     dpi = 125)
-# )
-```
-
 
 #### Level 2 Ethnicity
 ##### By BDO

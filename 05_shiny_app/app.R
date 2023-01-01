@@ -33,7 +33,9 @@ integer_breaks <- function(n = 5, ...) {
 
 
 # Define aesthetics ---------------
-colors_5102_state_dept <- c('darkgreen', 'gold')
+colors_5102_ethnicities <- rev(RColorBrewer::brewer.pal(n = 7, name = 'RdYlBu'))
+colors_5102_2 <- colors_5102_ethnicities[c(2,6)] # BIPOC / White
+colors_5102_7 <- colors_5102_ethnicities # detailed ethnic groups: Asian ... White
 
 
 # Import Data ---------------
@@ -51,17 +53,6 @@ deptchoices <- c(workforce_data %>%
                      distinct(dept) %>%
                      arrange(dept) %>%
                      pull(dept))
-
-categorychoices <- c(workforce_data %>%
-                         distinct(employee_category) %>%
-                         arrange(employee_category) %>%
-                         pull(employee_category))
-
-subcategorychoices <- c(workforce_data %>%
-                            distinct(sub_category) %>%
-                            arrange(sub_category) %>%
-                            pull(sub_category))
-
 
 # Define UI for app -----------------------------------------------
 
@@ -81,8 +72,8 @@ ui <- navbarPage(
         br(),
         tags$p(
             "The Data Subteam acknowledges that racial equity work is complex and  cannot be pared down to simple numbers in bins. In addition, diversity is intersectional and includes identities such as gender identity, race/ethnicity, sexual orientation, veteran status, and ability. This code and resulting  visualizations seeks to be the first step in critically examining an agency's  racial demographics, and may be more helpful in developing the right questions  that need to be asked, rather than immediate answers and /
-or numeric targets. If you have any questions about this code, please email Leah Jones at",
-            tags$a(href = "mailto:leah.jones@waterboards.ca.gov", "leah.jones@waterboards.ca.gov"),
+or numeric targets. If you have any questions about this code, please email Devan Burke at",
+            tags$a(href = "mailto:devan.burke@waterboards.ca.gov", "devan.burke@waterboards.ca.gov"),
             "."
         ),
         br(),
@@ -110,7 +101,7 @@ or numeric targets. If you have any questions about this code, please email Leah
     tabPanel(
         "Department Summary Plots",
         # Sidebar with filters (inputs)
-        # Broken down by department(s) and reporting year, not class
+        # Broken down by department(s) and reporting year
         sidebarLayout(
             sidebarPanel(
                 selectInput(
@@ -120,7 +111,7 @@ or numeric targets. If you have any questions about this code, please email Leah
                         distinct(report_year) %>%
                         arrange(desc(report_year)) %>%
                         pull(report_year),
-                    selected = 2019 # delete once we get 2020 census data
+                    selected = 2021
                 ),
                 pickerInput(
                     inputId = "sum_department",
@@ -135,40 +126,6 @@ or numeric targets. If you have any questions about this code, please email Leah
                         `selected-text-format` = paste0("count > ", length(deptchoices) -
                                                             1),
                         `count-selected-text` = "All Departments",
-                        size = 10
-                    ),
-                    multiple = TRUE
-                    ),
-                pickerInput(
-                    inputId = "sum_category",
-                    label = "Employee Category:",
-                    choices = categorychoices,
-                    # selected = workforce_data$employee_category,
-                    options = pickerOptions(
-                        `actions-box` = TRUE,
-                        `liveSearch` = TRUE,
-                        `virtual-scroll` = 10,
-                        `multiple-separator` = "\n",
-                        `selected-text-format` = paste0("count > ", length(categorychoices) -
-                                                            1),
-                        `count-selected-text` = "All Categories",
-                        size = 10
-                    ),
-                    multiple = TRUE
-                    ),
-                pickerInput(
-                    inputId = "sum_sub_category",
-                    label = "Employee Sub-Category:",
-                    choices = subcategorychoices,
-                    # selected = workforce_data$sub_category,
-                    options = pickerOptions(
-                        `actions-box` = TRUE,
-                        `liveSearch` = TRUE,
-                        `virtual-scroll` = 10,
-                        `multiple-separator` = "\n",
-                        `selected-text-format` = paste0("count > ", length(subcategorychoices) -
-                                                            1),
-                        `count-selected-text` = "All Sub-Categories",
                         size = 10
                     ),
                     multiple = TRUE
@@ -206,7 +163,7 @@ or numeric targets. If you have any questions about this code, please email Leah
     tabPanel(
         "Demographics Over Time",
         # Sidebar with filters (inputs)
-        # Broken down by department(s) and reporting year, not class
+        # Broken down by department(s) and reporting year
         sidebarLayout(
             sidebarPanel(
                 pickerInput(
@@ -309,39 +266,68 @@ or numeric targets. If you have any questions about this code, please email Leah
                 )
             ))
         )
+    ),
+    ## Page 5 ------------------------------------------------------------------
+    tabPanel(
+        "Metadata",
+        tags$h2("Data Sources"),
+        tags$h3("Census Data"),
+        tags$p("For this report, we use data from the U.S. Census Bureau's 1-year American Community Survey (ACS) dataset, which provides a statewide estimate of population and demographic data for a given year. The selected year (entered above) should match the year of the workforce data being analyzed, or if the ACS data for the desired year is not yet available the previous year's 1-year ACS dataset can be used. To access the ACS data we use the tidycensus R package, which provides a user friendly interface to to the Census Bureau's API via R. The ACS dataset provides information about a wide variety of topics, with different data types provided in separate tables, and fields within those tables defined by codes. We used ACS table B03002 to obtain estimates of statewide population by racial/ethnic group, because that table includes information about hispanic/latino origin (note that the primary ACS table for race/ethnicity information is table B02001, but that table does not contain information about hispanic/latino origin, as hispanic/latino orginin considered to be a characteristic that is tracked independent of race). The ethnicity groupings provided in ACS table B03002 are roughly analogous to the 'level 2' ethnicity groupings described above for the state workforce data. To make the census data consistent with the level 2 groupings state workforce data, the only transformation applied to the census data is grouping the 'Other' and 'Multiple' category into one 'Other or Multiple Race' category. We also create an ACS dataset consistent with the level 1 ethnicity groupings described above by combining all of the racial/ethnic categories except 'White' into one 'BIOPOC' category. In 2020, the United States Census Bureau conducted the Decennial Census, the primary purpose of which is congressional apportionment and state redistricting. The ACS is primarily for measuring demographics, which is the purpose of this report. Due to low response rates to the ACS in 2020, the Census Bureau instead released a set of experimental estimates for that year. The Decennial Census uses different survey methods than the ACS, so direct comparison of demographic data between the two is not recommended. Based on",
+               tags$a(href = "https://www.census.gov/programs-surveys/acs/library/flyers/flow-chart.html", "this flow chart by the Census Bureau"),
+               "we decided to use the 2019 ACS data to represent 2020 demographics."),
+        tags$h3("Workforce Data"),
+        tags$p("According to",
+               tags$a(href = "https://www.calhr.ca.gov/pages/statewide-reports.aspx", "the CalHR website"),
+               "CalHR's biannual 5102 report 'captures the race/ethnicity, gender, disability, and veteran status by occupational group and classification for all state employees.'"),
+        tags$p("A cleaned and compiled version of that data is available on the",
+        tags$a(href = "https://data.ca.gov/dataset/calhr-civil-rights-data-for-gare-capital-cohort-2019", "California Open Data Portal"),"."),
+        tags$h2("Report Credits"),
+        tags$p("CalEPA Racial Equity Team, specifically the following:"),
+        tags$p("Data Team: Leah Jones, Devan Burke, David Altare, Greg Gearheart"),
+        tags$p("Workforce Equity Team: Lily Wu, Terry Allen, Richelle Bishop, Patrice Bowen, Bev Bueno, Crystal Case, Julissa DeGonzalez, Stephanie Lewis, John Swanton")
+        )
     )
 )
+     
 
 # Define server logic -----------------------------------------------------
 server <- function(input, output, session) {
     # Page 2 ------------------------------------------------------------------
-    # Reactive update to available selections in dropdown for report year
+
+    observeEvent(input$sum_department,
+                 {
+                     updateSelectInput(
+                         session = session,
+                         inputId = 'sum_rpt_year',
+                         choices = c(
+                             workforce_data %>%
+                                 filter(dept %in% input$sum_department) %>%
+                                 distinct(report_year) %>%
+                                 arrange(desc(report_year)) %>%
+                                 pull(report_year)
+                         ),
+                         selected = input$sum_rpt_year
+                     )
+                 })
     
-    # # update category options based on sub-category selection
-    # sub_category_updated <- reactive({
-    #     workforce_data %>%
-    #         filter(
-    #             sub_category %in% input$sum_sub_category
-    #             # ,Level == input$time_level_type
-    #         ) %>%
-    #         distinct(employee_category, .keep_all = TRUE) %>%
-    #         arrange(employee_category) %>%
-    #         pull(employee_category)
-    # })
-    # 
-    # # update sub-category options based on category selection
-    # category_updated <- reactive({
-    #     workforce_data %>%
-    #         filter(
-    #             employee_category %in% input$sum_category
-    #             # ,Level == input$time_level_type
-    #         ) %>%
-    #         distinct(sub_category, .keep_all = TRUE) %>%
-    #         arrange(sub_category) %>%
-    #         pull(sub_category)
-    # })
-    # 
+    # Reactive update to available selections in dropdown for department
+    observeEvent(input$sum_rpt_year,
+                 {
+                     updateSelectInput(
+                         session = session,
+                         inputId = 'sum_department',
+                         choices = c(
+                             workforce_data %>%
+                                 filter(report_year == input$sum_rpt_year) %>%
+                                 distinct(dept) %>%
+                                 arrange(dept) %>%
+                                 pull(dept)
+                         ),
+                         selected = input$sum_department
+                     )
+                 })
     
+    # Update census data based on selections
     census_data_updated <- reactive({
         census_data %>%
             select(year,
@@ -355,13 +341,12 @@ server <- function(input, output, session) {
             filter(year == input$sum_rpt_year)
     })
     
+    # Update workforce data based on selections
     workforce_data_updated <- reactive({
         workforce_data %>%
             filter(
-                dept %in% sum_observer_department(),
+                dept %in% input$sum_department,
                 report_year == input$sum_rpt_year,
-                employee_category %in% sum_observer_category(),
-                sub_category %in% sum_observer_sub_category(),
                 Level == input$sum_level_type
             ) %>%
             rename(year = report_year,
@@ -379,185 +364,10 @@ server <- function(input, output, session) {
                    total_pop,
                    ethnicity_total,
                    rate,
-                   employee_category,
-                   sub_category,
                    type) %>%
             bind_rows(census_data_updated())
     })
-    
-    # # Reactive update for department
-    # observeEvent(workforce_data_updated(),
-    #              {
-    #                  updatePickerInput(
-    #                      session = session,
-    #                      inputId = 'sum_department',
-    #                      choices = c(workforce_data_updated() %>%
-    #                                      distinct(dept) %>%
-    #                                      arrange(desc(dept)) %>%
-    #                                      pull(dept)
-    #                      ),
-    #                      selected = input$sum_department
-    #                  )
-    #              })
-    # 
-    # # Reactive update for year
-    # observeEvent(workforce_data_updated(),
-    #              {
-    #                  updateSelectInput(
-    #                      session = session,
-    #                      inputId = 'sum_rpt_year',
-    #                      choices = c(workforce_data_updated() %>%
-    #                                      distinct(year) %>%
-    #                                      arrange(desc(year)) %>%
-    #                                      pull(year)
-    #                      ),
-    #                      selected = input$sum_rpt_year
-    #                  )
-    #              })
-    # 
-    # # Reactive update for category
-    # observeEvent(workforce_data_updated(),
-    #              {
-    #                  updatePickerInput(
-    #                      session = session,
-    #                      inputId = 'sum_category',
-    #                      choices = c(workforce_data_updated() %>%
-    #                                      distinct(employee_category) %>%
-    #                                      arrange(desc(employee_category)) %>%
-    #                                      pull(employee_category)
-    #                      ),
-    #                      selected = input$sum_category
-    #                  )
-    #              })
-    # 
-    # # Reactive update for sub-category
-    # observeEvent(workforce_data_updated(),
-    #              {
-    #                  updatePickerInput(
-    #                      session = session,
-    #                      inputId = 'sum_sub_category',
-    #                      choices = c(workforce_data_updated() %>%
-    #                                      distinct(sub_category) %>%
-    #                                      arrange(desc(sub_category)) %>%
-    #                                      pull(sub_category)
-    #                      ),
-    #                      selected = input$sum_sub_category
-    #                  )
-    #              })
-    
-    
-    # Reactive update for department
-    sum_observer_department <- reactive({
-        list(input$sum_rpt_year, input$sum_category, input$sum_sub_category)
-    })
-    observeEvent(sum_observer_department(),
-                 {
-                     updatePickerInput(
-                         session = session,
-                         inputId = 'sum_department',
-                         choices = c(
-                             workforce_data %>%
-                                 filter(report_year == input$sum_rpt_year,
-                                        employee_category %in% input$sum_category,
-                                        sub_category %in% input$sum_sub_category
-                                 ) %>%
-                                 distinct(dept) %>%
-                                 arrange(desc(dept)) %>%
-                                 pull(dept)
-                         ),
-                         selected = input$sum_department
-                     )
-                 })
-
-    # Reactive update for year
-    sum_observer_year <- reactive({
-        list(input$sum_department, input$sum_category, input$sum_sub_category)
-    })
-    observeEvent(sum_observer_year(),
-                 {
-                     updateSelectInput(
-                         session = session,
-                         inputId = 'sum_rpt_year',
-                         choices = c(
-                             workforce_data %>%
-                                 filter(dept %in% input$sum_department,
-                                        employee_category %in% input$sum_category,
-                                        sub_category %in% input$sum_sub_category
-                                 ) %>%
-                                 distinct(report_year) %>%
-                                 arrange(desc(report_year)) %>%
-                                 pull(report_year)
-                         ),
-                         selected = input$sum_rpt_year
-                     )
-                 })
-
-    # Reactive update for category
-    sum_observer_category <- reactive({
-        list(input$sum_rpt_year, input$sum_department, input$sum_sub_category)
-    })
-    observeEvent(sum_observer_category(),
-                 {
-                     updatePickerInput(
-                         session = session,
-                         inputId = 'sum_category',
-                         choices = c(
-                             workforce_data %>%
-                                 filter(report_year == input$sum_rpt_year,
-                                        dept %in% input$sum_department,
-                                        sub_category %in% input$sum_sub_category
-                                 ) %>%
-                                 distinct(employee_category) %>%
-                                 arrange(desc(employee_category)) %>%
-                                 pull(employee_category)
-                         ),
-                         selected = input$sum_category
-                     )
-                 })
-
-    # Reactive update for sub-category
-    sum_observer_sub_category <- reactive({
-        list(input$sum_rpt_year, input$sum_category, input$sum_department)
-    })
-    observeEvent(sum_observer_sub_category(),
-                 {
-                     updatePickerInput(
-                         session = session,
-                         inputId = 'sum_sub_category',
-                         choices = c(
-                             workforce_data %>%
-                                 filter(report_year == input$sum_rpt_year,
-                                        employee_category %in% input$sum_category,
-                                        dept %in% input$sum_department
-                                 ) %>%
-                                 distinct(sub_category) %>%
-                                 arrange(desc(sub_category)) %>%
-                                 pull(sub_category)
-                         ),
-                         selected = input$sum_sub_category
-                     )
-                 })
-
-    # Reactive update to available selections in dropdown for department
-    # observeEvent(input$sum_rpt_year,
-    #              {
-    #                  updateSelectInput(
-    #                      session = session,
-    #                      inputId = 'sum_department',
-    #                      choices = c(
-    #                          workforce_data %>%
-    #                              filter(report_year == input$sum_rpt_year) %>%
-    #                              distinct(dept) %>%
-    #                              arrange(dept) %>%
-    #                              pull(dept)
-    #                      ),
-    #                      selected = input$sum_department
-    #                  )
-    #              })
-    # Reactive update to filter for ACS year
-    
-
-    
+  
     ### Render plot -------------------------------------------------------------
     output$sum_plot <- renderPlotly({
         pl_dept_sum <- ggplotly(
@@ -572,7 +382,7 @@ server <- function(input, output, session) {
                     stat = 'identity',
                     position = 'dodge'
                 ) +
-                scale_fill_manual(values = colors_5102_state_dept) +
+                scale_fill_manual(values = colors_5102_2) +
                 scale_y_continuous(labels = label_percent(accuracy = 1L)) +
                 labs(
                     x = 'Ethnicity Group',
@@ -645,10 +455,9 @@ server <- function(input, output, session) {
                         fill = Ethnicity
                     )
                 ) +
-                # scale_fill_manual(values = colors_5102_state_dept) +
+                scale_fill_manual(values = colors_5102_7,
+                                  aesthetics = "fill") +
                 scale_y_continuous(limits = c(0,1), labels = label_percent(accuracy = 1L)) +
-                scale_colour_brewer(palette = "RdYlBu",
-                                    aesthetics = "fill") +
                 labs(
                     x = 'Year',
                     y = 'Percent of Total',
@@ -797,7 +606,7 @@ server <- function(input, output, session) {
                     stat = 'identity',
                     position = ifelse(input$bar_type == 'stacked', 'stack', 'dodge')
                 ) + # position = 'dodge'
-                scale_fill_manual(values = colors_5102_state_dept) +
+                scale_fill_manual(values = colors_5102_2) +
                 scale_y_continuous(labels = comma_format(accuracy = 1),
                                    breaks = integer_breaks()) +
                 coord_flip() +

@@ -34,11 +34,13 @@ To download the census data, you need to first request a key here: <https://api.
 Then, enter census_api_key("*your_key*", install = TRUE) in your console.
 ```{r}
 api_key <- "3e6e49b4c5dcaf87f3683870589946fa111e6852"
+census_api_key(api_key, install=TRUE)
 ```
 
 
 ```{r}
-acs_data_raw <- map_dfr(
+# all years except 2020
+acs_data_not2020 <- map_dfr(
     years,
     ~ get_acs(
         geography = 'state',
@@ -70,12 +72,9 @@ acs_data_raw <- map_dfr(
     ),
     .id = "year"
 )
-```
 
-
-ACS Experimental Data (for 2020)
-```{r}
-census_2020_data_raw <- get_decennial(
+# append 2020 data separately using 2019 ACS, consistent with R Markdown
+acs_data_2020 <- get_acs(
         geography = 'state',
         variables = c(
             # total_state_pop = 'B02001_001',
@@ -101,33 +100,36 @@ census_2020_data_raw <- get_decennial(
         state = 'CA',
         geometry = FALSE,
         # set to TRUE to get as geospatial data
-        year = 2020
+        year = 2019
     )
 ```
 
 
 Clean / reformat the ACS data (the data will be formatted to be consistent with the "level 2" ethnicity groupings in the workforce data that are created above)
 ```{r}
-# First, bind 2020 with 2011-2019, and 2021
-
-
-
-# Modify column types, labels, & correct years
-acs_data <- acs_data_raw %>%
+# First, modify years
+acs_data_not2020_years <- acs_data_not2020 %>%
     mutate(year = as.numeric(year)) %>% 
     mutate(year = case_when(
         year < 10 ~ year + 2010,
-        year >= 10 ~ year + 2011)) %>%
+        year >= 10 ~ year + 2011)) 
+
+acs_data_2020_years <- acs_data_2020 %>% 
+    mutate(year = 2020) 
+    
+# Bind 2020 with 2011-2019 and 2021 and modify column types & labels
+acs_data_bind <- acs_data_not2020_years %>% 
+    bind_rows(acs_data_2020_years) %>%
     clean_names() %>%
     rename(
         total_pop = summary_est,
         total_state_pop_moe = summary_moe,
         location_name = name,
         `Ethnicity` = variable
-    )
+        )
 
 # Group the 'Other' and 'Multiple' rows into one 'Other or Multiple Race' row
-acs_data_level2 <- acs_data %>%
+acs_data_level2 <- acs_data_bind %>%
     mutate(
         Ethnicity = case_when(
             Ethnicity == 'Other' | Ethnicity == 'Multiple' ~ 'Other or Multiple Race',
@@ -143,11 +145,8 @@ acs_data_level2 <- acs_data %>%
            Level = "Level 2") %>%
     {.}
 
-## check (should be TRUE) - make sure sum of populations by group == total state population
-# sum(acs_data_level2$estimate) == acs_data_level2$total_state_pop[1]
-
 ## create a dataset grouped at level 1 - all BIPOC together (resulting groups are BIPOC and white)
-acs_data_level1 <- acs_data %>%
+acs_data_level1 <- acs_data_bind %>%
     mutate(
         Ethnicity = case_when(
             Ethnicity == 'White' ~ 'White',
@@ -163,48 +162,13 @@ acs_data_level1 <- acs_data %>%
 
 acs_data_both_levels <- acs_data_level1 %>% 
     bind_rows(acs_data_level2)
-
-## check (should be TRUE)
-# sum(acs_data_level1$estimate) == acs_data_level1$total_state_pop[1]
-```
-
-
-Dicennial census data (not using)
-```{r}
-# Pull Dicennial census data for 2020
-# dcensus_data_raw <- get_decennial(
-#         geography = 'state',
-#         variables = c(
-#             # total_state_pop = 'B02001_001',
-#             'Hispanic or Latino' = 'B03002_012',
-#             # Total Hispanic or Latino
-#             'White' = 'B03002_003',
-#             # White (Not Hispanic or Latino)
-#             'Black or African American' = 'B03002_004',
-#             # Black or African American (Not Hispanic or Latino)
-#             'Native American or Alaska Native' = 'B03002_005',
-#             # American Indian and Alaska Native (Not Hispanic or Latino)
-#             'Asian' = 'B03002_006',
-#             # Asian (Not Hispanic or Latino)
-#             'Pacific Islander' = 'B03002_007',
-#             # Native Hawaiian and Other Pacific Islander (Not Hispanic or Latino)
-#             'Other' = 'B03002_008',
-#             # Some other race (Not Hispanic or Latino)
-#             'Multiple' = 'B03002_009'# Two or more races (Not Hispanic or Latino)
-#         ),
-#         summary_var = c(total_state_pop = 'B02001_001'),
-#         state = 'CA',
-#         geometry = FALSE,
-#         # set to TRUE to get as geospatial data
-#         year = 2020
-#     )
 ```
 
 
 ## Export census data
 ```{r}
 # setwd("05_shiny_app/data")
-# write.csv(acs_data_both_levels, file = "census_data.csv")
+write.csv(acs_data_both_levels, file = "census_data.csv")
 ```
 
 
@@ -256,10 +220,11 @@ workforce_data <- df_5102_level1 %>%
 ## Export 5102 data
 ```{r}
 # setwd("05_shiny_app/data")
-# write_csv(x = workforce_data, file = "workforce_data.csv.gz")
+write_csv(x = workforce_data, file = "workforce_data.csv.gz")
 ```
 
 
+# Testing code for shiny app
 TEST PAGE 3
 ```{r}
 workforce_data_updated <- workforce_data %>%
