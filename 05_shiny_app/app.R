@@ -280,12 +280,11 @@ or numeric targets. If you have any questions about this code, please email Deva
                tags$a(href = "https://www.calhr.ca.gov/pages/statewide-reports.aspx", "the CalHR website"),
                "CalHR's biannual 5102 report 'captures the race/ethnicity, gender, disability, and veteran status by occupational group and classification for all state employees.'"),
         tags$p("A cleaned and compiled version of that data is available on the",
-        tags$a(href = "https://data.ca.gov/dataset/calhr-civil-rights-data-for-gare-capital-cohort-2019", "California Open Data Portal"),"."),
+               tags$a(href = "https://data.ca.gov/dataset/calhr-civil-rights-data-for-gare-capital-cohort-2019", "California Open Data Portal"),"."),
         tags$h2("Report Credits"),
         tags$p("CalEPA Racial Equity Team, specifically the following:"),
         tags$p("Data Team: Leah Jones, Devan Burke, David Altare, Greg Gearheart"),
         tags$p("Workforce Equity Team: Lily Wu, Terry Allen, Richelle Bishop, Patrice Bowen, Bev Bueno, Crystal Case, Julissa DeGonzalez, Stephanie Lewis, John Swanton")
-        )
     )
 )
      
