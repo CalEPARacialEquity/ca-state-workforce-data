@@ -60,7 +60,7 @@ deptchoices <- c(workforce_data %>%
 ui <- navbarPage(
     title = "Workforce Demographic Tools",
     tabPanel(
-        "Introduction",
+        "Home",
         h2("This Report"),
         tags$p(
             "Understanding the composition of a workforce is useful for anticipating future hiring needs and associated budgets (such as succession planning), program and/or policy implementation, and contextually understanding workforce survey results. The purpose of this workforce demographics report is to provide initial data to assess whether California government workforce resemble the state's population demographics. Annual updates of workforce demographics will provide a baseline for understanding whether future racial equity initiatives foster a diverse workforce within and across agencies. Alternatively, it can serve as a guide to reflect whether we adequately represent the populations in the communities we serve."
@@ -99,7 +99,7 @@ or numeric targets. If you have any questions about this code, please email Deva
     
     ## Page 2 ------------------------------------------------------------------
     tabPanel(
-        "Department Summary Plots",
+        "State Population",
         # Sidebar with filters (inputs)
         # Broken down by department(s) and reporting year
         sidebarLayout(
@@ -161,7 +161,7 @@ or numeric targets. If you have any questions about this code, please email Deva
     
     ## Page 3 ------------------------------------------------------------------
     tabPanel(
-        "Demographics Over Time",
+        "Over Time",
         # Sidebar with filters (inputs)
         # Broken down by department(s) and reporting year
         sidebarLayout(
@@ -214,7 +214,7 @@ or numeric targets. If you have any questions about this code, please email Deva
     
     ## Page 4 ------------------------------------------------------------------
     tabPanel(
-        "Exploratory Tool: Department Ethnicity and Gender",
+        "In Detail",
         # Sidebar with filters (inputs)
         sidebarLayout(
             sidebarPanel(
@@ -249,7 +249,13 @@ or numeric targets. If you have any questions about this code, please email Deva
                                 pull(class_title)
                         )
                     )
-                )
+                ),
+                textInput(
+                    inputId = "exp_graph_title",
+                    label = "Graph title:",
+                    placeholder = "All Workforce Demographics"
+                ),
+                width = 3
             ),
             
             # Main panel with plot (output)
@@ -612,7 +618,6 @@ server <- function(input, output, session) {
                 labs(
                     x = 'Race / Ethnicity',
                     y = 'Number of Employees',
-                    title = glue('Employees In California State Government'),
                     subtitle = glue(
                         'Year: ',
                         input$exp_rpt_year,
@@ -624,7 +629,8 @@ server <- function(input, output, session) {
                     caption = "Note: data from 5102 Inline Report",
                     fill = 'Gender'
                 )
-        )
+        ) %>% 
+            layout(title = input$exp_graph_title)
         
         # output the plot
         pl_class_title
